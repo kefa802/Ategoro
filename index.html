@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工藤式 競艇全場予想ツール</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f9; padding: 20px; }
+        .card { background: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1 { color: #004d99; font-size: 1.5rem; }
+        .race-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+        .race-item { border: 1px solid #ddd; padding: 10px; border-radius: 5px; background: #fff; }
+        .stadium-name { font-weight: bold; color: #e60000; border-bottom: 2px solid #e60000; margin-bottom: 10px; }
+        .prediction { font-weight: bold; color: #007bff; font-size: 1.1rem; }
+        button { padding: 10px 20px; background: #004d99; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <h1>工藤式 競艇全場予想 (三連単)</h1>
+    <p>本日（2026年5月2日）開催の全レースを自動予想します。</p>
+    <button onclick="fetchRaces()">予想を開始する</button>
+    <div id="status"></div>
+    <div id="output"></div>
+
+    <script>
+        async function fetchRaces() {
+            const output = document.getElementById('output');
+            const status = document.getElementById('status');
+            output.innerHTML = '';
+            status.innerText = 'データ取得中...';
+
+            try {
+                // 本日の日付を取得 (YYYYMMDD)
+                const today = "20260502"; 
+                const response = await fetch(`https://boatraceopenapi.github.io/programs/${today}/all.json`);
+                if (!response.ok) throw new Error('データが見つかりませんでした');
+                const data = await response.json();
+
+                status.innerText = '';
+                
+                // 会場ごとに表示
+                data.forEach(stadium => {
+                    let html = `<div class="card">
+                        <div class="stadium-name">${stadium.stadiumName}</div>
+                        <div class="race-grid">`;
+                    
+                    stadium.races.forEach(race => {
+                        const pred = calculatePrediction(race.players);
+                        html += `
+                            <div class="race-item">
+                                <div>${race.raceNo}R</div>
+                                <div class="prediction">三連単: ${pred}</div>
+                            </div>`;
+                    });
+
+                    html += `</div></div>`;
+                    output.innerHTML += html;
+                });
+
+            } catch (error) {
+                status.innerText = 'エラー: ' + error.message;
+            }
+        }
+
+        function calculatePrediction(players) {
+            // スコアリング（全国勝率 + 当地勝率）
+            let scores = players.map(p => ({
+                no: p.bracketNo,
+                val: (parseFloat(p.nationalWinRate) || 0) + (parseFloat(p.localWinRate) || 0)
+            }));
+
+            // スコア順にソート
+            scores.sort((a, b) => b.val - a.val);
+
+            const top = scores.slice(0, 4).map(s => s.no);
+            
+            // 1号艇がスコア上位なら本命サイド、そうでなければ波乱含み
+            if (top[0] === 1) {
+                return `1-${top[1]}${top[2]}-${top[1]}${top[2]}${top[3]}`;
+            } else {
+                return `${top[0]}-${top[1]}-${top[2]}, ${top[0]}-${top[1]}-${top[3]}`;
+            }
+        }
+    </script>
+</body>
+</html>
