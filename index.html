@@ -18,7 +18,7 @@
     </style>
 </head>
 <body>
-<div class="header"><span class="ver">Ver 1.0.2</span><h1>当五郎</h1></div>
+<div class="header"><span class="ver">Ver 1.0.3</span><h1>当五郎</h1></div>
 <div class="container">
     <div class="box">
         <input type="date" id="targetDate" style="padding:10px; width:80%; margin-bottom:15px;">
@@ -33,34 +33,41 @@
 
     function load() {
         const ymd = document.getElementById('targetDate').value.replace(/-/g, '');
-        document.getElementById('status').innerText = '🚀 究極同期モードで解析中...';
+        const status = document.getElementById('status');
+        status.innerText = '🚀 直接接続モードで解析中...';
         document.getElementById('output').innerHTML = '';
 
-        // ブラウザのブロックを完全に回避するため、Google検索の仕組みを悪用したプロキシを使います
+        // CORS制限を受けない唯一の方法：scriptタグとして読み込む
         const script = document.createElement('script');
-        // 「yql」的な役割を果たす超軽量プロキシ
-        script.src = `https://api.allorigins.win/get?url=${encodeURIComponent('https://boatraceopenapi.github.io/programs/' + ymd + '/all.json')}&callback=process`;
+        // 他のサーバーを通さず、データの提供元から直接読み込みを試みます
+        script.src = `https://boatraceopenapi.github.io/programs/${ymd}/all.json?callback=renderData`;
+        
+        script.onerror = () => {
+            status.innerText = '❌ 直接接続に失敗しました。ネットワーク制限の可能性があります。';
+        };
+        
         document.body.appendChild(script);
     }
 
     // データが届いた時に動く関数
-    window.process = function(json) {
+    window.renderData = function(data) {
         const status = document.getElementById('status');
         const output = document.getElementById('output');
-        try {
-            const data = JSON.parse(json.contents);
-            status.innerText = `✅ ${data.length}会場を取得`;
-            data.forEach(st => {
-                let grid = '';
-                st.races.forEach(r => { grid += `<div class="race-box"><small>${r.raceNo}R</small><span class="pred">${predict(r.players)}</span></div>`; });
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `<div style="font-weight:bold;color:var(--blue);">${st.stadiumName}</div><div class="race-grid">${grid}</div>`;
-                output.appendChild(card);
-            });
-        } catch(e) {
-            status.innerText = '❌ データ形式エラー。もう一度押してください。';
+        
+        if (!data || data.length === 0) {
+            status.innerText = '⚠️ データが準備されていません';
+            return;
         }
+        
+        status.innerText = `✅ ${data.length}会場を取得`;
+        data.forEach(st => {
+            let grid = '';
+            st.races.forEach(r => { grid += `<div class="race-box"><small>${r.raceNo}R</small><span class="pred">${predict(r.players)}</span></div>`; });
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `<div style="font-weight:bold;color:var(--blue);">${st.stadiumName}</div><div class="race-grid">${grid}</div>`;
+            output.appendChild(card);
+        });
     }
 
     function predict(players) {
