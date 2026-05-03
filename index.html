@@ -28,51 +28,55 @@
 
 <div class="header">
     <h1 style="margin:0;">当五郎</h1>
-    <p style="margin:5px 0 0; font-size: 0.8rem; opacity: 0.9;">工藤専用・JSONP高速取得モード</p>
+    <p style="margin:5px 0 0; font-size: 0.8rem; opacity: 0.9;">工藤専用・完全同期モード</p>
 </div>
 
 <div class="container">
     <div class="setup-box">
         <input type="date" id="targetDate">
-        <button class="btn-predict" onclick="loadData()">予想を開始する</button>
+        <button class="btn-predict" onclick="startLoading()">予想を開始する</button>
     </div>
     <div id="status"></div>
     <div id="output"></div>
 </div>
 
 <script>
-    // 工藤さんの最新URL（Odd2iiYHeg/exec）を反映済み
-    const gasUrl = "https://script.google.com/macros/s/AKfycbw13UAlytdp0AWVSVPuAaGhmPwnQuaPffiwVtEdZyNahhxxWPv8XDWywNjbOdd2iiYHeg/exec";
+    // 工藤さんの最新正常URLをセット済み
+    const gasUrl = "https://script.google.com/macros/s/AKfycbzVCs84C0JNqgh-nTw2GE6du0ck7OHAik1F0jxj2w7YMex-QaFVCiLbQMjog4elPeEHuA/exec";
 
     window.onload = () => {
         document.getElementById('targetDate').value = new Date().toISOString().split('T')[0];
     };
 
-    function loadData() {
+    function startLoading() {
         const output = document.getElementById('output');
         const status = document.getElementById('status');
         const ymd = document.getElementById('targetDate').value.replace(/-/g, '');
         
         output.innerHTML = '';
-        status.innerText = '🚀 セキュリティ制限を回避してデータ取得中...';
+        status.innerText = '🚀 データを解析中...';
 
-        // ブラウザのブロック（CORS）を100%回避するJSONP方式
+        // 以前のスクリプトタグがあれば削除
         const oldScript = document.getElementById('jsonp-script');
         if (oldScript) oldScript.remove();
 
+        // セキュリティ制限を100%回避するJSONP方式
         const script = document.createElement('script');
         script.id = 'jsonp-script';
-        script.src = `${gasUrl}?ymd=${ymd}&callback=renderData`;
+        script.src = `${gasUrl}?ymd=${ymd}`;
         document.body.appendChild(script);
+        
+        // 読み込み完了後にタグを削除
+        script.onload = () => { document.body.removeChild(script); };
     }
 
-    // GASからのデータを受け取って描画する関数
-    function renderData(data) {
+    // GAS側の「renderData」と完全に一致させて受け取ります
+    window.renderData = function(data) {
         const output = document.getElementById('output');
         const status = document.getElementById('status');
         
         if (!data || data.length === 0 || data.error) {
-            status.innerText = '⚠️ データが見つからないか、準備中（朝9時以降）です。';
+            status.innerText = '⚠️ データがまだ準備されていないようです。';
             return;
         }
         
