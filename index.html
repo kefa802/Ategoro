@@ -18,9 +18,9 @@
 </head>
 <body>
 <div class="header">
-    <span class="ver">Ver 1.0.5</span>
+    <span class="ver">Ver 1.0.7</span>
     <h1 style="margin:0;">当五郎</h1>
-    <p style="margin:5px 0 0; font-size: 0.8rem; opacity: 0.9;">工藤専用・同期完了モデル</p>
+    <p style="margin:5px 0 0; font-size: 0.8rem; opacity: 0.9;">工藤専用・安定同期モデル</p>
 </div>
 <div class="container">
     <div class="setup-box">
@@ -31,8 +31,8 @@
     <div id="o"></div>
 </div>
 <script>
-    // 最新のURL（...OV8UQsg/exec）を反映済みです
-    const url = "https://script.google.com/macros/s/AKfycbwvlweOzODIM26p1vqsj-_CugqcQX6bS5lJLwOsdbcOu2ThqBRBxmjjmAM7bAkOV8UQsg/exec";
+    // 工藤さんの最新正常URLに差し替え済み
+    const url = "https://script.google.com/macros/s/AKfycbyS0HOgCOu5BPe6UEv7I3NHi2WP0rwJcF3Hwov7pUcJKc6Nma2zvFa8dGOBWiTgqlu5Sg/exec";
     
     window.onload = () => {
         const now = new Date();
@@ -40,7 +40,7 @@
     };
 
     function go() {
-        document.getElementById('s').innerText = "🚀 解析中...";
+        document.getElementById('s').innerText = "🚀 サーバーから取得中...";
         document.getElementById('o').innerHTML = "";
         
         const old = document.getElementById('jsonp');
@@ -48,24 +48,21 @@
 
         const s = document.createElement('script');
         s.id = 'jsonp';
-        // キャッシュを回避して最新データを呼ぶためのタイムスタンプ
+        // キャッシュを回避して最新の状態を呼ぶためのタイムスタンプ
         s.src = url + "?ymd=" + document.getElementById('d').value.replace(/-/g,'') + "&t=" + new Date().getTime();
         document.body.appendChild(s);
     }
 
-    // サーバー（GAS）から届いたHTMLデータを画面に流し込みます
     window.renderData = (res) => {
         const status = document.getElementById('s');
         const output = document.getElementById('o');
-        
         status.innerText = "";
         
-        // サーバー側からのHTMLをそのまま展開
         if (res.html && !res.html.includes("⚠️")) {
             output.innerHTML = res.html;
-            status.innerText = "✅ 取得完了しました";
+            status.innerText = "✅ 取得成功しました";
         } else {
-            status.innerText = res.html || "⚠️ データ取得に失敗しました。";
+            status.innerText = res.html || "⚠️ 通信エラーが発生しました。";
         }
     };
 </script>
