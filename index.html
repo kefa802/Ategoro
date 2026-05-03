@@ -17,14 +17,14 @@
         .race-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         .race-box { background: #f8f9fa; border: 1px solid #eee; padding: 8px 4px; border-radius: 6px; text-align: center; }
         .pred { color: #d32f2f; font-weight: bold; font-size: 0.9rem; display: block; margin-top: 3px; }
-        #status { text-align: center; margin: 15px; font-weight: bold; color: var(--blue); }
+        #status { text-align: center; margin: 15px; font-weight: bold; color: var(--blue); font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
 <div class="header">
     <h1 style="margin:0;">当五郎</h1>
-    <p style="margin:5px 0 0; font-size:0.7rem; opacity:0.8;">工藤専用・サーバー連携モード</p>
+    <p style="margin:5px 0 0; font-size:0.7rem; opacity:0.8;">工藤専用サーバー・全場予想モード</p>
 </div>
 
 <div class="container">
@@ -37,7 +37,7 @@
 </div>
 
 <script>
-    // 先ほど取得したURLをセット済みです
+    // 工藤さんのGAS URL
     const gasUrl = "https://script.google.com/macros/s/AKfycbzO6Tk_udWmVzUTEk17ga3b48YXJSCM94EWerMT3gFWszwS3u1ogVeul50v3YYCWNedFw/exec";
 
     window.onload = () => {
@@ -50,14 +50,14 @@
         const ymd = document.getElementById('targetDate').value.replace(/-/g, '');
         
         output.innerHTML = '';
-        status.innerText = '🚀 工藤専用サーバーに接続中...';
+        status.innerText = '🚀 サーバー経由で最新データを解析中...';
 
         try {
             const res = await fetch(`${gasUrl}?ymd=${ymd}`);
             const data = await res.json();
             
-            if (!data || data.length === 0) {
-                status.innerText = '⚠️ 本日のデータはまだ準備されていないようです。';
+            if (!data || data.length === 0 || data.error) {
+                status.innerText = '⚠️ 本日のデータがまだ準備されていないか、サーバーエラーです。';
                 return;
             }
             
@@ -73,7 +73,7 @@
                 output.appendChild(card);
             });
         } catch (e) {
-            status.innerText = '❌ サーバー接続エラー。GASのデプロイ設定を確認してください。';
+            status.innerText = '❌ 接続エラー。URLが正しいか、GASの設定が「全員」になっているか確認してください。';
         }
     }
 
@@ -84,7 +84,6 @@
             s: (parseFloat(x.nationalWinRate)||0)*0.8 + (parseFloat(x.localWinRate)||0)*0.2
         })).sort((a,b) => b.s - a.s);
         
-        // 1号艇がスコア1位なら1頭、そうでなければ上位ボックス風
         if (p[0].n === 1) {
             return `1-${p[1].n}${p[2].n}-${p[1].n}${p[2].n}${p[3].n}`;
         } else {
