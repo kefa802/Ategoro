@@ -2,76 +2,52 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>当五郎</title>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; margin: 0; color: #333; }
+        body { font-family: sans-serif; background: #f0f2f5; margin: 0; }
         .header { background: #01579b; color: white; padding: 20px; text-align: center; position: relative; }
-        .ver { position: absolute; top: 5px; right: 10px; font-size: 0.6rem; opacity: 0.7; }
         .container { padding: 10px; max-width: 600px; margin: auto; }
-        .setup-box { background: white; padding: 20px; border-radius: 15px; margin: 10px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        input[type="date"] { padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 1.1rem; width: 85%; margin-bottom: 15px; }
-        .btn { background: #ffc107; color: #333; border: none; padding: 15px; border-radius: 30px; font-weight: bold; width: 90%; cursor: pointer; font-size: 1.1rem; }
-        .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 20px; border-left: 6px solid #01579b; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .race-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
-        .race-box { background: #f8f9fa; border: 1px solid #eee; padding: 10px 5px; border-radius: 8px; text-align: center; }
-        .pred { display: block; font-size: 0.95rem; color: #d32f2f; font-weight: bold; margin-top: 5px; }
+        .box { background: white; padding: 20px; border-radius: 15px; margin: 10px; text-align: center; }
+        .btn { background: #ffc107; border: none; padding: 15px; border-radius: 30px; font-weight: bold; width: 90%; cursor: pointer; }
     </style>
 </head>
 <body>
-<div class="header"><span class="ver">Ver 1.0.9</span><h1>当五郎</h1></div>
+<div class="header">
+    <span style="position:absolute;top:5px;right:10px;font-size:0.6rem;opacity:0.7;">Ver 1.1.0</span>
+    <h1>当五郎</h1>
+</div>
 <div class="container">
-    <div class="setup-box">
-        <input type="date" id="d">
+    <div class="box">
+        <input type="date" id="d" style="padding:10px;width:80%;margin-bottom:10px;">
         <button class="btn" onclick="go()">予想を開始する</button>
     </div>
-    <div id="s" style="text-align:center; font-weight:bold; margin:15px; color:#01579b;"></div>
+    <div id="s" style="text-align:center;font-weight:bold;margin:10px;"></div>
     <div id="o"></div>
 </div>
 <script>
+    // 工藤さんの最新URLをセット
+    const url = "https://script.google.com/macros/s/AKfycbxeUalWMFs0hsIU5HnArPV4m1jb5w6crqGkaoe08s4NinsK-cJ_KEo-Ha4nYJrOPUmLRQ/exec";
+    
     window.onload = () => { document.getElementById('d').value = new Date().toISOString().split('T')[0]; };
 
     function go() {
-        const ymd = document.getElementById('d').value.replace(/-/g,'');
-        const status = document.getElementById('s');
-        const output = document.getElementById('o');
-        status.innerText = "🚀 解析中...";
-        output.innerHTML = "";
+        document.getElementById('s').innerText = "🚀 サーバーに接続中...";
+        document.getElementById('o').innerHTML = "";
+        
+        const old = document.getElementById('j-script');
+        if (old) old.remove();
 
-        // Googleを通さず、中継サイト「allorigins」を使って直接データを取りに行きます
-        const target = `https://boatraceopenapi.github.io/programs/${ymd}/all.json`;
-        const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(target)}&t=${new Date().getTime()}`;
-
-        fetch(proxy)
-            .then(res => res.json())
-            .then(data => {
-                const boatData = JSON.parse(data.contents);
-                if (!boatData || boatData.length === 0) {
-                    status.innerText = "⚠️ データがありません。";
-                    return;
-                }
-                status.innerText = "✅ 取得成功";
-                boatData.forEach(st => {
-                    let grid = '';
-                    st.races.forEach(r => {
-                        grid += `<div class="race-box"><small style="color:#888;">${r.raceNo}R</small><span class="pred">${calc(r.players)}</span></div>`;
-                    });
-                    const div = document.createElement('div');
-                    div.className = 'card';
-                    div.innerHTML = `<div style="font-size:1.3rem;font-weight:bold;color:#01579b;border-bottom:1px solid #eee;padding-bottom:10px;margin-bottom:15px;">${st.stadiumName}</div><div class="race-grid">${grid}</div>`;
-                    output.appendChild(div);
-                });
-            })
-            .catch(() => {
-                status.innerText = "❌ 通信エラー。シークレットモードで試してみてください。";
-            });
+        const s = document.createElement('script');
+        s.id = 'j-script';
+        s.src = url + "?ymd=" + document.getElementById('d').value.replace(/-/g,'') + "&t=" + new Date().getTime();
+        document.body.appendChild(s);
     }
 
-    function calc(players) {
-        if (!players) return "---";
-        let p = players.map(x => ({n: x.bracketNo, s: (parseFloat(x.nationalWinRate)||0)*0.8 + (parseFloat(x.localWinRate)||0)*0.2})).sort((a,b) => b.s - a.s);
-        return p[0].n === 1 ? `1-${p[1].n}${p[2].n}-全` : `${p[0].n}-${p[1].n}-${p[2].n}`;
-    }
+    window.renderData = (res) => {
+        document.getElementById('s').innerText = "";
+        document.getElementById('o').innerHTML = res.html || "⚠️データなし";
+    };
 </script>
 </body>
 </html>
