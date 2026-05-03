@@ -13,11 +13,14 @@
         input[type="date"] { padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-size: 1.1rem; width: 90%; margin-bottom: 15px; }
         .btn-predict { background: var(--accent-yellow); color: #333; border: none; padding: 15px 30px; border-radius: 30px; font-weight: bold; font-size: 1.1rem; width: 90%; cursor: pointer; box-shadow: 0 4px 0 #d4a017; }
         .btn-predict:active { transform: translateY(2px); box-shadow: 0 2px 0 #d4a017; }
+        
         .stadium-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 20px; border-left: 6px solid var(--main-blue); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .stadium-name { font-size: 1.4rem; font-weight: bold; color: var(--main-blue); border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
         .race-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
         .race-box { background: #f8f9fa; border: 1px solid #eee; padding: 10px 5px; border-radius: 8px; text-align: center; }
-        .prediction-val { display: block; font-size: 0.95rem; color: #d32f2f; font-weight: bold; margin-top: 5px; }
+        .race-label { font-size: 0.7rem; color: #888; font-weight: bold; }
+        .prediction-val { display: block; font-size: 0.95rem; color: #d32f2f; font-weight: bold; margin-top: 5px; letter-spacing: 1px; }
+        
         #status { text-align: center; margin: 15px; font-weight: bold; color: var(--main-blue); font-size: 0.9rem; }
     </style>
 </head>
@@ -25,66 +28,76 @@
 
 <div class="header">
     <h1 style="margin:0;">当五郎</h1>
-    <p style="margin:5px 0 0; font-size: 0.8rem; opacity: 0.9;">工藤専用サーバー・全場予想モード</p>
+    <p style="margin:5px 0 0; font-size: 0.8rem; opacity: 0.9;">工藤専用・JSONP高速取得モード</p>
 </div>
 
 <div class="container">
     <div class="setup-box">
         <input type="date" id="targetDate">
-        <button class="btn-predict" onclick="fetchFromGas()">予想を開始する</button>
+        <button class="btn-predict" onclick="loadData()">予想を開始する</button>
     </div>
     <div id="status"></div>
     <div id="output"></div>
 </div>
 
 <script>
-    // 工藤さんの正常動作確認済みURL
-    const gasUrl = "https://script.google.com/macros/s/AKfycbzCQOr3klIXmVlI0VHqgVKGXAZtedu1R0Z55-6BEluylDtuxfdGWNjl5pUyZ8A4LGC-iA/exec";
+    // 工藤さんの最新URL（Odd2iiYHeg/exec）を反映済み
+    const gasUrl = "https://script.google.com/macros/s/AKfycbw13UAlytdp0AWVSVPuAaGhmPwnQuaPffiwVtEdZyNahhxxWPv8XDWywNjbOdd2iiYHeg/exec";
 
     window.onload = () => {
         document.getElementById('targetDate').value = new Date().toISOString().split('T')[0];
     };
 
-    function fetchFromGas() {
+    function loadData() {
         const output = document.getElementById('output');
         const status = document.getElementById('status');
         const ymd = document.getElementById('targetDate').value.replace(/-/g, '');
         
         output.innerHTML = '';
-        status.innerText = '🚀 サーバーからデータを取得中...';
+        status.innerText = '🚀 セキュリティ制限を回避してデータ取得中...';
 
-        // 接続エラーを回避するため、最も標準的な fetch 方式を採用
-        fetch(`${gasUrl}?ymd=${ymd}`)
-            .then(res => res.json())
-            .then(data => {
-                if (!data || data.length === 0 || data.error) {
-                    status.innerText = '⚠️ データがまだ準備されていないようです。';
-                    return;
-                }
-                
-                status.innerText = `✅ ${data.length}会場のデータを表示します`;
-                data.forEach(st => {
-                    const card = document.createElement('div');
-                    card.className = 'stadium-card';
-                    let gridHtml = '';
-                    st.races.forEach(r => {
-                        gridHtml += `<div class="race-box"><small style="color:#888;">${r.raceNo}R</small><span class="prediction-val">${predict(r.players)}</span></div>`;
-                    });
-                    card.innerHTML = `<div class="stadium-name">${st.stadiumName}</div><div class="race-grid">${gridHtml}</div>`;
-                    output.appendChild(card);
-                });
-            })
-            .catch(e => {
-                console.error(e);
-                status.innerText = '❌ 取得に失敗しました。もう一度ボタンを押してみてください。';
+        // ブラウザのブロック（CORS）を100%回避するJSONP方式
+        const oldScript = document.getElementById('jsonp-script');
+        if (oldScript) oldScript.remove();
+
+        const script = document.createElement('script');
+        script.id = 'jsonp-script';
+        script.src = `${gasUrl}?ymd=${ymd}&callback=renderData`;
+        document.body.appendChild(script);
+    }
+
+    // GASからのデータを受け取って描画する関数
+    function renderData(data) {
+        const output = document.getElementById('output');
+        const status = document.getElementById('status');
+        
+        if (!data || data.length === 0 || data.error) {
+            status.innerText = '⚠️ データが見つからないか、準備中（朝9時以降）です。';
+            return;
+        }
+        
+        status.innerText = `✅ ${data.length}会場のデータを取得しました`;
+        data.forEach(st => {
+            const card = document.createElement('div');
+            card.className = 'stadium-card';
+            let gridHtml = '';
+            st.races.forEach(r => {
+                gridHtml += `
+                    <div class="race-box">
+                        <div class="race-label">${r.raceNo}R</div>
+                        <span class="prediction-val">${predict(r.players)}</span>
+                    </div>`;
             });
+            card.innerHTML = `<div class="stadium-name">${st.stadiumName}</div><div class="race-grid">${gridHtml}</div>`;
+            output.appendChild(card);
+        });
     }
 
     function predict(players) {
         if (!players) return "---";
         let p = players.map(x => ({n: x.bracketNo, s: (parseFloat(x.nationalWinRate)||0)*0.8 + (parseFloat(x.localWinRate)||0)*0.2}))
                        .sort((a,b) => b.s - a.s);
-        return p[0].n === 1 ? `1-${p[1].n}${p[2].n}-${p[1].n}${p[2].n}${p[3].n}` : `${p[0].n}-${p[1].n}-${p[2].n}`;
+        return p[0].n === 1 ? `1-${p[1].n}${p[2].n}-全` : `${p[0].n}-${p[1].n}-${p[2].n}`;
     }
 </script>
 </body>
