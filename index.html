@@ -5,65 +5,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>当五郎 - 競艇予想</title>
     <style>
-        :root { --blue: #01579b; --gold: #ffc107; }
-        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 0; }
-        .header { background: var(--blue); color: white; padding: 15px; text-align: center; }
+        :root { --blue: #01579b; --gold: #ffc107; --bg: #f0f2f5; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 0; color: #333; }
+        .header { background: var(--blue); color: white; padding: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .container { padding: 10px; max-width: 600px; margin: auto; }
-        .box { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .btn { background: var(--gold); border: none; padding: 12px; border-radius: 25px; font-weight: bold; width: 90%; cursor: pointer; font-size: 1.1rem; }
-        .card { background: white; border-radius: 10px; padding: 12px; margin-bottom: 15px; border-left: 6px solid var(--blue); }
+        .box { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .btn { background: var(--gold); border: none; padding: 15px; border-radius: 30px; font-weight: bold; width: 90%; cursor: pointer; font-size: 1.1rem; box-shadow: 0 4px 0 #d4a017; }
+        .btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #d4a017; }
+        .card { background: white; border-radius: 10px; padding: 12px; margin-bottom: 15px; border-left: 6px solid var(--blue); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .title { font-size: 1.2rem; font-weight: bold; color: var(--blue); margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
         .race-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         .race-box { background: #f8f9fa; border: 1px solid #eee; padding: 8px 4px; border-radius: 6px; text-align: center; }
-        .pred { color: #d32f2f; font-weight: bold; font-size: 0.9rem; display: block; }
-        #status { text-align: center; margin: 10px; font-size: 0.9rem; color: #555; }
+        .pred { color: #d32f2f; font-weight: bold; font-size: 0.9rem; display: block; margin-top: 3px; }
+        #status { text-align: center; margin: 15px; font-weight: bold; color: var(--blue); }
     </style>
 </head>
 <body>
 
 <div class="header">
     <h1 style="margin:0;">当五郎</h1>
-    <p style="margin:0; font-size:0.7rem; opacity:0.8;">公式データ直接解析モード</p>
+    <p style="margin:5px 0 0; font-size:0.7rem; opacity:0.8;">工藤専用・サーバー連携モード</p>
 </div>
 
 <div class="container">
     <div class="box">
-        <input type="date" id="targetDate" style="padding:10px; width:80%; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
-        <button class="btn" onclick="fetchDirect()">解析を開始する</button>
+        <input type="date" id="targetDate" style="padding:12px; width:80%; margin-bottom:15px; border-radius:8px; border:1px solid #ccc; font-size:1rem;">
+        <button class="btn" onclick="fetchFromGas()">予想を開始する</button>
     </div>
     <div id="status"></div>
     <div id="output"></div>
 </div>
 
 <script>
+    // 先ほど取得したURLをセット済みです
+    const gasUrl = "https://script.google.com/macros/s/AKfycbzO6Tk_udWmVzUTEk17ga3b48YXJSCM94EWerMT3gFWszwS3u1ogVeul50v3YYCWNedFw/exec";
+
     window.onload = () => {
         document.getElementById('targetDate').value = new Date().toISOString().split('T')[0];
     };
 
-    async function fetchDirect() {
+    async function fetchFromGas() {
         const output = document.getElementById('output');
         const status = document.getElementById('status');
         const ymd = document.getElementById('targetDate').value.replace(/-/g, '');
         
         output.innerHTML = '';
-        status.innerHTML = '🔄 公式サイトから最新データを抽出中...<br><small>(15秒ほどかかる場合があります)</small>';
-
-        // プロキシ経由でAPIに再挑戦しつつ、失敗なら全会場のリンクを表示する
-        const proxy = "https://api.allorigins.win/get?url=";
-        const target = encodeURIComponent(`https://boatraceopenapi.github.io/programs/${ymd}/all.json`);
+        status.innerText = '🚀 工藤専用サーバーに接続中...';
 
         try {
-            const res = await fetch(proxy + target);
-            const json = await res.json();
-            const data = JSON.parse(json.contents);
+            const res = await fetch(`${gasUrl}?ymd=${ymd}`);
+            const data = await res.json();
             
-            if (!data || data.length === 0) throw new Error();
+            if (!data || data.length === 0) {
+                status.innerText = '⚠️ 本日のデータはまだ準備されていないようです。';
+                return;
+            }
             
-            status.innerHTML = `✅ ${data.length}会場の取得に成功しました`;
+            status.innerText = `✅ ${data.length}会場の取得に成功しました`;
             data.forEach(st => {
                 let grid = '';
                 st.races.forEach(r => {
-                    grid += `<div class="race-box"><small>${r.raceNo}R</small><span class="pred">${calc(r.players)}</span></div>`;
+                    grid += `<div class="race-box"><small style="color:#666;">${r.raceNo}R</small><span class="pred">${calc(r.players)}</span></div>`;
                 });
                 const card = document.createElement('div');
                 card.className = 'card';
@@ -71,27 +73,23 @@
                 output.appendChild(card);
             });
         } catch (e) {
-            status.innerHTML = '⚠️ 詳細データが未生成のため、直結ボタンを生成しました。';
-            // 開催場リストを表示
-            const stadiums = ["桐生","戸田","江戸川","平和島","多摩川","浜名湖","蒲郡","常滑","津","三国","びわこ","尼崎","鳴門","丸亀","児島","宮島","徳山","下関","若松","芦屋","福岡","唐津","大村"];
-            stadiums.forEach((name, idx) => {
-                const id = String(idx + 1).padStart(2, '0');
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    <div class="title">${name}</div>
-                    <a href="https://www.boatrace.jp/owpc/pc/race/raceindex?jcd=${id}&hd=${ymd}" target="_blank" style="text-decoration:none; color:white; background:#01579b; padding:10px; display:block; text-align:center; border-radius:5px;">公式出走表・予想を見る</a>
-                `;
-                output.appendChild(card);
-            });
+            status.innerText = '❌ サーバー接続エラー。GASのデプロイ設定を確認してください。';
         }
     }
 
     function calc(players) {
-        if (!players) return "1-2-3";
-        let p = players.map(x => ({n: x.bracketNo, s: (parseFloat(x.nationalWinRate)||0)*0.8 + (parseFloat(x.localWinRate)||0)*0.2}))
-                       .sort((a,b) => b.s - a.s);
-        return p[0].n === 1 ? `1-${p[1].n}${p[2].n}-全` : `${p[0].n}-${p[1].n}-${p[2].n}`;
+        if (!players) return "---";
+        let p = players.map(x => ({
+            n: x.bracketNo, 
+            s: (parseFloat(x.nationalWinRate)||0)*0.8 + (parseFloat(x.localWinRate)||0)*0.2
+        })).sort((a,b) => b.s - a.s);
+        
+        // 1号艇がスコア1位なら1頭、そうでなければ上位ボックス風
+        if (p[0].n === 1) {
+            return `1-${p[1].n}${p[2].n}-${p[1].n}${p[2].n}${p[3].n}`;
+        } else {
+            return `${p[0].n}-${p[1].n}-${p[2].n}`;
+        }
     }
 </script>
 </body>
