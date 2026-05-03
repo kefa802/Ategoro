@@ -6,93 +6,83 @@
     <title>当五郎 - 競艇三連単予想</title>
     <style>
         :root { --main-blue: #01579b; --accent-yellow: #ffc107; --bg-gray: #f0f2f5; }
-        body { font-family: sans-serif; background: var(--bg-gray); margin: 0; padding: 0; color: #333; }
-        .header { background: var(--main-blue); color: white; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
-        .container { padding: 15px; max-width: 600px; margin: auto; }
-        .setup-box { background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        input[type="date"] { padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-size: 1.1rem; width: 90%; margin-bottom: 15px; }
-        .btn-predict { background: var(--accent-yellow); color: #333; border: none; padding: 15px 30px; border-radius: 30px; font-weight: bold; font-size: 1.1rem; width: 90%; cursor: pointer; box-shadow: 0 4px 0 #d4a017; }
-        .btn-predict:active { transform: translateY(2px); box-shadow: 0 2px 0 #d4a017; }
-        .stadium-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 20px; border-left: 6px solid var(--main-blue); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .stadium-name { font-size: 1.4rem; font-weight: bold; color: var(--main-blue); border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
-        .race-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .race-box { background: #f8f9fa; border: 1px solid #eee; padding: 10px 5px; border-radius: 8px; text-align: center; }
-        .prediction-val { display: block; font-size: 0.95rem; color: #d32f2f; font-weight: bold; margin-top: 5px; }
-        #status { text-align: center; margin: 15px; font-weight: bold; color: var(--main-blue); font-size: 0.9rem; }
+        body { font-family: sans-serif; background: var(--bg-gray); margin: 0; padding: 0; }
+        .header { background: var(--main-blue); color: white; padding: 20px; text-align: center; }
+        .box { background: white; padding: 20px; border-radius: 15px; margin: 15px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .btn { background: var(--accent-yellow); border: none; padding: 15px; border-radius: 30px; font-weight: bold; width: 90%; cursor: pointer; font-size: 1.1rem; }
+        .stadium-card { background: white; border-radius: 12px; padding: 15px; margin: 15px; border-left: 6px solid var(--main-blue); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .race-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+        .race-box { background: #f8f9fa; padding: 10px 5px; border-radius: 8px; text-align: center; border: 1px solid #eee; }
+        .pred { display: block; font-size: 0.95rem; color: #d32f2f; font-weight: bold; margin-top: 5px; }
     </style>
 </head>
 <body>
 
 <div class="header">
     <h1 style="margin:0;">当五郎</h1>
-    <p style="margin:5px 0 0; font-size: 0.8rem; opacity: 0.9;">工藤専用・完全同期モード</p>
+    <p style="margin:5px 0 0; font-size: 0.8rem; opacity: 0.9;">工藤専用・同期モデル</p>
 </div>
 
 <div class="container">
-    <div class="setup-box">
-        <input type="date" id="targetDate">
-        <button class="btn-predict" onclick="go()">予想を開始する</button>
+    <div class="box">
+        <input type="date" id="targetDate" style="padding:10px; width:80%; margin-bottom:15px; border-radius:8px; border:1px solid #ccc;">
+        <button class="btn" onclick="start()">予想を開始する</button>
     </div>
-    <div id="status"></div>
+    <div id="status" style="text-align:center; font-weight:bold; color:var(--main-blue);"></div>
     <div id="output"></div>
 </div>
 
 <script>
-    // 工藤さんの最新・正常動作URLをセット済み
+    // 工藤さんの最新・正常動作確認済みURL
     const gasUrl = "https://script.google.com/macros/s/AKfycbzRY8PT4y8UJLQ8j8pajkYuuZ2YYBEIYOVjkYFG8X7-IweJ1kv1bHhupD4J8bGo2oup2A/exec";
 
     window.onload = () => {
         document.getElementById('targetDate').value = new Date().toISOString().split('T')[0];
     };
 
-    function go() {
-        const output = document.getElementById('output');
-        const status = document.getElementById('status');
+    function start() {
         const ymd = document.getElementById('targetDate').value.replace(/-/g, '');
-        
-        output.innerHTML = '';
-        status.innerText = '🚀 データを解析中...';
+        document.getElementById('status').innerText = '🚀 解析中...';
+        document.getElementById('output').innerHTML = '';
 
-        // JSONP方式でデータを読み込む
-        const script = document.createElement('script');
-        script.src = `${gasUrl}?ymd=${ymd}`;
-        document.body.appendChild(script);
-        script.onload = () => { document.body.removeChild(script); };
+        // 古いスクリプトを掃除
+        const old = document.getElementById('jsonp');
+        if (old) old.remove();
+
+        // データを読み込む
+        const s = document.createElement('script');
+        s.id = 'jsonp';
+        s.src = gasUrl + "?ymd=" + ymd;
+        document.body.appendChild(s);
     }
 
-    // GASから届くデータを受け取る関数
+    // GASから届くデータを受け取る
     window.renderData = function(data) {
-        const output = document.getElementById('output');
         const status = document.getElementById('status');
+        const output = document.getElementById('output');
         
         if (!data || data.length === 0) {
-            status.innerText = '⚠️ データがまだ準備されていないようです。';
+            status.innerText = '⚠️ データが準備されていません';
             return;
         }
         
-        status.innerText = `✅ ${data.length}会場のデータを取得しました`;
+        status.innerText = `✅ ${data.length}会場を表示中`;
         data.forEach(st => {
             const card = document.createElement('div');
             card.className = 'stadium-card';
-            let gridHtml = '';
+            let grid = '';
             st.races.forEach(r => {
-                gridHtml += `
-                    <div class="race-box">
-                        <small style="color:#888;">${r.raceNo}R</small>
-                        <span class="prediction-val">${predict(r.players)}</span>
-                    </div>`;
+                grid += `<div class="race-box"><small>${r.raceNo}R</small><span class="pred">${calc(r.players)}</span></div>`;
             });
-            card.innerHTML = `<div class="stadium-name">${st.stadiumName}</div><div class="race-grid">${gridHtml}</div>`;
+            card.innerHTML = `<div style="font-weight:bold;color:var(--main-blue);font-size:1.2rem;">${st.stadiumName}</div><div class="race-grid">${grid}</div>`;
             output.appendChild(card);
         });
     }
 
-    function predict(players) {
+    function calc(players) {
         if (!players) return "---";
-        let p = players.map(x => ({
-            n: x.bracketNo, 
-            s: (parseFloat(x.nationalWinRate)||0)*0.8 + (parseFloat(x.localWinRate)||0)*0.2
-        })).sort((a,b) => b.s - a.s);
+        let p = players.map(x => ({n: x.bracketNo, s: (parseFloat(x.nationalWinRate)||0)*0.8 + (parseFloat(x.localWinRate)||0)*0.2}))
+                       .sort((a,b) => b.s - a.s);
         return p[0].n === 1 ? `1-${p[1].n}${p[2].n}-全` : `${p[0].n}-${p[1].n}-${p[2].n}`;
     }
 </script>
