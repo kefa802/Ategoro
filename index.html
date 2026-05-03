@@ -18,9 +18,9 @@
 </head>
 <body>
 <div class="header">
-    <span class="ver">Ver 1.0.7</span>
+    <span class="ver">Ver 1.0.8</span>
     <h1 style="margin:0;">当五郎</h1>
-    <p style="margin:5px 0 0; font-size: 0.8rem; opacity: 0.9;">工藤専用・安定同期モデル</p>
+    <p style="margin:5px 0 0; font-size: 0.8rem; opacity: 0.9;">工藤専用・最終同期モデル</p>
 </div>
 <div class="container">
     <div class="setup-box">
@@ -31,8 +31,8 @@
     <div id="o"></div>
 </div>
 <script>
-    // 工藤さんの最新正常URLに差し替え済み
-    const url = "https://script.google.com/macros/s/AKfycbyS0HOgCOu5BPe6UEv7I3NHi2WP0rwJcF3Hwov7pUcJKc6Nma2zvFa8dGOBWiTgqlu5Sg/exec";
+    // 工藤さんの最新URL（...OPUmLRQ/exec）を反映済みです
+    const url = "https://script.google.com/macros/s/AKfycbxeUalWMFs0hsIU5HnArPV4m1jb5w6crqGkaoe08s4NinsK-cJ_KEo-Ha4nYJrOPUmLRQ/exec";
     
     window.onload = () => {
         const now = new Date();
@@ -40,7 +40,7 @@
     };
 
     function go() {
-        document.getElementById('s').innerText = "🚀 サーバーから取得中...";
+        document.getElementById('s').innerText = "🚀 サーバーからデータを取得中...";
         document.getElementById('o').innerHTML = "";
         
         const old = document.getElementById('jsonp');
@@ -48,7 +48,6 @@
 
         const s = document.createElement('script');
         s.id = 'jsonp';
-        // キャッシュを回避して最新の状態を呼ぶためのタイムスタンプ
         s.src = url + "?ymd=" + document.getElementById('d').value.replace(/-/g,'') + "&t=" + new Date().getTime();
         document.body.appendChild(s);
     }
