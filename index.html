@@ -2,79 +2,65 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>当五郎</title>
     <style>
-        :root { --blue: #01579b; --gold: #ffc107; --bg: #f0f2f5; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 0; }
-        .header { background: var(--blue); color: white; padding: 20px; text-align: center; position: relative; }
+        body { font-family: sans-serif; background: #f0f2f5; margin: 0; color: #333; }
+        .header { background: #01579b; color: white; padding: 20px; text-align: center; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
         .ver { position: absolute; top: 5px; right: 10px; font-size: 0.6rem; opacity: 0.7; }
-        .box { background: white; padding: 20px; border-radius: 15px; margin: 15px; text-align: center; }
-        .btn { background: var(--gold); border: none; padding: 15px; border-radius: 30px; font-weight: bold; width: 90%; cursor: pointer; }
-        .card { background: white; border-radius: 12px; padding: 15px; margin: 15px; border-left: 6px solid var(--blue); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .race-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
-        .race-box { background: #f8f9fa; padding: 8px; border-radius: 8px; text-align: center; border: 1px solid #eee; }
-        .pred { color: #d32f2f; font-weight: bold; display: block; margin-top: 4px; }
+        .container { padding: 10px; max-width: 600px; margin: auto; }
+        .setup-box { background: white; padding: 20px; border-radius: 15px; margin: 10px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        input[type="date"] { padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 1.1rem; width: 85%; margin-bottom: 15px; }
+        .btn { background: #ffc107; color: #333; border: none; padding: 15px; border-radius: 30px; font-weight: bold; width: 90%; cursor: pointer; box-shadow: 0 4px 0 #d4a017; font-size: 1.1rem; }
+        .btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #d4a017; }
+        #s { text-align: center; font-weight: bold; margin: 15px; color: #01579b; }
     </style>
 </head>
 <body>
-<div class="header"><span class="ver">Ver 1.0.3</span><h1>当五郎</h1></div>
-<div class="container">
-    <div class="box">
-        <input type="date" id="targetDate" style="padding:10px; width:80%; margin-bottom:15px;">
-        <button class="btn" onclick="load()">予想を開始する</button>
-    </div>
-    <div id="status" style="text-align:center; font-weight:bold;"></div>
-    <div id="output"></div>
+<div class="header">
+    <span class="ver">Ver 1.0.4</span>
+    <h1 style="margin:0;">当五郎</h1>
+    <p style="margin:5px 0 0; font-size: 0.8rem; opacity: 0.9;">工藤専用・サーバーレンダリングモデル</p>
 </div>
-
+<div class="container">
+    <div class="setup-box">
+        <input type="date" id="d">
+        <button class="btn" onclick="go()">予想を開始する</button>
+    </div>
+    <div id="s"></div>
+    <div id="o"></div>
+</div>
 <script>
-    window.onload = () => { document.getElementById('targetDate').value = new Date().toISOString().split('T')[0]; };
+    const url = "https://script.google.com/macros/s/AKfycbz-_DR_r7tM0CLFTrA3NSYmDSi1kQ2iGUfKBM6z370u60bIFhxLHgjxNGKiNmwS6qJ46A/exec";
+    
+    window.onload = () => {
+        const now = new Date();
+        document.getElementById('d').value = now.toISOString().split('T')[0];
+    };
 
-    function load() {
-        const ymd = document.getElementById('targetDate').value.replace(/-/g, '');
-        const status = document.getElementById('status');
-        status.innerText = '🚀 直接接続モードで解析中...';
-        document.getElementById('output').innerHTML = '';
+    function go() {
+        document.getElementById('s').innerText = "🚀 サーバーで解析中...";
+        document.getElementById('o').innerHTML = "";
+        
+        const old = document.getElementById('jsonp');
+        if (old) old.remove();
 
-        // CORS制限を受けない唯一の方法：scriptタグとして読み込む
-        const script = document.createElement('script');
-        // 他のサーバーを通さず、データの提供元から直接読み込みを試みます
-        script.src = `https://boatraceopenapi.github.io/programs/${ymd}/all.json?callback=renderData`;
-        
-        script.onerror = () => {
-            status.innerText = '❌ 直接接続に失敗しました。ネットワーク制限の可能性があります。';
-        };
-        
-        document.body.appendChild(script);
+        const s = document.createElement('script');
+        s.id = 'jsonp';
+        // キャッシュ回避のためタイムスタンプを付与
+        s.src = url + "?ymd=" + document.getElementById('d').value.replace(/-/g,'') + "&t=" + new Date().getTime();
+        document.body.appendChild(s);
     }
 
-    // データが届いた時に動く関数
-    window.renderData = function(data) {
-        const status = document.getElementById('status');
-        const output = document.getElementById('output');
-        
-        if (!data || data.length === 0) {
-            status.innerText = '⚠️ データが準備されていません';
-            return;
+    // サーバーから届いた「完成済みのHTML」を表示する
+    window.renderData = (res) => {
+        document.getElementById('s').innerText = "";
+        if (res.html.includes("⚠️")) {
+            document.getElementById('s').innerText = res.html;
+        } else {
+            document.getElementById('o').innerHTML = res.html;
         }
-        
-        status.innerText = `✅ ${data.length}会場を取得`;
-        data.forEach(st => {
-            let grid = '';
-            st.races.forEach(r => { grid += `<div class="race-box"><small>${r.raceNo}R</small><span class="pred">${predict(r.players)}</span></div>`; });
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.innerHTML = `<div style="font-weight:bold;color:var(--blue);">${st.stadiumName}</div><div class="race-grid">${grid}</div>`;
-            output.appendChild(card);
-        });
-    }
-
-    function predict(players) {
-        if (!players) return "---";
-        let p = players.map(x => ({n: x.bracketNo, s: (parseFloat(x.nationalWinRate)||0)*0.8 + (parseFloat(x.localWinRate)||0)*0.2})).sort((a,b) => b.s - a.s);
-        return p[0].n === 1 ? `1-${p[1].n}${p[2].n}-全` : `${p[0].n}-${p[1].n}-${p[2].n}`;
-    }
+    };
 </script>
 </body>
 </html>
