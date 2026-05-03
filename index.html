@@ -2,36 +2,30 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>当五郎 - 競艇三連単予想</title>
     <style>
-        :root { --main-blue: #01579b; --accent-yellow: #ffc107; --bg-gray: #f0f2f5; }
-        body { font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif; background: var(--bg-gray); margin: 0; padding: 0; color: #333; }
-        .header { background: var(--main-blue); color: white; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
-        .container { padding: 15px; max-width: 600px; margin: auto; }
-        .setup-box { background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        input[type="date"] { padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-size: 1.1rem; width: 90%; margin-bottom: 15px; }
-        .btn-predict { background: var(--accent-yellow); color: #333; border: none; padding: 15px 30px; border-radius: 30px; font-weight: bold; font-size: 1.1rem; width: 90%; cursor: pointer; transition: 0.2s; }
-        .btn-predict:active { transform: scale(0.95); background: #e6af00; }
+        :root { --main: #01579b; --acc: #ffc107; --bg: #f4f7f6; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 0; color: #333; }
+        .header { background: var(--main); color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; }
+        .container { padding: 10px; max-width: 600px; margin: auto; }
+        .setup-box { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        input[type="date"] { padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; width: 85%; margin-bottom: 10px; }
+        .btn-predict { background: var(--acc); color: #333; border: none; padding: 12px; border-radius: 25px; font-weight: bold; width: 90%; cursor: pointer; }
         
-        .stadium-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 20px; border-left: 6px solid var(--main-blue); position: relative; overflow: hidden; }
-        .stadium-name { font-size: 1.4rem; font-weight: bold; color: var(--main-blue); border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .live-badge { font-size: 0.7rem; background: #ff5252; color: white; padding: 2px 8px; border-radius: 10px; }
-        
-        .race-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .race-box { background: #f8f9fa; border: 1px solid #eee; padding: 10px 5px; border-radius: 8px; text-align: center; }
-        .race-label { font-size: 0.7rem; color: #888; font-weight: bold; }
-        .prediction-val { display: block; font-size: 0.95rem; color: #d32f2f; font-weight: bold; margin-top: 5px; letter-spacing: 1px; }
-        
-        .official-link { display: inline-block; margin-top: 15px; font-size: 0.85rem; color: var(--main-blue); text-decoration: none; border: 1px solid var(--main-blue); padding: 5px 12px; border-radius: 15px; }
-        #loading { display: none; text-align: center; padding: 20px; font-weight: bold; color: var(--main-blue); }
+        .stadium-card { background: white; border-radius: 10px; padding: 12px; margin-bottom: 15px; border-left: 6px solid var(--main); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .stadium-name { font-size: 1.2rem; font-weight: bold; color: var(--main); border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 12px; }
+        .race-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .race-box { background: #fdfdfd; border: 1px solid #eee; padding: 8px 4px; border-radius: 6px; text-align: center; }
+        .prediction { color: #d32f2f; font-weight: bold; font-size: 0.9rem; display: block; margin-top: 3px; }
+        #status { text-align: center; font-weight: bold; color: #555; margin: 10px; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h1 style="margin:0; letter-spacing: 2px;">当五郎</h1>
-    <p style="margin:5px 0 0; font-size: 0.8rem; opacity: 0.9;">全国会場対応・AI三連単予想</p>
+    <h1 style="margin:0; font-size:1.5rem;">当五郎</h1>
+    <p style="margin:0; font-size:0.7rem; opacity:0.8;">データ取得エンジン強化版</p>
 </div>
 
 <div class="container">
@@ -39,21 +33,11 @@
         <input type="date" id="targetDate">
         <button class="btn-predict" onclick="runTogoro()">予想を開始する</button>
     </div>
-
-    <div id="loading">解析中...</div>
+    <div id="status"></div>
     <div id="output"></div>
 </div>
 
 <script>
-    // 24会場リスト
-    const stadiums = [
-        {id:'01', n:'桐生'}, {id:'02', n:'戸田'}, {id:'03', n:'江戸川'}, {id:'04', n:'平和島'}, {id:'05', n:'多摩川'},
-        {id:'06', n:'浜名湖'}, {id:'07', n:'蒲郡'}, {id:'08', n:'常滑'}, {id:'09', n:'津'}, {id:'10', n:'三国'},
-        {id:'11', n:'琵琶湖'}, {id:'12', n:'尼崎'}, {id:'13', n:'鳴門'}, {id:'14', n:'丸亀'}, {id:'15', n:'児島'},
-        {id:'16', n:'宮島'}, {id:'17', n:'徳山'}, {id:'18', n:'下関'}, {id:'19', n:'若松'}, {id:'20', n:'芦屋'},
-        {id:'21', n:'福岡'}, {id:'22', n:'唐津'}, {id:'23', n:'大村'}, {id:'24', n:'多摩川'}
-    ];
-
     window.onload = () => {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('targetDate').value = today;
@@ -61,67 +45,68 @@
 
     async function runTogoro() {
         const output = document.getElementById('output');
-        const loader = document.getElementById('loading');
-        const dateVal = document.getElementById('targetDate').value;
-        const ymd = dateVal.replace(/-/g, '');
+        const status = document.getElementById('status');
+        const ymd = document.getElementById('targetDate').value.replace(/-/g, '');
         
         output.innerHTML = '';
-        loader.style.display = 'block';
+        status.innerHTML = '⚡ 複数のサーバーからデータを探しています...';
 
-        try {
-            // 外部APIを介して本日の開催場のみを取得
-            const res = await fetch(`https://boatraceopenapi.github.io/programs/${ymd}/all.json`);
-            if(!res.ok) throw new Error("API_DOWN");
-            const data = await res.json();
-            
-            loader.style.display = 'none';
-            data.forEach(st => {
-                const card = document.createElement('div');
-                card.className = 'stadium-card';
+        // 複数のデータソースを試行
+        const sources = [
+            `https://boatraceopenapi.github.io/programs/${ymd}/all.json`,
+            `https://raw.githubusercontent.com/boatraceopenapi/boatraceopenapi.github.io/main/programs/${ymd}/all.json`
+        ];
+
+        let success = false;
+        for (let url of sources) {
+            try {
+                const res = await fetch(url);
+                if (!res.ok) continue;
+                const data = await res.json();
                 
-                let gridHtml = '';
-                st.races.forEach(r => {
-                    gridHtml += `
-                        <div class="race-box">
-                            <div class="race-label">${r.raceNo}R</div>
-                            <span class="prediction-val">${logic(r.players)}</span>
-                        </div>`;
-                });
+                if (data && data.length > 0) {
+                    renderData(data);
+                    success = true;
+                    status.innerHTML = `✅ ${data.length}会場のデータを取得しました`;
+                    break;
+                }
+            } catch (e) {
+                console.log("Source failed:", url);
+            }
+        }
 
-                card.innerHTML = `
-                    <div class="stadium-name">${st.stadiumName} <span class="live-badge">開催中</span></div>
-                    <div class="race-grid">${gridHtml}</div>
-                    <a href="https://www.boatrace.jp/owpc/pc/race/raceindex?jcd=${st.stadiumId}&hd=${ymd}" target="_blank" class="official-link">公式出走表 ≫</a>
-                `;
-                output.appendChild(card);
-            });
-
-        } catch (e) {
-            // 万が一データが取れなかった場合でも、会場リンクだけは必ず出す
-            loader.style.display = 'none';
-            output.innerHTML = '<p style="text-align:center; color:#666; font-size:0.8rem;">詳細データが未着です。公式ページで確認してください。</p>';
-            stadiums.forEach(s => {
-                const card = document.createElement('div');
-                card.className = 'stadium-card';
-                card.innerHTML = `
-                    <div class="stadium-name">${s.n}</div>
-                    <a href="https://www.boatrace.jp/owpc/pc/race/raceindex?jcd=${s.id}&hd=${ymd}" target="_blank" class="official-link">公式ページを開く</a>
-                `;
-                output.appendChild(card);
-            });
+        if (!success) {
+            status.innerHTML = '❌ データがまだ準備されていません。<br><small>公式の更新（朝9時頃）をお待ちください。</small>';
         }
     }
 
-    // 当五郎ロジック (勝率ベース)
-    function logic(players) {
-        if(!players || players.length < 6) return "1-2-3";
+    function renderData(data) {
+        const output = document.getElementById('output');
+        data.forEach(st => {
+            const card = document.createElement('div');
+            card.className = 'stadium-card';
+            let gridHtml = '';
+            st.races.forEach(r => {
+                gridHtml += `
+                    <div class="race-box">
+                        <small style="color:#888;">${r.raceNo}R</small>
+                        <span class="prediction">${predict(r.players)}</span>
+                    </div>`;
+            });
+            card.innerHTML = `<div class="stadium-name">${st.stadiumName}</div><div class="race-grid">${gridHtml}</div>`;
+            output.appendChild(card);
+        });
+    }
+
+    function predict(players) {
+        if (!players || players.length < 6) return "1-2-3";
+        // 勝率スコア計算 (全国勝率0.8 + 当地勝率0.2)
         let p = players.map(x => ({
             n: x.bracketNo,
-            s: (parseFloat(x.nationalWinRate)||0) * 0.8 + (parseFloat(x.localWinRate)||0) * 0.2
+            s: (parseFloat(x.nationalWinRate)||0)*0.8 + (parseFloat(x.localWinRate)||0)*0.2
         })).sort((a,b) => b.s - a.s);
-        
-        // 1号艇がスコア1位なら1頭、そうでなければボックス
-        if(p[0].n === 1) {
+
+        if (p[0].n === 1) {
             return `1-${p[1].n}${p[2].n}-${p[1].n}${p[2].n}${p[3].n}`;
         } else {
             return `${p[0].n}-${p[1].n}-${p[2].n}`;
