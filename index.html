@@ -38,47 +38,46 @@
 </div>
 
 <script>
+    // 工藤さんの正常動作確認済みURL
     const gasUrl = "https://script.google.com/macros/s/AKfycbzCQOr3klIXmVlI0VHqgVKGXAZtedu1R0Z55-6BEluylDtuxfdGWNjl5pUyZ8A4LGC-iA/exec";
 
     window.onload = () => {
         document.getElementById('targetDate').value = new Date().toISOString().split('T')[0];
     };
 
-    async function fetchFromGas() {
+    function fetchFromGas() {
         const output = document.getElementById('output');
         const status = document.getElementById('status');
         const ymd = document.getElementById('targetDate').value.replace(/-/g, '');
         
         output.innerHTML = '';
-        status.innerText = '🚀 サーバーからデータを解析中...';
+        status.innerText = '🚀 サーバーからデータを取得中...';
 
-        try {
-            // Googleサーバーからのリダイレクトを確実に追いかける設定
-            const res = await fetch(`${gasUrl}?ymd=${ymd}`, {
-                method: "GET",
-                redirect: "follow"
-            });
-            const data = await res.json();
-            
-            if (!data || data.length === 0 || data.error) {
-                status.innerText = '⚠️ データがまだ準備されていないようです。';
-                return;
-            }
-            
-            status.innerText = `✅ ${data.length}会場のデータを表示します`;
-            data.forEach(st => {
-                const card = document.createElement('div');
-                card.className = 'stadium-card';
-                let gridHtml = '';
-                st.races.forEach(r => {
-                    gridHtml += `<div class="race-box"><small style="color:#888;">${r.raceNo}R</small><span class="prediction-val">${predict(r.players)}</span></div>`;
+        // 接続エラーを回避するため、最も標準的な fetch 方式を採用
+        fetch(`${gasUrl}?ymd=${ymd}`)
+            .then(res => res.json())
+            .then(data => {
+                if (!data || data.length === 0 || data.error) {
+                    status.innerText = '⚠️ データがまだ準備されていないようです。';
+                    return;
+                }
+                
+                status.innerText = `✅ ${data.length}会場のデータを表示します`;
+                data.forEach(st => {
+                    const card = document.createElement('div');
+                    card.className = 'stadium-card';
+                    let gridHtml = '';
+                    st.races.forEach(r => {
+                        gridHtml += `<div class="race-box"><small style="color:#888;">${r.raceNo}R</small><span class="prediction-val">${predict(r.players)}</span></div>`;
+                    });
+                    card.innerHTML = `<div class="stadium-name">${st.stadiumName}</div><div class="race-grid">${gridHtml}</div>`;
+                    output.appendChild(card);
                 });
-                card.innerHTML = `<div class="stadium-name">${st.stadiumName}</div><div class="race-grid">${gridHtml}</div>`;
-                output.appendChild(card);
+            })
+            .catch(e => {
+                console.error(e);
+                status.innerText = '❌ 取得に失敗しました。もう一度ボタンを押してみてください。';
             });
-        } catch (e) {
-            status.innerText = '❌ 接続に失敗しました。少し時間を置いて再度お試しください。';
-        }
     }
 
     function predict(players) {
