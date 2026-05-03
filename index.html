@@ -18,9 +18,9 @@
 </head>
 <body>
 <div class="header">
-    <span class="ver">Ver 1.0.4</span>
+    <span class="ver">Ver 1.0.5</span>
     <h1 style="margin:0;">当五郎</h1>
-    <p style="margin:5px 0 0; font-size: 0.8rem; opacity: 0.9;">工藤専用・サーバーレンダリングモデル</p>
+    <p style="margin:5px 0 0; font-size: 0.8rem; opacity: 0.9;">工藤専用・同期完了モデル</p>
 </div>
 <div class="container">
     <div class="setup-box">
@@ -31,7 +31,8 @@
     <div id="o"></div>
 </div>
 <script>
-    const url = "https://script.google.com/macros/s/AKfycbz-_DR_r7tM0CLFTrA3NSYmDSi1kQ2iGUfKBM6z370u60bIFhxLHgjxNGKiNmwS6qJ46A/exec";
+    // 最新のURL（...OV8UQsg/exec）を反映済みです
+    const url = "https://script.google.com/macros/s/AKfycbwvlweOzODIM26p1vqsj-_CugqcQX6bS5lJLwOsdbcOu2ThqBRBxmjjmAM7bAkOV8UQsg/exec";
     
     window.onload = () => {
         const now = new Date();
@@ -39,7 +40,7 @@
     };
 
     function go() {
-        document.getElementById('s').innerText = "🚀 サーバーで解析中...";
+        document.getElementById('s').innerText = "🚀 解析中...";
         document.getElementById('o').innerHTML = "";
         
         const old = document.getElementById('jsonp');
@@ -47,18 +48,24 @@
 
         const s = document.createElement('script');
         s.id = 'jsonp';
-        // キャッシュ回避のためタイムスタンプを付与
+        // キャッシュを回避して最新データを呼ぶためのタイムスタンプ
         s.src = url + "?ymd=" + document.getElementById('d').value.replace(/-/g,'') + "&t=" + new Date().getTime();
         document.body.appendChild(s);
     }
 
-    // サーバーから届いた「完成済みのHTML」を表示する
+    // サーバー（GAS）から届いたHTMLデータを画面に流し込みます
     window.renderData = (res) => {
-        document.getElementById('s').innerText = "";
-        if (res.html.includes("⚠️")) {
-            document.getElementById('s').innerText = res.html;
+        const status = document.getElementById('s');
+        const output = document.getElementById('o');
+        
+        status.innerText = "";
+        
+        // サーバー側からのHTMLをそのまま展開
+        if (res.html && !res.html.includes("⚠️")) {
+            output.innerHTML = res.html;
+            status.innerText = "✅ 取得完了しました";
         } else {
-            document.getElementById('o').innerHTML = res.html;
+            status.innerText = res.html || "⚠️ データ取得に失敗しました。";
         }
     };
 </script>
