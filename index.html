@@ -3,117 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>12球団応援歌コンプリート</title>
+    <title>12球団応援歌＆名鑑</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* 球団カラーの定義 */
-        .color-giants { background-color: #ff6600; color: #000; }
-        .color-hawks { background-color: #f6ca06; color: #000; }
-        .color-tigers { background-color: #ffe200; color: #000; }
-        .color-carp { background-color: #ff0000; color: #fff; }
-        /* ...他球団分も追加可能 */
-        .bg-player { background-color: #1f2937; }
-        .bg-chance { background-color: #374151; border: 1px solid #4b5563; }
-    </style>
 </head>
-<body class="bg-gray-900 text-white pb-10">
+<body class="bg-gray-900 text-white pb-20">
 
-    <header class="p-4 bg-black text-center sticky top-0 z-50 shadow-2xl">
-        <select id="team-selector" onchange="loadTeam(this.value)" class="bg-gray-800 text-white p-2 rounded-lg border border-gray-600 w-full max-w-xs font-bold">
-            <option value="">球団を選択してください</option>
-            <option value="giants">読売ジャイアンツ</option>
-            <option value="hawks">福岡ソフトバンクホークス</option>
-            <option value="tigers">阪神タイガース</option>
-            <option value="carp">広島東洋カープ</option>
-            </select>
+    <header class="p-4 bg-black text-center sticky top-0 z-50">
+        <h1 class="text-xl font-bold italic text-orange-500">PLAYER ENCYCLOPEDIA</h1>
     </header>
 
-    <main class="p-4 max-w-2xl mx-auto">
-        <section id="chance-section" class="mb-8 hidden">
-            <h2 class="text-xl font-black italic mb-3 text-red-500 uppercase tracking-widest">Chance Themes</h2>
-            <div id="chance-list" class="grid grid-cols-2 gap-2"></div>
-        </section>
-
-        <section id="player-section" class="hidden">
-            <h2 class="text-xl font-black italic mb-3 text-blue-400 uppercase tracking-widest">Player Songs</h2>
-            <div id="player-list" class="grid gap-3"></div>
-        </section>
+    <main class="p-4 max-w-md mx-auto">
+        <div id="player-list" class="grid gap-3">
+            <button onclick="openPlayer('坂本勇人')" class="p-5 rounded-xl bg-gray-800 border-l-8 border-orange-500 text-left font-black text-xl hover:bg-gray-700 transition-all">
+                坂本 勇人
+            </button>
+            <button onclick="openPlayer('柳田悠岐')" class="p-5 rounded-xl bg-gray-800 border-l-8 border-yellow-400 text-left font-black text-xl hover:bg-gray-700 transition-all">
+                柳田 悠岐
+            </button>
+        </div>
     </main>
 
-    <div id="modal" class="fixed inset-0 bg-black/95 z-[100] hidden flex flex-col p-4">
+    <div id="modal" class="fixed inset-0 bg-black/95 z-[100] hidden flex flex-col p-4 overflow-y-auto">
         <button onclick="closeModal()" class="self-end text-3xl p-2">&times;</button>
-        <div id="modal-content" class="text-center mt-4">
-            <h3 id="m-name" class="text-3xl font-black italic mb-4"></h3>
-            <div class="bg-white/10 p-6 rounded-2xl mb-6 max-h-64 overflow-y-auto">
-                <p id="m-lyrics" class="text-lg font-bold leading-relaxed whitespace-pre-wrap"></p>
+        
+        <div class="mt-2">
+            <h2 id="m-name" class="text-3xl font-black italic mb-4 border-b-2 border-white pb-2 text-center"></h2>
+            
+            <div class="mb-6">
+                <h3 class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-tighter">Wikipedia Summary</h3>
+                <div id="m-wiki" class="bg-white/10 p-4 rounded-xl text-sm leading-relaxed text-gray-200">
+                    読み込み中...
+                </div>
             </div>
-            <div id="m-video" class="aspect-video w-full rounded-lg bg-black"></div>
+
+            <div class="mb-6">
+                <h3 class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-tighter">Cheer Song</h3>
+                <div class="bg-orange-600/20 p-4 rounded-xl border border-orange-500/50">
+                    <p id="m-lyrics" class="font-bold text-lg whitespace-pre-wrap text-center">応援歌データ準備中...</p>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        // 実際には別ファイルのJSONから取得すると管理が楽です
-        const MASTER_DATA = {
-            giants: {
-                chances: [
-                    { name: "VIVA巨人", lyrics: "VIVA GIANTS! 輝ける黄金の時...", vid: "DomPXPr39kY" },
-                    { name: "バタフライ", lyrics: "熱き魂 燃やせ...", vid: "DomPXPr39kY" }
-                ],
-                players: [
-                    { name: "坂本 勇人", lyrics: "オオオ... 燃えろ 燃えろ 坂本！", vid: "DomPXPr39kY" },
-                    { name: "岡本 和真", lyrics: "歴史を築け 岡本和真", vid: "DomPXPr39kY" }
-                ]
-            },
-            hawks: {
-                chances: [
-                    { name: "藤本わっしょい", lyrics: "わっしょい！わっしょい！", vid: "BDfZ8E6qA_4" }
-                ],
-                players: [
-                    { name: "柳田 悠岐", lyrics: "光り輝く 舞台を駆け抜けろ", vid: "BDfZ8E6qA_4" }
-                ]
-            }
-            // tigers, carp... 順次追加
-        };
-
-        function loadTeam(teamId) {
-            if(!teamId) return;
-            const data = MASTER_DATA[teamId];
-            
-            // チャンテ表示
-            const cList = document.getElementById('chance-list');
-            cList.innerHTML = '';
-            data.chances.forEach(c => {
-                const b = document.createElement('button');
-                b.className = "bg-chance p-3 rounded-lg text-sm font-bold";
-                b.innerText = c.name;
-                b.onclick = () => openModal(c);
-                cList.appendChild(b);
-            });
-            document.getElementById('chance-section').classList.remove('hidden');
-
-            // 選手表示
-            const pList = document.getElementById('player-list');
-            pList.innerHTML = '';
-            data.players.forEach(p => {
-                const b = document.createElement('button');
-                b.className = "bg-player p-4 rounded-xl text-left font-bold text-lg border-l-4 border-blue-500";
-                b.innerText = p.name;
-                b.onclick = () => openModal(p);
-                pList.appendChild(b);
-            });
-            document.getElementById('player-section').classList.remove('hidden');
-        }
-
-        function openModal(item) {
-            document.getElementById('m-name').innerText = item.name;
-            document.getElementById('m-lyrics').innerText = item.lyrics;
-            document.getElementById('m-video').innerHTML = `<iframe class="w-full h-full" src="https://www.youtube.com/embed/${item.vid}" frameborder="0"></iframe>`;
+        async function openPlayer(playerName) {
+            document.getElementById('m-name').innerText = playerName;
+            document.getElementById('m-wiki').innerText = "Wikipediaから取得中...";
             document.getElementById('modal').classList.remove('hidden');
+
+            try {
+                // Wikipedia API を叩く (CORS対応のエンドポイント)
+                const url = `https://ja.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(playerName)}`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.extract) {
+                    document.getElementById('m-wiki').innerText = data.extract;
+                } else {
+                    document.getElementById('m-wiki').innerText = "情報が見つかりませんでした。";
+                }
+            } catch (error) {
+                document.getElementById('m-wiki').innerText = "Wikipediaの読み込みに失敗しました。";
+            }
         }
 
         function closeModal() {
             document.getElementById('modal').classList.add('hidden');
-            document.getElementById('m-video').innerHTML = '';
         }
     </script>
 </body>
