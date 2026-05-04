@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Goal Rider Biz - V1.05</title>
+    <title>Goal Rider Biz - V1.05.1</title>
 
     <link rel="icon" href="https://img.icons8.com/clouds/256/delivery-man.png" type="image/png">
     <link rel="apple-touch-icon" href="https://img.icons8.com/clouds/256/delivery-man.png">
@@ -69,7 +69,6 @@
         .rule-btn { background: #f1c40f; border: none; color: #2c3e50; padding: 4px 10px; border-radius: 20px; font-size: 0.75em; font-weight: bold; cursor: pointer; }
         .analysis-chart-box { height: 180px; margin-bottom: 20px; }
 
-        /* スポット一覧：V1.05改善UI */
         .filter-tabs { display: flex; gap: 2px; margin-bottom: 12px; background: #eee; padding: 2px; border-radius: 8px; }
         .filter-btn { flex: 1; border: none; background: none; padding: 6px 2px; font-size: 0.65em; font-weight: bold; border-radius: 6px; color: #777; cursor: pointer; }
         .filter-btn.active { background: white; color: #2c3e50; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
@@ -82,7 +81,6 @@
         .tag-ドロップ { background: #2980b9; }
         .tag-休憩 { background: #27ae60; }
         .list-comment { font-size: 0.8em; color: #555; margin-top: 4px; background: #fcfcfc; padding: 4px; border-radius: 4px; border-left: 3px solid #ddd; }
-        .list-meta { font-size: 0.65em; color: #999; }
     </style>
 </head>
 <body>
@@ -92,7 +90,7 @@
         <button id="tabMap" class="tab-btn" onclick="showPage('map')">マップ</button>
     </div>
     
-    <div class="version-bar">GoalRider V1.05</div>
+    <div class="version-bar">GoalRider V1.05.1</div>
 
     <div id="pageSales" class="content-area active">
         <div class="rider-selector">
@@ -342,7 +340,31 @@
             if (mapType === 'hybrid') { map.removeLayer(hybridLayer); baseLayer.addTo(map); mapType = 'normal'; document.getElementById('layerBtn').innerText = "🛰️"; }
             else { map.removeLayer(baseLayer); hybridLayer.addTo(map); mapType = 'hybrid'; document.getElementById('layerBtn').innerText = "🗺️"; }
         }
-        function analyzeMap() { const nowDay = new Date().getDay(), nowHour = new Date().getHours(); Object.keys(allSpots).forEach(id => { const s = allSpots[id]; const isRel = (s.day === nowDay && Math.abs(s.hour - nowHour) <= 2); if (mapMarkers[id]) { mapMarkers[id].setRadius(isRel ? 18 : 8); mapMarkers[id].setStyle({ weight: isRel ? 5 : 2, color: isRel ? '#000' : '#fff' }); } }); alert("分析完了！"); }
+
+        // マップ分析機能のロジック
+        function analyzeMap() {
+            const nowDay = new Date().getDay();
+            const nowHour = new Date().getHours();
+            let count = 0;
+
+            Object.keys(allSpots).forEach(id => {
+                const s = allSpots[id];
+                // 曜日が同じ、かつ時間が前後2時間以内のデータを強調
+                const isRel = (s.day === nowDay && Math.abs(s.hour - nowHour) <= 2);
+                if (mapMarkers[id]) {
+                    if (isRel) {
+                        mapMarkers[id].setRadius(18); // サイズを大きく
+                        mapMarkers[id].setStyle({ weight: 5, color: '#000' }); // 黒縁で強調
+                        count++;
+                    } else {
+                        mapMarkers[id].setRadius(10); // 通常サイズ
+                        mapMarkers[id].setStyle({ weight: 2, color: '#fff' });
+                    }
+                }
+            });
+            alert(`【分析結果】\n現在の曜日・時間帯に近い過去データ(${count}件)をマップ上で強調表示しました。\n(ピンが大きく、黒縁になります)`);
+        }
+
         function startLocationWatch() { navigator.geolocation.watchPosition(p => { const pos = [p.coords.latitude, p.coords.longitude]; if (!currentPosMarker) { currentPosMarker = L.circleMarker(pos, { radius: 8, fillColor: "#3498db", color: "#fff", weight: 3, fillOpacity: 1 }).addTo(map); } else currentPosMarker.setLatLng(pos); window.latestPos = pos; }, null, { enableHighAccuracy: true }); }
         function goToCurrentLocation() { if (window.latestPos) map.flyTo(window.latestPos, 17); }
 
@@ -383,6 +405,7 @@
 
         async function saveSales() { 
             const n = RIDERS[currentRiderIdx], dk = document.getElementById('inputDate').value;
+            if(!allData[n]) allData[n] = { sales: {}, goals: {} };
             allData[n].sales[dk] = { 
                 hours: Number(document.getElementById('inputHours').value), gas: Number(document.getElementById('inputGas').value), otherExp: Number(document.getElementById('inputOtherExp').value),
                 uber: Number(document.getElementById('inputUber').value), demae: Number(document.getElementById('inputDemae').value), menu: Number(document.getElementById('inputMenu').value), rocket: Number(document.getElementById('inputRocket').value),
@@ -390,7 +413,7 @@
             }; renderApp(); await fetch(DB_SALES, { method: 'PUT', body: JSON.stringify(allData) }); closeInputModal();
         }
         function loadExistingData() { 
-            const n = RIDERS[currentRiderIdx], dk = document.getElementById('inputDate').value; const d = (allData[n] && allData[n].sales[dk]) ? allData[n].sales[dk] : {};
+            const n = RIDERS[currentRiderIdx], dk = document.getElementById('inputDate').value; const d = (allData[n] && allData[n].sales && allData[n].sales[dk]) ? allData[n].sales[dk] : {};
             document.getElementById('inputHours').value = d.hours || ""; document.getElementById('inputGas').value = d.gas || ""; document.getElementById('inputOtherExp').value = d.otherExp || "";
             document.getElementById('inputUber').value = d.uber || ""; document.getElementById('inputDemae').value = d.demae || ""; document.getElementById('inputMenu').value = d.menu || ""; document.getElementById('inputRocket').value = d.rocket || "";
             setWeather(d.weather || "");
