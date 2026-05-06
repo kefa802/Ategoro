@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Goal Rider Biz - V1.05.3.1</title>
+    <title>Goal Rider Biz - V1.05.4</title>
 
     <link rel="icon" href="https://img.icons8.com/clouds/256/delivery-man.png" type="image/png">
     <link rel="apple-touch-icon" href="https://img.icons8.com/clouds/256/delivery-man.png">
@@ -57,14 +57,16 @@
         input, select, textarea { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; font-size: 1em; }
         .rule-btn { background: #f1c40f; border: none; color: #2c3e50; padding: 4px 10px; border-radius: 20px; font-size: 0.75em; font-weight: bold; cursor: pointer; }
 
+        /* スポット一覧：フィルタ強化版 */
         .filter-tabs { display: flex; gap: 2px; margin-bottom: 8px; background: #eee; padding: 2px; border-radius: 8px; overflow-x: auto; }
         .filter-btn { flex: 1; border: none; background: none; padding: 6px 4px; font-size: 0.65em; font-weight: bold; border-radius: 6px; color: #777; cursor: pointer; white-space: nowrap; }
         .filter-btn.active { background: white; color: #2c3e50; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .filter-btn.alert { color: #e74c3c; }
         .filter-btn.alert.active { background: #e74c3c; color: white; }
         
+        /* あかさたなフィルタUI */
         .kana-tabs { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; margin-bottom: 12px; background: #f0f0f0; padding: 2px; border-radius: 8px; }
-        .kana-btn { border: none; background: white; padding: 4px 0; font-size: 0.65em; border-radius: 4px; color: #666; cursor: pointer; font-weight: bold; }
+        .kana-btn { border: none; background: white; padding: 6px 0; font-size: 0.65em; border-radius: 4px; color: #666; cursor: pointer; font-weight: bold; }
         .kana-btn.active { background: #3498db; color: white; }
 
         .list-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; }
@@ -97,7 +99,7 @@
         <button id="tabMap" class="tab-btn" onclick="showPage('map')">マップ</button>
     </div>
     
-    <div class="version-bar">GoalRider V1.05.3.1</div>
+    <div class="version-bar">GoalRider V1.05.4</div>
 
     <div id="pageSales" class="content-area active">
         <div class="rider-selector">
@@ -203,6 +205,20 @@
                 <button class="filter-btn" id="fDrop" onclick="filterList('ドロップ')">ドロップ</button>
                 <button class="filter-btn" id="fRest" onclick="filterList('休憩')">休憩</button>
             </div>
+            <div class="kana-tabs" id="kanaTabs">
+                <button class="kana-btn active" onclick="filterKana('全')">全</button>
+                <button class="kana-btn" onclick="filterKana('あ')">あ</button>
+                <button class="kana-btn" onclick="filterKana('か')">か</button>
+                <button class="kana-btn" onclick="filterKana('さ')">さ</button>
+                <button class="kana-btn" onclick="filterKana('た')">た</button>
+                <button class="kana-btn" onclick="filterKana('な')">な</button>
+                <button class="kana-btn" onclick="filterKana('は')">は</button>
+                <button class="kana-btn" onclick="filterKana('ま')">ま</button>
+                <button class="kana-btn" onclick="filterKana('や')">や</button>
+                <button class="kana-btn" onclick="filterKana('ら')">ら</button>
+                <button class="kana-btn" onclick="filterKana('わ')">わ</button>
+                <button class="kana-btn" onclick="filterKana('他')">他</button>
+            </div>
             <div id="spotList" style="max-height:300px; overflow-y:auto;"></div>
             <button class="btn-modal-primary" onclick="document.getElementById('listModal').style.display='none'" style="margin-top:15px;">閉じる</button>
         </div>
@@ -260,7 +276,7 @@
         let currentView = 'month', referenceDate = new Date(), myChart, myExpChart, myHourlyChart, map, currentPosMarker, editTargetId = null, allSpots = {}, mapMarkers = {};
         let mapType = 'normal', baseLayer, hybridLayer, selectedWeather = "";
         let dayAnalysisChart, weatherAnalysisChart;
-        let currentFilter = 'すべて';
+        let currentFilter = 'すべて', currentKana = '全';
 
         window.onload = () => {
             document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
@@ -349,6 +365,29 @@
             if (myHourlyChart) myHourlyChart.destroy(); myHourlyChart = new Chart(document.getElementById('hourlyChart'), { type: 'line', data: { labels, datasets: [{ data: chartHourly, borderColor: '#f39c12', tension: 0.3 }]}, options: opt });
         }
 
+        // --- 50音フィルタロジック ---
+        function getKanaHead(str) {
+            if (!str) return "他";
+            const c = str.charAt(0);
+            if (/[あ-おア-オ]/.test(c)) return "あ";
+            if (/[か-こカ-コガ-ゴ]/.test(c)) return "か";
+            if (/[さ-そサ-ソザ-ゾ]/.test(c)) return "さ";
+            if (/[た-とタ-トダ-ド]/.test(c)) return "た";
+            if (/[な-のナ-ノ]/.test(c)) return "な";
+            if (/[は-ほハ-ホバ-ボパ-ポ]/.test(c)) return "は";
+            if (/[ま-もマ-モ]/.test(c)) return "ま";
+            if (/[や-よヤ-ヨ]/.test(c)) return "や";
+            if (/[ら-ろラ-ロ]/.test(c)) return "ら";
+            if (/[わ-んワ-ン]/.test(c)) return "わ";
+            return "他";
+        }
+
+        function filterKana(k) {
+            currentKana = k;
+            document.querySelectorAll('.kana-btn').forEach(b => { b.classList.remove('active'); if(b.innerText === k) b.classList.add('active'); });
+            renderSpotList();
+        }
+
         function filterList(cat) {
             currentFilter = cat;
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -362,10 +401,13 @@
             Object.keys(allSpots).reverse().forEach(id => {
                 const s = allSpots[id];
                 if (currentFilter === '要注意') {
-                    // 要注意判定（評価が要注意、または鳴らない）
                     if (!(s.subCat === '要注意' || s.subCat === '鳴らない（要注意）')) return;
                 } else if (currentFilter !== 'すべて' && s.mainCat !== currentFilter) {
                     return;
+                }
+                if (currentKana !== '全') {
+                    const targetStr = s.spotName || s.comment || "";
+                    if (getKanaHead(targetStr) !== currentKana) return;
                 }
                 const item = document.createElement('div'); item.className = "list-item";
                 item.onclick = () => { document.getElementById('listModal').style.display='none'; map.flyTo([s.lat, s.lng], 18); setTimeout(() => openSpotModal(s.lat, s.lng, id), 500); };
@@ -381,7 +423,6 @@
             if (mapType === 'hybrid') { map.removeLayer(hybridLayer); baseLayer.addTo(map); mapType = 'normal'; document.getElementById('layerBtn').innerText = "🛰️"; }
             else { map.removeLayer(baseLayer); hybridLayer.addTo(map); mapType = 'hybrid'; document.getElementById('layerBtn').innerText = "🗺️"; } 
         }
-
         function analyzeMap() {
             const nowDay = new Date().getDay(); const nowHour = new Date().getHours(); let count = 0;
             Object.keys(allSpots).forEach(id => {
@@ -393,26 +434,15 @@
             });
             alert(`【分析結果】\n現在の曜日・時間帯に近い過去データ(${count}件)を強調表示しました。`);
         }
-
         function startLocationWatch() { navigator.geolocation.watchPosition(p => { const pos = [p.coords.latitude, p.coords.longitude]; if (!currentPosMarker) { currentPosMarker = L.circleMarker(pos, { radius: 8, fillColor: "#3498db", color: "#fff", weight: 3, fillOpacity: 1 }).addTo(map); } else currentPosMarker.setLatLng(pos); window.latestPos = pos; }, null, { enableHighAccuracy: true }); }
         function goToCurrentLocation() { if (window.latestPos) map.flyTo(window.latestPos, 17); }
-
         function updateSubCat() {
             const m = document.getElementById('mainCat').value, s = document.getElementById('subCat'), g = document.getElementById('subCatGroup'), l = document.getElementById('subCatLabel');
             s.innerHTML = "";
-            if (m === "待機") {
-                l.innerText = "鳴りやすさ";
-                s.innerHTML = '<option value="鳴る">鳴るエリア</option><option value="鳴らない（要注意）">鳴らない（要注意）</option>';
-                g.style.display = "block";
-            } else if (m === "ピック" || m === "ドロップ" || m === "休憩") {
-                l.innerText = "評価";
-                s.innerHTML = '<option value="最高">最高</option><option value="普通">普通</option><option value="要注意">要注意</option>';
-                g.style.display = "block";
-            } else {
-                g.style.display = "none";
-            }
+            if (m === "待機") { l.innerText = "鳴りやすさ"; s.innerHTML = '<option value="鳴る">鳴るエリア</option><option value="鳴らない（要注意）">鳴らない（要注意）</option>'; g.style.display = "block"; }
+            else if (m === "ピック" || m === "ドロップ" || m === "休憩") { l.innerText = "評価"; s.innerHTML = '<option value="最高">最高</option><option value="普通">普通</option><option value="要注意">要注意</option>'; g.style.display = "block"; }
+            else g.style.display = "none";
         }
-
         function openSpotModal(lat, lng, id = null) {
             editTargetId = id; document.getElementById('spotModal').style.display = 'block'; document.getElementById('deleteBtn').style.display = id ? 'block' : 'none';
             if (id) {
@@ -429,12 +459,7 @@
         }
         function closeSpotModal() { document.getElementById('spotModal').style.display = 'none'; }
         async function saveSpot() {
-            const spot = { 
-                lat: window.tempLat, lng: window.tempLng, spotName: document.getElementById('spotName').value,
-                mainCat: document.getElementById('mainCat').value, subCat: document.getElementById('subCat').value, parkingStatus: document.getElementById('parkingStatus').value,
-                parkingNote: document.getElementById('parkingNote').value, comment: document.getElementById('spotComment').value, rider: RIDERS[currentRiderIdx], 
-                time: new Date().toLocaleString(), day: new Date().getDay(), hour: new Date().getHours() 
-            };
+            const spot = { lat: window.tempLat, lng: window.tempLng, spotName: document.getElementById('spotName').value, mainCat: document.getElementById('mainCat').value, subCat: document.getElementById('subCat').value, parkingStatus: document.getElementById('parkingStatus').value, parkingNote: document.getElementById('parkingNote').value, comment: document.getElementById('spotComment').value, rider: RIDERS[currentRiderIdx], time: new Date().toLocaleString(), day: new Date().getDay(), hour: new Date().getHours() };
             await fetch(editTargetId ? `${DB_MAP.replace('.json', `/${editTargetId}.json`)}` : DB_MAP, { method: editTargetId?'PUT':'POST', body: JSON.stringify(spot) });
             closeSpotModal(); loadAllSpots();
         }
