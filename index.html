@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Goal Rider Biz - V1.05.5.1</title>
+    <title>Goal Rider Biz - V1.06</title>
 
     <link rel="icon" href="https://img.icons8.com/clouds/256/delivery-man.png" type="image/png">
     <link rel="apple-touch-icon" href="https://img.icons8.com/clouds/256/delivery-man.png">
@@ -97,7 +97,7 @@
         <button id="tabMap" class="tab-btn" onclick="showPage('map')">マップ</button>
     </div>
     
-    <div class="version-bar">GoalRider V1.05.5.1</div>
+    <div class="version-bar">GoalRider V1.06</div>
 
     <div id="pageSales" class="content-area active">
         <div class="rider-selector">
@@ -153,11 +153,8 @@
             <h3 id="spotModalTitle">地点メモ</h3>
             <div id="spotInfo" style="font-size: 0.65em; color: #666; margin-bottom: 8px;"></div>
             <div class="compact-grid">
-                <div class="input-group"><label>施設名 / 店舗名</label><input type="text" id="spotName" placeholder="〇〇マンション / 〇〇店"></div>
-                <div class="input-group">
-                    <label>施設名 (カナ) <span style="font-weight:normal; font-size:0.85em; color:#888;">※任意</span></label>
-                    <input type="text" id="spotKana" placeholder="ササキビル">
-                </div>
+                <div class="input-group"><label>施設名 / 店舗名</label><input type="text" id="spotName" placeholder="〇〇マンション"></div>
+                <div class="input-group"><label>施設名 (カナ) <span style="font-weight:normal; font-size:0.85em; color:#888;">※任意</span></label><input type="text" id="spotKana" placeholder="ササキビル"></div>
             </div>
             <div class="compact-grid">
                 <div class="input-group"><label>カテゴリ</label><select id="mainCat" onchange="updateSubCat()"><option value="">選択...</option><option value="待機">待機</option><option value="ピック">ピック</option><option value="ドロップ">ドロップ</option><option value="休憩">休憩場所</option></select></div>
@@ -204,27 +201,84 @@
         </div>
     </div>
 
+    <div id="inputModal" class="modal">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h3 style="margin: 0; font-size: 1.2em;">実績入力</h3>
+                <button class="rule-btn" onclick="alert('【判定ルール】\n1時間以上雨が降っていたら雨を選択。\n1時間以内なら「曇り」または「晴れ」を選択してください。')">💡判定ルール</button>
+            </div>
+            <div class="input-group"><label>日付</label><input type="date" id="inputDate" onchange="loadExistingData()"></div>
+            <div class="weather-selector" id="weatherSelector">
+                <button class="weather-btn" data-w="大雨" onclick="setWeather('大雨')">⛈️</button>
+                <button class="weather-btn" data-w="雨" onclick="setWeather('雨')">🌧️</button>
+                <button class="weather-btn" data-w="小雨" onclick="setWeather('小雨')">🌦️</button>
+                <button class="weather-btn" data-w="曇り" onclick="setWeather('曇り')">☁️</button>
+                <button class="weather-btn" data-w="晴れ" onclick="setWeather('晴れ')">☀️</button>
+            </div>
+            <div class="compact-grid">
+                <div class="input-group"><label>稼働(h)</label><input type="number" id="inputHours" step="0.5"></div>
+                <div class="input-group"><label>ガソリン</label><input type="number" id="inputGas"></div>
+            </div>
+            <div class="input-group"><label>その他経費</label><input type="number" id="inputOtherExp"></div>
+            <hr style="border:0; border-top:1px solid #eee; margin:10px 0;">
+            <div class="compact-grid">
+                <div class="input-group"><label>Uber</label><input type="number" id="inputUber"></div>
+                <div class="input-group"><label>出前館</label><input type="number" id="inputDemae"></div>
+                <div class="input-group"><label>Menu</label><input type="number" id="inputMenu"></div>
+                <div class="input-group"><label>ロケット</label><input type="number" id="inputRocket"></div>
+            </div>
+            <button class="btn-modal-primary" style="margin-top:10px;" onclick="saveSales()">保存して閉じる</button>
+            <button onclick="closeInputModal()" style="width:100%; border:none; background:none; color:#777; padding:10px;">閉じる</button>
+        </div>
+    </div>
+
+    <div id="analysisModal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin: 0 0 15px 0;">稼働効率分析 (売上時給)</h3>
+            <div class="stats-label" style="margin-bottom: 5px;">曜日別 平均売上時給</div>
+            <div class="analysis-chart-box"><canvas id="dayAnalysisChart"></canvas></div>
+            <div class="stats-label" style="margin-bottom: 5px;">天気別 平均売上時給</div>
+            <div class="analysis-chart-box"><canvas id="weatherAnalysisChart"></canvas></div>
+            <button class="btn-modal-primary" onclick="closeAnalysisModal()">閉じる</button>
+        </div>
+    </div>
+
     <script>
         const DB_SALES = "https://goalrider-81f01-default-rtdb.firebaseio.com/data.json";
         const DB_MAP = "https://goalrider-81f01-default-rtdb.firebaseio.com/spots.json";
         const RIDERS = ["工藤正臣", "高瀬戒兜"];
         const DEFAULT_GOAL = 300000;
         let currentRiderIdx = Number(localStorage.getItem('goalRider_idx')) || 0;
-        let allData = JSON.parse(localStorage.getItem('goalRider_cache')) || {};
-        let currentView = 'month', referenceDate = new Date(), myChart, myExpChart, myHourlyChart, map, currentPosMarker, editTargetId = null, allSpots = {}, mapMarkers = {};
-        let mapType = 'normal', baseLayer, hybridLayer, selectedWeather = "";
-        let dayAnalysisChart, weatherAnalysisChart;
-        let currentFilter = 'すべて', currentKana = '全';
+        let allData = {}; let allSpots = {}, mapMarkers = {};
+        let map, currentPosMarker, editTargetId = null;
+        let currentView = 'month', referenceDate = new Date();
+        let myChart, myExpChart, myHourlyChart, dayAnalysisChart, weatherAnalysisChart;
+        let currentFilter = 'すべて', currentKana = '全', selectedWeather = "";
 
         window.onload = () => {
             document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
-            switchRider(currentRiderIdx); fetchCloudSales();
+            switchRider(currentRiderIdx);
+            fetchCloudSales();
         };
 
-        function setWeather(w) { selectedWeather = w; document.querySelectorAll('.weather-btn').forEach(b => { b.classList.remove('active'); if(b.getAttribute('data-w') === w) b.classList.add('active'); }); }
-        function showPage(page) { document.querySelectorAll('.content-area, .tab-btn').forEach(el => el.classList.remove('active')); document.getElementById(page === 'sales' ? 'pageSales' : 'pageMap').classList.add('active'); document.getElementById(page === 'sales' ? 'tabSales' : 'tabMap').classList.add('active'); if(page === 'map') { if(!map) initMap(); else setTimeout(() => map.invalidateSize(), 300); } }
-        function initMap() { map = L.map('map', { zoomControl: false, maxZoom: 19 }).setView([35.7289, 139.7104], 15); baseLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }); hybridLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20 }); baseLayer.addTo(map); map.on('contextmenu', e => openSpotModal(e.latlng.lat, e.latlng.lng)); startLocationWatch(); loadAllSpots(); }
-        async function fetchCloudSales() { try { const res = await fetch(DB_SALES); const cloud = await res.json(); if (cloud) { allData = cloud; renderApp(); } } catch (e) {} }
+        function showPage(page) {
+            document.querySelectorAll('.content-area, .tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(page === 'sales' ? 'pageSales' : 'pageMap').classList.add('active');
+            document.getElementById(page === 'sales' ? 'tabSales' : 'tabMap').classList.add('active');
+            if(page === 'map') { if(!map) initMap(); else setTimeout(() => map.invalidateSize(), 300); }
+        }
+
+        function initMap() {
+            map = L.map('map', { zoomControl: false, maxZoom: 19 }).setView([35.7289, 139.7104], 15);
+            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+            baseLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
+            hybridLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20 });
+            baseLayer.addTo(map); mapType = 'normal';
+            map.on('contextmenu', e => openSpotModal(e.latlng.lat, e.latlng.lng));
+            startLocationWatch(); loadAllSpots();
+        }
+
+        async function fetchCloudSales() { try { const res = await fetch(DB_SALES); allData = await res.json() || {}; renderApp(); } catch (e) {} }
 
         function renderApp() {
             const name = RIDERS[currentRiderIdx]; if (!allData[name]) allData[name] = { sales: {}, goals: {} };
@@ -232,6 +286,7 @@
             const y = referenceDate.getFullYear(), m = referenceDate.getMonth();
             const monthKey = `${y}-${String(m+1).padStart(2,'0')}`;
             const goal = data.goals ? (data.goals[monthKey] || DEFAULT_GOAL) : DEFAULT_GOAL;
+
             if (currentView === 'month') {
                 const last = new Date(y, m + 1, 0).getDate();
                 document.getElementById('periodLabel').innerText = `${y}年${m + 1}月`;
@@ -242,8 +297,7 @@
                     chartSales.push(ds); chartExp.push(de); chartHourly.push(dh > 0 ? Math.round(ds/dh) : 0);
                     tSales += ds; tExp += de; tHours += dh;
                 }
-                const today = new Date();
-                let dailyReqStr = "---";
+                const today = new Date(); let dailyReqStr = "---";
                 if (today.getFullYear() === y && today.getMonth() === m) {
                     const todayKey = today.toISOString().split('T')[0];
                     const todayDone = (data.sales[todayKey] && (data.sales[todayKey].hours || data.sales[todayKey].uber));
@@ -254,17 +308,13 @@
                 }
                 document.getElementById('dailyRequired').innerText = dailyReqStr;
             } else {
-                const tempDate = new Date(referenceDate);
-                const day = tempDate.getDay();
-                const diff = (day === 0 ? -6 : 1 - day); 
+                const tempDate = new Date(referenceDate); const day = tempDate.getDay(); const diff = (day === 0 ? -6 : 1 - day); 
                 const mon = new Date(tempDate.setDate(tempDate.getDate() + diff));
                 const sun = new Date(new Date(mon).setDate(mon.getDate() + 6));
                 document.getElementById('periodLabel').innerText = `${mon.getMonth()+1}/${mon.getDate()}〜${sun.getMonth()+1}/${sun.getDate()}`;
                 for (let i = 0; i < 7; i++) {
-                    let d = new Date(mon); d.setDate(d.getDate() + i);
-                    let key = d.toISOString().split('T')[0];
-                    labels.push(['月','火','水','木','金','土','日'][i]);
-                    const s = data.sales[key] || {};
+                    let d = new Date(mon); d.setDate(d.getDate() + i); let key = d.toISOString().split('T')[0];
+                    labels.push(['月','火','水','木','金','土','日'][i]); const s = data.sales[key] || {};
                     const ds = (s.uber||0)+(s.demae||0)+(s.menu||0)+(s.rocket||0), de = (s.gas||0)+(s.otherExp||0), dh = s.hours || 0;
                     chartSales.push(ds); chartExp.push(de); chartHourly.push(dh > 0 ? Math.round(ds/dh) : 0);
                     tSales += ds; tExp += de; tHours += dh;
@@ -277,6 +327,7 @@
             document.getElementById('displayRemaining').innerText = Math.max(0, goal - tSales).toLocaleString() + "円";
             document.getElementById('avgHourly').innerText = tHours > 0 ? Math.round(tSales/tHours).toLocaleString() + "円" : "0円";
             document.getElementById('netHourly').innerText = tHours > 0 ? Math.round((tSales-tExp)/tHours).toLocaleString() + "円" : "0円";
+
             const opt = { responsive: true, maintainAspectRatio: false, plugins: { legend: false }, scales: { y: { beginAtZero: true, ticks: { font: { size: 8 } } }, x: { ticks: { font: { size: 7 } } } } };
             if (myChart) myChart.destroy(); myChart = new Chart(document.getElementById('salesChart'), { type: 'bar', data: { labels, datasets: [{ data: chartSales, backgroundColor: '#3498db' }] }, options: opt });
             if (myExpChart) myExpChart.destroy(); myExpChart = new Chart(document.getElementById('expenseChart'), { type: 'bar', data: { labels, datasets: [{ data: chartExp, backgroundColor: '#e06287' }] }, options: opt });
@@ -284,9 +335,8 @@
         }
 
         function getKanaHead(str) {
-            if (!str) return "他";
-            const c = str.charAt(0);
-            if (/[あ-おア-オ平-ほ]/.test(c) || /[ぁ-ぉ]/.test(c)) return "あ";
+            if (!str) return "他"; const c = str.charAt(0);
+            if (/[あ-おア-オぁ-ぉ平-ほ]/.test(c)) return "あ";
             if (/[か-こカ-コガ-ゴか-こが-ご]/.test(c)) return "か";
             if (/[さ-そサ-ソザ-ゾさ-そざ-ぞ]/.test(c)) return "さ";
             if (/[た-とタ-トダ-ドた-とだ-ど]/.test(c)) return "た";
@@ -316,27 +366,63 @@
         }
         function openSpotList() { renderSpotList(); document.getElementById('listModal').style.display = 'block'; }
         function toggleMapType() { if (mapType === 'hybrid') { map.removeLayer(hybridLayer); baseLayer.addTo(map); mapType = 'normal'; document.getElementById('layerBtn').innerText = "🛰️"; } else { map.removeLayer(baseLayer); hybridLayer.addTo(map); mapType = 'hybrid'; document.getElementById('layerBtn').innerText = "🗺️"; } }
-        function analyzeMap() { const nowDay = new Date().getDay(); const nowHour = new Date().getHours(); let count = 0; Object.keys(allSpots).forEach(id => { const s = allSpots[id]; const isRel = (s.day === nowDay && Math.abs(s.hour - nowHour) <= 2); if (mapMarkers[id]) { if (isRel) { mapMarkers[id].setRadius(18); mapMarkers[id].setStyle({ weight: 5, color: '#000' }); count++; } else { mapMarkers[id].setRadius(10); mapMarkers[id].setStyle({ weight: 2, color: '#fff' }); } } }); alert(`【分析結果】現在の曜日・時間帯に近い過去データ(${count}件)を強調表示しました。`); }
+        function analyzeMap() {
+            const nowDay = new Date().getDay(); const nowHour = new Date().getHours(); let count = 0;
+            Object.keys(allSpots).forEach(id => {
+                const s = allSpots[id]; const isRel = (s.day === nowDay && Math.abs(s.hour - nowHour) <= 2);
+                if (mapMarkers[id]) {
+                    if (isRel) { mapMarkers[id].setRadius(18); mapMarkers[id].setStyle({ weight: 5, color: '#000' }); count++; }
+                    else { mapMarkers[id].setRadius(10); mapMarkers[id].setStyle({ weight: 2, color: '#fff' }); }
+                }
+            });
+            alert(`【分析結果】(${count}件)を強調しました。`);
+        }
         function startLocationWatch() { navigator.geolocation.watchPosition(p => { const pos = [p.coords.latitude, p.coords.longitude]; if (!currentPosMarker) { currentPosMarker = L.circleMarker(pos, { radius: 8, fillColor: "#3498db", color: "#fff", weight: 3, fillOpacity: 1 }).addTo(map); } else currentPosMarker.setLatLng(pos); window.latestPos = pos; }, null, { enableHighAccuracy: true }); }
         function goToCurrentLocation() { if (window.latestPos) map.flyTo(window.latestPos, 17); }
-        function updateSubCat() { const m = document.getElementById('mainCat').value, s = document.getElementById('subCat'), g = document.getElementById('subCatGroup'), l = document.getElementById('subCatLabel'); s.innerHTML = ""; if (m === "待機") { l.innerText = "鳴りやすさ"; s.innerHTML = '<option value="鳴る">鳴るエリア</option><option value="鳴らない">鳴らないエリア</option>'; g.style.display = "block"; } else if (m === "ピック" || m === "ドロップ" || m === "休憩") { l.innerText = "評価"; s.innerHTML = '<option value="最高">最高</option><option value="普通">普通</option><option value="要注意">要注意</option>'; g.style.display = "block"; } else g.style.display = "none"; }
+        function updateSubCat() {
+            const m = document.getElementById('mainCat').value, s = document.getElementById('subCat'), g = document.getElementById('subCatGroup'), l = document.getElementById('subCatLabel');
+            s.innerHTML = "";
+            if (m === "待機") { l.innerText = "鳴りやすさ"; s.innerHTML = '<option value="鳴る">鳴るエリア</option><option value="鳴らない">鳴らない</option>'; g.style.display = "block"; }
+            else if (m === "ピック" || m === "ドロップ" || m === "休憩") { l.innerText = "評価"; s.innerHTML = '<option value="最高">最高</option><option value="普通">普通</option><option value="要注意">要注意</option>'; g.style.display = "block"; }
+            else g.style.display = "none";
+        }
         function openSpotModal(lat, lng, id = null) {
             editTargetId = id; document.getElementById('spotModal').style.display = 'block'; document.getElementById('deleteBtn').style.display = id ? 'block' : 'none';
-            if (id) { const s = allSpots[id]; document.getElementById('spotName').value = s.spotName || ""; document.getElementById('spotKana').value = s.spotKana || ""; document.getElementById('mainCat').value = s.mainCat; updateSubCat(); document.getElementById('subCat').value = s.subCat; document.getElementById('parkingStatus').value = s.parkingStatus || "不明"; document.getElementById('parkingNote').value = s.parkingNote || ""; document.getElementById('spotComment').value = s.comment || ""; window.tempLat = s.lat; window.tempLng = s.lng; } 
-            else { document.getElementById('spotName').value = ""; document.getElementById('spotKana').value = ""; document.getElementById('mainCat').value = ""; document.getElementById('subCatGroup').style.display = "none"; document.getElementById('parkingStatus').value = "不明"; document.getElementById('parkingNote').value = ""; document.getElementById('spotComment').value = ""; window.tempLat = lat; window.tempLng = lng; }
+            if (id) {
+                const s = allSpots[id]; document.getElementById('spotName').value = s.spotName || ""; document.getElementById('spotKana').value = s.spotKana || "";
+                document.getElementById('mainCat').value = s.mainCat; updateSubCat(); document.getElementById('subCat').value = s.subCat; 
+                document.getElementById('parkingStatus').value = s.parkingStatus || "不明"; document.getElementById('parkingNote').value = s.parkingNote || "";
+                document.getElementById('spotComment').value = s.comment || ""; window.tempLat = s.lat; window.tempLng = s.lng;
+            } else {
+                document.getElementById('spotName').value = ""; document.getElementById('spotKana').value = "";
+                document.getElementById('mainCat').value = ""; document.getElementById('subCatGroup').style.display = "none"; 
+                document.getElementById('parkingStatus').value = "不明"; document.getElementById('parkingNote').value = "";
+                document.getElementById('spotComment').value = ""; window.tempLat = lat; window.tempLng = lng;
+            }
         }
         function closeSpotModal() { document.getElementById('spotModal').style.display = 'none'; }
-        async function saveSpot() { const spot = { lat: window.tempLat, lng: window.tempLng, spotName: document.getElementById('spotName').value, spotKana: document.getElementById('spotKana').value, mainCat: document.getElementById('mainCat').value, subCat: document.getElementById('subCat').value, parkingStatus: document.getElementById('parkingStatus').value, parkingNote: document.getElementById('parkingNote').value, comment: document.getElementById('spotComment').value, rider: RIDERS[currentRiderIdx], time: new Date().toLocaleString(), day: new Date().getDay(), hour: new Date().getHours() }; await fetch(editTargetId ? `${DB_MAP.replace('.json', `/${editTargetId}.json`)}` : DB_MAP, { method: editTargetId?'PUT':'POST', body: JSON.stringify(spot) }); closeSpotModal(); loadAllSpots(); }
+        async function saveSpot() {
+            const spot = { lat: window.tempLat, lng: window.tempLng, spotName: document.getElementById('spotName').value, spotKana: document.getElementById('spotKana').value, mainCat: document.getElementById('mainCat').value, subCat: document.getElementById('subCat').value, parkingStatus: document.getElementById('parkingStatus').value, parkingNote: document.getElementById('parkingNote').value, comment: document.getElementById('spotComment').value, rider: RIDERS[currentRiderIdx], time: new Date().toLocaleString(), day: new Date().getDay(), hour: new Date().getHours() };
+            await fetch(editTargetId ? `${DB_MAP.replace('.json', `/${editTargetId}.json`)}` : DB_MAP, { method: editTargetId?'PUT':'POST', body: JSON.stringify(spot) });
+            closeSpotModal(); loadAllSpots();
+        }
         async function deleteSpot() { if(!confirm("削除しますか？")) return; await fetch(`${DB_MAP.replace('.json', `/${editTargetId}.json`)}`, { method: 'DELETE' }); closeSpotModal(); loadAllSpots(); }
         async function loadAllSpots() {
             const res = await fetch(DB_MAP); allSpots = await res.json() || {}; Object.values(mapMarkers).forEach(m => map.removeLayer(m));
-            Object.keys(allSpots).forEach(id => { const s = allSpots[id]; let color = (s.subCat === "最高" || s.subCat === "鳴る") ? "#2ecc71" : (s.subCat === "要注意" || s.subCat === "鳴らない") ? "#e74c3c" : "#f1c40f"; const m = L.circleMarker([s.lat, s.lng], { radius: 10, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.8 }).addTo(map); if (s.spotName || s.comment) m.bindTooltip(s.spotName || s.comment, { permanent: true, direction: 'right', className: 'leaflet-tooltip-own' }).openTooltip(); m.on('click', () => openSpotModal(s.lat, s.lng, id)); mapMarkers[id] = m; });
+            Object.keys(allSpots).forEach(id => {
+                const s = allSpots[id]; let color = (s.subCat === "最高" || s.subCat === "鳴る") ? "#2ecc71" : (s.subCat === "要注意" || s.subCat === "鳴らない") ? "#e74c3c" : "#f1c40f";
+                const m = L.circleMarker([s.lat, s.lng], { radius: 10, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.8 }).addTo(map);
+                if (s.spotName || s.comment) m.bindTooltip(s.spotName || s.comment, { permanent: true, direction: 'right', className: 'leaflet-tooltip-own' }).openTooltip();
+                m.on('click', () => openSpotModal(s.lat, s.lng, id)); mapMarkers[id] = m;
+            });
         }
+        function setWeather(w) { selectedWeather = w; document.querySelectorAll('.weather-btn').forEach(b => { b.classList.remove('active'); if(b.getAttribute('data-w') === w) b.classList.add('active'); }); }
         function openAnalysisModal() {
             const name = RIDERS[currentRiderIdx]; const salesData = (allData[name] && allData[name].sales) ? allData[name].sales : {};
             const daySum = { 0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[] }; const weatherSum = { "大雨":[], "雨":[], "小雨":[], "曇り":[], "晴れ":[] };
             Object.keys(salesData).forEach(dateStr => { const s = salesData[dateStr]; const dh = s.hours || 0; if (dh > 0) { const ds = (s.uber||0)+(s.demae||0)+(s.menu||0)+(s.rocket||0); const salesHourly = ds / dh; const day = new Date(dateStr).getDay(); daySum[day].push(salesHourly); if (s.weather && weatherSum[s.weather] !== undefined) weatherSum[s.weather].push(salesHourly); } });
-            const dayAvg = [1,2,3,4,5,6,0].map(d => daySum[d].length ? Math.round(daySum[d].reduce((a,b)=>a+b)/daySum[d].length) : 0); const weatherAvg = ["大雨","雨","小雨","曇り","晴れ"].map(w => weatherSum[w].length ? Math.round(weatherSum[w].reduce((a,b)=>a+b)/weatherSum[w].length) : 0);
+            const dayAvg = [1,2,3,4,5,6,0].map(d => daySum[d].length ? Math.round(daySum[d].reduce((a,b)=>a+b)/daySum[d].length) : 0);
+            const weatherAvg = ["大雨","雨","小雨","曇り","晴れ"].map(w => weatherSum[w].length ? Math.round(weatherSum[w].reduce((a,b)=>a+b)/weatherSum[w].length) : 0);
             document.getElementById('analysisModal').style.display = 'block';
             const chartOpt = { responsive: true, maintainAspectRatio: false, plugins: { legend: false }, scales: { y: { beginAtZero: true } } };
             if (dayAnalysisChart) dayAnalysisChart.destroy(); dayAnalysisChart = new Chart(document.getElementById('dayAnalysisChart'), { type: 'bar', data: { labels: ['月','火','水','木','金','土','日'], datasets: [{ data: dayAvg, backgroundColor: '#3498db' }] }, options: chartOpt });
