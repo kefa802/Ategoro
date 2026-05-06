@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Goal Rider Biz - V1.07</title>
+    <title>Goal Rider Biz - V1.07.1</title>
 
     <link rel="icon" href="https://img.icons8.com/clouds/256/delivery-man.png" type="image/png">
     <link rel="apple-touch-icon" href="https://img.icons8.com/clouds/256/delivery-man.png">
@@ -59,6 +59,8 @@
         .input-group label { display: block; margin-bottom: 2px; font-weight: bold; font-size: 0.75em; color: #444; }
         input, select, textarea { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; font-size: 1em; }
 
+        .rule-btn { background: #f1c40f; border: none; color: #2c3e50; padding: 4px 10px; border-radius: 20px; font-size: 0.75em; font-weight: bold; cursor: pointer; }
+
         .filter-tabs { display: flex; gap: 2px; margin-bottom: 8px; background: #eee; padding: 2px; border-radius: 8px; overflow-x: auto; }
         .filter-btn { flex: 1; border: none; background: none; padding: 6px 4px; font-size: 0.65em; font-weight: bold; border-radius: 6px; color: #777; cursor: pointer; white-space: nowrap; }
         .filter-btn.active { background: white; color: #2c3e50; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
@@ -96,7 +98,7 @@
         <button id="tabMap" class="tab-btn" onclick="showPage('map')">マップ</button>
     </div>
     
-    <div class="version-bar">GoalRider V1.07</div>
+    <div class="version-bar">GoalRider V1.07.1</div>
 
     <div id="pageSales" class="content-area active">
         <div class="rider-selector">
@@ -160,7 +162,10 @@
             <div id="spotInfo" style="font-size: 0.65em; color: #666; margin-bottom: 8px;"></div>
             <div class="compact-grid">
                 <div class="input-group"><label>施設名 / 店舗名</label><input type="text" id="spotName" placeholder="漢字/ひらがな"></div>
-                <div class="input-group"><label>施設名 (カナ) <span style="font-weight:normal; font-size:0.85em; color:#888;">※任意</span></label><input type="text" id="spotKana" placeholder="ササキビル"></div>
+                <div class="input-group">
+                    <label>施設名 (カナ) <span style="font-weight:normal; font-size:0.85em; color:#888;">※任意</span></label>
+                    <input type="text" id="spotKana" placeholder="ササキビル">
+                </div>
             </div>
             <div class="compact-grid">
                 <div class="input-group"><label>カテゴリ</label><select id="mainCat" onchange="updateSubCat()"><option value="">選択...</option><option value="待機">待機</option><option value="ピック">ピック</option><option value="ドロップ">ドロップ</option><option value="休憩">休憩場所</option></select></div>
@@ -179,7 +184,10 @@
     
     <div id="inputModal" class="modal">
         <div class="modal-content">
-            <h3>実績入力</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h3 style="margin:0;">実績入力</h3>
+                <button class="rule-btn" onclick="alert('【判定ルール】\n1時間以上雨が降っていたら雨を選択。\n1時間以内なら「曇り」または「晴れ」を選択してください。')">💡判定ルール</button>
+            </div>
             <div class="input-group"><label>日付</label><input type="date" id="inputDate" onchange="loadExistingData()"></div>
             <div class="weather-selector" id="weatherSelector">
                 <button class="weather-btn" data-w="大雨" onclick="setWeather('大雨')">⛈️</button>
@@ -237,7 +245,7 @@
 
     <div id="analysisModal" class="modal">
         <div class="modal-content">
-            <h3>分析結果</h3>
+            <h3>効率分析</h3>
             <div style="height:180px; margin-bottom:20px;"><canvas id="dayAnalysisChart"></canvas></div>
             <div style="height:180px;"><canvas id="weatherAnalysisChart"></canvas></div>
             <button class="btn-modal-primary" onclick="closeAnalysisModal()" style="margin-top:20px;">閉じる</button>
@@ -356,10 +364,10 @@
             document.getElementById('displayRemaining').innerText = Math.max(0, goal - tSales).toLocaleString() + "円";
             document.getElementById('avgHourly').innerText = tHours > 0 ? Math.round(tSales/tHours).toLocaleString() + "円" : "0円";
             document.getElementById('netHourly').innerText = tHours > 0 ? Math.round((tSales-tExp)/tHours).toLocaleString() + "円" : "0円";
-            const optC = { responsive: true, maintainAspectRatio: false, plugins: { legend: false }, scales: { y: { beginAtZero: true, ticks: { font: { size: 8 } } }, x: { ticks: { font: { size: 7 } } } } };
-            if (myChart) myChart.destroy(); myChart = new Chart(document.getElementById('salesChart'), { type: 'bar', data: { labels, datasets: [{ data: chartSales, backgroundColor: '#3498db' }] }, options: optC });
-            if (myExpChart) myExpChart.destroy(); myExpChart = new Chart(document.getElementById('expenseChart'), { type: 'bar', data: { labels, datasets: [{ data: chartExp, backgroundColor: '#e06287' }] }, options: optC });
-            if (myHourlyChart) myHourlyChart.destroy(); myHourlyChart = new Chart(document.getElementById('hourlyChart'), { type: 'line', data: { labels, datasets: [{ data: chartHourly, borderColor: '#f39c12', tension: 0.3 }]}, options: optC });
+            const optCharts = { responsive: true, maintainAspectRatio: false, plugins: { legend: false }, scales: { y: { beginAtZero: true, ticks: { font: { size: 8 } } }, x: { ticks: { font: { size: 7 } } } } };
+            if (myChart) myChart.destroy(); myChart = new Chart(document.getElementById('salesChart'), { type: 'bar', data: { labels, datasets: [{ data: chartSales, backgroundColor: '#3498db' }] }, options: optCharts });
+            if (myExpChart) myExpChart.destroy(); myExpChart = new Chart(document.getElementById('expenseChart'), { type: 'bar', data: { labels, datasets: [{ data: chartExp, backgroundColor: '#e06287' }] }, options: optCharts });
+            if (myHourlyChart) myHourlyChart.destroy(); myHourlyChart = new Chart(document.getElementById('hourlyChart'), { type: 'line', data: { labels, datasets: [{ data: chartHourly, borderColor: '#f39c12', tension: 0.3 }]}, options: optCharts });
         }
 
         function getKanaHead(str) {
@@ -367,7 +375,7 @@
             if (/[あいうえおぁぃぅぇぉアィゥェォア-オあ-おぁ-ぉ]/.test(c)) return "あ";
             if (/[かきくけこがぎぐげごカキクケコガギグゲゴか-こが-ご]/.test(c)) return "か";
             if (/[さしすせそざじずぜぞサシスセソザジズゼゾさ-そざ-ぞ]/.test(c)) return "さ";
-            if (/[たちつてとだぢづでどっタチツテトダヂヅデドッた-とだ-ど]/.test(c)) return "た";
+            if (/[たちつてとだぢづでどったちつてとだぢづでどっタチツテトダヂヅデドッ]/.test(c)) return "た";
             if (/[なにぬねのナニヌネノな-の]/.test(c)) return "な";
             if (/[はひふへほばびぶべぼぱぴぷぺぽハヒフヘホバビブベボパピプペポは-ほば-ぼぱ-ぽ]/.test(c)) return "は";
             if (/[まみむめもマミムメモま-も]/.test(c)) return "ま";
@@ -421,7 +429,7 @@
             const daySum = { 0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[] }, weatherSum = { "大雨":[], "雨":[], "小雨":[], "曇り":[], "晴れ":[] };
             Object.keys(salesData).forEach(dateStr => { const s = salesData[dateStr]; const dh = s.hours || 0; if (dh > 0) { const ds = (s.uber||0)+(s.demae||0)+(s.menu||0)+(s.rocket||0), sh = ds / dh, d = new Date(dateStr).getDay(); daySum[d].push(sh); if (s.weather && weatherSum[s.weather] !== undefined) weatherSum[s.weather].push(sh); } });
             const dayAvg = [1,2,3,4,5,6,0].map(d => daySum[d].length ? Math.round(daySum[d].reduce((a,b)=>a+b)/daySum[d].length) : 0), weatherAvg = ["大雨","雨","小雨","曇り","晴れ"].map(w => weatherSum[w].length ? Math.round(weatherSum[w].reduce((a,b)=>a+b)/weatherSum[w].length) : 0);
-            document.getElementById('analysisModal').style.display = 'block';
+            document.getElementById('analysisModal').style.display = 'block'; 
             if (dayAnalysisChart) dayAnalysisChart.destroy(); dayAnalysisChart = new Chart(document.getElementById('dayAnalysisChart'), { type: 'bar', data: { labels: ['月','火','水','木','金','土','日'], datasets: [{ data: dayAvg, backgroundColor: '#3498db' }] }, options: { responsive: true, maintainAspectRatio: false } });
             if (weatherAnalysisChart) weatherAnalysisChart.destroy(); weatherAnalysisChart = new Chart(document.getElementById('weatherAnalysisChart'), { type: 'bar', data: { labels: ['大雨','雨','小雨','曇','晴'], datasets: [{ data: weatherAvg, backgroundColor: ['#6c5ce7','#0984e3','#00cec9','#636e72','#f39c12'] }] }, options: { responsive: true, maintainAspectRatio: false } });
         }
