@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Goal Rider Biz - V1.07.2</title>
+    <title>Goal Rider Biz - V1.07</title>
 
     <link rel="icon" href="https://img.icons8.com/clouds/256/delivery-man.png" type="image/png">
     <link rel="apple-touch-icon" href="https://img.icons8.com/clouds/256/delivery-man.png">
@@ -98,7 +98,7 @@
         <button id="tabMap" class="tab-btn" onclick="showPage('map')">マップ</button>
     </div>
     
-    <div class="version-bar">GoalRider V1.07.2</div>
+    <div class="version-bar">GoalRider V1.07</div>
 
     <div id="pageSales" class="content-area active">
         <div class="rider-selector">
@@ -246,12 +246,8 @@
     <div id="analysisModal" class="modal">
         <div class="modal-content">
             <h3>時給分析</h3>
-            <div id="analysisCharts">
-                <div class="stats-label">曜日別</div>
-                <div class="analysis-chart-box" style="height:180px; margin-bottom:20px;"><canvas id="dayAnalysisChart"></canvas></div>
-                <div class="stats-label">天気別</div>
-                <div class="analysis-chart-box" style="height:180px;"><canvas id="weatherAnalysisChart"></canvas></div>
-            </div>
+            <div style="height:180px; margin-bottom:20px;"><canvas id="dayAnalysisChart"></canvas></div>
+            <div style="height:180px;"><canvas id="weatherAnalysisChart"></canvas></div>
             <button class="btn-modal-primary" onclick="closeAnalysisModal()" style="margin-top:20px;">閉じる</button>
         </div>
     </div>
@@ -369,9 +365,9 @@
             document.getElementById('avgHourly').innerText = tHours > 0 ? Math.round(tSales/tHours).toLocaleString() + "円" : "0円";
             document.getElementById('netHourly').innerText = tHours > 0 ? Math.round((tSales-tExp)/tHours).toLocaleString() + "円" : "0円";
             const optC = { responsive: true, maintainAspectRatio: false, plugins: { legend: false }, scales: { y: { beginAtZero: true, ticks: { font: { size: 8 } } }, x: { ticks: { font: { size: 7 } } } } };
-            if (myChart) myChart.destroy(); myChart = new Chart(document.getElementById('salesChart'), { type: 'bar', data: { labels, datasets: [{ data: chartSales, backgroundColor: '#3498db' }] }, options: optC });
-            if (myExpChart) myExpChart.destroy(); myExpChart = new Chart(document.getElementById('expenseChart'), { type: 'bar', data: { labels, datasets: [{ data: chartExp, backgroundColor: '#e06287' }] }, options: optC });
-            if (myHourlyChart) myHourlyChart.destroy(); myHourlyChart = new Chart(document.getElementById('hourlyChart'), { type: 'line', data: { labels, datasets: [{ data: chartHourly, borderColor: '#f39c12', tension: 0.3 }]}, options: optC });
+            if (myChart) myChart.destroy(); myChart = new Chart(document.getElementById('salesChart'), { type: 'bar', data: { labels, datasets: [{ label: '時給', data: chartSales, backgroundColor: '#3498db' }] }, options: optC });
+            if (myExpChart) myExpChart.destroy(); myExpChart = new Chart(document.getElementById('expenseChart'), { type: 'bar', data: { labels, datasets: [{ label: '時給', data: chartExp, backgroundColor: '#e06287' }] }, options: optC });
+            if (myHourlyChart) myHourlyChart.destroy(); myHourlyChart = new Chart(document.getElementById('hourlyChart'), { type: 'line', data: { labels, datasets: [{ label: '時給', data: chartHourly, borderColor: '#f39c12', tension: 0.3 }]}, options: optC });
         }
 
         function getKanaHead(str) {
