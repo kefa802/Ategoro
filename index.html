@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Goal Rider Biz - V1.05.6</title>
+    <title>Goal Rider Biz - V1.05.6.1</title>
 
     <link rel="icon" href="https://img.icons8.com/clouds/256/delivery-man.png" type="image/png">
     <link rel="apple-touch-icon" href="https://img.icons8.com/clouds/256/delivery-man.png">
@@ -18,43 +18,55 @@
         .main-tabs { display: flex; background: #2c3e50; padding: 2px; gap: 2px; position: relative; z-index: 2000; flex-shrink: 0; }
         .tab-btn { flex: 1; padding: 10px 8px; border: none; background: none; color: #bdc3c7; font-weight: bold; font-size: 0.85em; border-radius: 4px; cursor: pointer; }
         .tab-btn.active { background: #34495e; color: white; }
+        
         .version-bar { background: #e0e0e0; color: #777; font-size: 0.6em; text-align: right; padding: 1px 10px; font-weight: bold; flex-shrink: 0; border-bottom: 1px solid #ccc; }
+
         .content-area { flex: 1; overflow-y: auto; padding: 4px 6px; box-sizing: border-box; display: none; }
         .content-area.active { display: block; }
+
         .rider-selector { display: flex; background: #ddd; border-radius: 8px; padding: 2px; margin-bottom: 4px; }
         .rider-btn { flex: 1; text-align: center; padding: 6px; border-radius: 6px; font-size: 0.8em; font-weight: bold; border: none; background: none; color: #666; }
         .rider-active { background: #3498db; color: white; }
+
         .btn-row { display: flex; gap: 4px; margin-bottom: 4px; align-items: center; }
         button.view-btn { flex: 1; padding: 8px 4px; border-radius: 6px; border: 1px solid #ddd; background: white; cursor: pointer; font-weight: bold; font-size: 0.75em; }
         .active-view { background: #3498db !important; border-color: #2980b9 !important; color: white !important; }
+
         .card { background: white; border-radius: 8px; padding: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 6px; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; border-top: 1px solid #eee; padding-top: 4px; }
         .stats-val { font-weight: 800; font-size: 0.95em; color: #2c3e50; line-height: 1.1; }
         .stats-label { font-size: 0.6em; color: #777; }
+
         .chart-container { height: 85px; position: relative; margin-bottom: 2px; }
         .action-button-row { display: flex; gap: 6px; padding: 4px 0; }
         .btn-main-entry { flex: 3; background: #2ecc71; color: white; border: none; padding: 12px; font-size: 1.0em; border-radius: 10px; cursor: pointer; font-weight: bold; }
         .btn-analyze-trigger { flex: 1; background: #95a5a6; color: white; border: none; padding: 12px; font-size: 0.85em; border-radius: 10px; cursor: pointer; font-weight: bold; }
         .btn-modal-primary { width: 100%; background: #2ecc71; color: white; border: none; padding: 12px; font-size: 1.0em; border-radius: 10px; cursor: pointer; font-weight: bold; }
+
         #map { width: 100%; height: 100%; border-radius: 10px; z-index: 1; background: #eee; }
         .map-ui { position: absolute; bottom: 85px; right: 15px; display: flex; flex-direction: column; gap: 10px; z-index: 1000; }
         .ui-btn { width: 50px; height: 50px; border-radius: 25px; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; font-size: 1.1em; cursor: pointer; }
         .leaflet-tooltip-own { background: white; border: 1px solid #333; border-radius: 4px; padding: 2px 4px; font-size: 9px; font-weight: bold; }
+
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 3000; overflow-y: auto; }
         .modal-content { background: white; margin: 2% auto; padding: 12px; width: 94%; border-radius: 15px; box-sizing: border-box; }
+        
         .compact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .input-group { margin-bottom: 8px; }
         .input-group label { display: block; margin-bottom: 2px; font-weight: bold; font-size: 0.75em; color: #444; }
         input, select, textarea { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; font-size: 1em; }
         .rule-btn { background: #f1c40f; border: none; color: #2c3e50; padding: 4px 10px; border-radius: 20px; font-size: 0.75em; font-weight: bold; cursor: pointer; }
+
         .filter-tabs { display: flex; gap: 2px; margin-bottom: 8px; background: #eee; padding: 2px; border-radius: 8px; overflow-x: auto; }
         .filter-btn { flex: 1; border: none; background: none; padding: 6px 4px; font-size: 0.65em; font-weight: bold; border-radius: 6px; color: #777; cursor: pointer; white-space: nowrap; }
         .filter-btn.active { background: white; color: #2c3e50; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .filter-btn.alert { color: #e74c3c; }
         .filter-btn.alert.active { background: #e74c3c; color: white; }
+        
         .kana-tabs { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; margin-bottom: 12px; background: #f0f0f0; padding: 2px; border-radius: 8px; }
         .kana-btn { border: none; background: white; padding: 4px 0; font-size: 0.65em; border-radius: 4px; color: #666; cursor: pointer; font-weight: bold; }
         .kana-btn.active { background: #3498db; color: white; }
+
         .list-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; }
         .list-info { flex: 1; }
         .list-title { font-weight: bold; font-size: 0.9em; margin-bottom: 2px; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
@@ -67,6 +79,7 @@
         .list-meta { font-size: 0.65em; color: #999; margin-top: 2px; }
         .list-parking { font-size: 0.7em; color: #27ae60; font-weight: bold; margin-top: 2px; display: flex; align-items: center; gap: 3px; }
         .list-comment { font-size: 0.8em; color: #555; margin-top: 4px; background: #fcfcfc; padding: 4px; border-radius: 4px; border-left: 3px solid #ddd; }
+        
         .weather-selector { display: flex; gap: 4px; margin-bottom: 12px; justify-content: space-between; }
         .weather-btn { flex: 1; padding: 10px 0; border: 2px solid #eee; border-radius: 10px; background: white; cursor: pointer; font-size: 1.4em; display: flex; align-items: center; justify-content: center; transition: all 0.2s; filter: grayscale(100%); }
         .weather-btn.active { filter: grayscale(0%); color: white; border-color: transparent; }
@@ -84,7 +97,7 @@
         <button id="tabMap" class="tab-btn" onclick="showPage('map')">マップ</button>
     </div>
     
-    <div class="version-bar">GoalRider V1.05.6</div>
+    <div class="version-bar">GoalRider V1.05.6.1</div>
 
     <div id="pageSales" class="content-area active">
         <div class="rider-selector">
@@ -105,7 +118,7 @@
                 <div><div class="stats-label">売上合計</div><div class="stats-val" id="totalSales">0円</div></div>
                 <div><div class="stats-label" style="color:#e74c3c;">目標まで</div><div class="stats-val" id="displayRemaining" style="color:#e74c3c;">0円</div></div>
                 <div><div class="stats-label" id="dailyRequiredLabel">1日必要額 (今日込)</div><div class="stats-val" style="color:#9b59b6;" id="dailyRequired">0円</div></div>
-                <div><div class="stats-label">経費合計</div><div class="stats-val" style="color:#e67e22;" id="totalExpense">0円</div></div>
+                <div><div class="stats-label">経費合計</div><div class="stats-val" id="totalExpense">0円</div></div>
                 <div><div class="stats-label">売上時給</div><div class="stats-val" id="avgHourly">0円</div></div>
                 <div><div class="stats-label">実質時給</div><div class="stats-val" style="color:#2ecc71;" id="netHourly">0円</div></div>
             </div>
@@ -148,7 +161,7 @@
                 <div class="input-group" id="subCatGroup" style="display:none;"><label id="subCatLabel">評価</label><select id="subCat"></select></div>
             </div>
             <div class="compact-grid">
-                <div class="input-group"><label>パーキング</label><select id="parkingStatus"><option value="不明">不明</option><option value="有り (無料)">有り (無料)</option><option value="無し (有料は有り)">無し (有料は有り)</option><option value="無し (近領に無し)">無し (近隣に無し)</option></select></div>
+                <div class="input-group"><label>パーキング</label><select id="parkingStatus"><option value="不明">不明</option><option value="有り (無料)">有り (無料)</option><option value="無し (有料は有り)">無し (有料は有り)</option><option value="無し (近隣に無し)">無し (近隣に無し)</option></select></div>
                 <div class="input-group"><label>P詳細</label><input type="text" id="parkingNote" placeholder="裏口付近など"></div>
             </div>
             <div class="input-group"><label>コメント</label><textarea id="spotComment" rows="3"></textarea></div>
@@ -251,7 +264,6 @@
             const y = referenceDate.getFullYear(), m = referenceDate.getMonth();
             const monthKey = `${y}-${String(m+1).padStart(2,'0')}`;
             const goal = data.goals ? (data.goals[monthKey] || DEFAULT_GOAL) : DEFAULT_GOAL;
-
             if (currentView === 'month') {
                 const last = new Date(y, m + 1, 0).getDate();
                 document.getElementById('periodLabel').innerText = `${y}年${m + 1}月`;
@@ -267,14 +279,14 @@
                     const todayKey = today.toISOString().split('T')[0];
                     const todayDone = (data.sales[todayKey] && (data.sales[todayKey].hours || data.sales[todayKey].uber));
                     let remainingDays = last - today.getDate() + (todayDone ? 0 : 1);
-                    dailyReqStr = remainingDays > 0 ? Math.ceil(Math.max(0, goal - tSales) / remainingDays).toLocaleString() + "円" : "終了";
+                    if (remainingDays <= 0) dailyReqStr = "最終日終了";
+                    else dailyReqStr = Math.max(0, goal - tSales) > 0 ? Math.ceil((goal - tSales) / remainingDays).toLocaleString() + "円" : "達成！";
                     document.getElementById('dailyRequiredLabel').innerText = todayDone ? "1日必要額(明日から)" : "1日必要額(今日込)";
                 }
                 document.getElementById('dailyRequired').innerText = dailyReqStr;
             } else {
                 const tempDate = new Date(referenceDate); const day = tempDate.getDay(); const diff = (day === 0 ? -6 : 1 - day); 
                 const mon = new Date(tempDate.setDate(tempDate.getDate() + diff));
-                document.getElementById('periodLabel').innerText = `${mon.getMonth()+1}/${mon.getDate()}〜`;
                 for (let i = 0; i < 7; i++) {
                     let d = new Date(mon); d.setDate(d.getDate() + i); let key = d.toISOString().split('T')[0];
                     labels.push(['月','火','水','木','金','土','日'][i]); const s = data.sales[key] || {};
@@ -289,7 +301,6 @@
             document.getElementById('displayRemaining').innerText = Math.max(0, goal - tSales).toLocaleString() + "円";
             document.getElementById('avgHourly').innerText = tHours > 0 ? Math.round(tSales/tHours).toLocaleString() + "円" : "0円";
             document.getElementById('netHourly').innerText = tHours > 0 ? Math.round((tSales-tExp)/tHours).toLocaleString() + "円" : "0円";
-
             const opt = { responsive: true, maintainAspectRatio: false, plugins: { legend: false }, scales: { y: { beginAtZero: true, ticks: { font: { size: 8 } } }, x: { ticks: { font: { size: 7 } } } } };
             if (myChart) myChart.destroy(); myChart = new Chart(document.getElementById('salesChart'), { type: 'bar', data: { labels, datasets: [{ data: chartSales, backgroundColor: '#3498db' }] }, options: opt });
             if (myExpChart) myExpChart.destroy(); myExpChart = new Chart(document.getElementById('expenseChart'), { type: 'bar', data: { labels, datasets: [{ data: chartExp, backgroundColor: '#e06287' }] }, options: opt });
@@ -298,11 +309,16 @@
 
         function getKanaHead(str) {
             if (!str) return "他"; const c = str.charAt(0);
-            if (/[あ-おア-オぁ-ぉ平-ほ]/.test(c)) return "あ"; if (/[か-こカ-コガ-ゴか-こが-ご]/.test(c)) return "か";
-            if (/[さ-そサ-ソザ-ゾさ-そざ-ぞ]/.test(c)) return "さ"; if (/[た-とタ-トダ-ドた-とだ-ど]/.test(c)) return "た";
-            if (/[な-のナ-ノな-の]/.test(c)) return "な"; if (/[は-ほハ-ホバ-ボパ-ポは-ほば-ぼぱ-ぽ]/.test(c)) return "は";
-            if (/[ま-もマ-モま-も]/.test(c)) return "ま"; if (/[や-よヤ-ヨや-よ]/.test(c)) return "や";
-            if (/[ら-ろラ-ロら-ろ]/.test(c)) return "ら"; if (/[わ-んワ-ンわ-ん]/.test(c)) return "わ";
+            if (/[あいうえおぁぃぅぇぉアィゥェォア-オ]/.test(c)) return "あ";
+            if (/[かきくけこがぎぐげごカキクケコガギグゲゴ]/.test(c)) return "か";
+            if (/[さしすせそざじずぜぞサシスセソザジズゼゾ]/.test(c)) return "さ";
+            if (/[たちつてとだぢづでどタチツテトダヂヅデドっッ]/.test(c)) return "た";
+            if (/[なにぬねのナニヌネノ]/.test(c)) return "な";
+            if (/[はひふへほばびぶべぼぱぴぷぺぽハヒフヘホバビブベボパピプペポ]/.test(c)) return "は";
+            if (/[まみむめもマミムメモ]/.test(c)) return "ま";
+            if (/[やゆよゃゅょヤユヨャュョ]/.test(c)) return "や";
+            if (/[らりるれろラリルレロ]/.test(c)) return "ら";
+            if (/[わをんゎヮ]/.test(c)) return "わ";
             return "他";
         }
         function filterKana(k) { currentKana = k; document.querySelectorAll('.kana-btn').forEach(b => { b.classList.remove('active'); if(b.innerText === k) b.classList.add('active'); }); renderSpotList(); }
@@ -321,33 +337,17 @@
             });
         }
         function openSpotList() { renderSpotList(); document.getElementById('listModal').style.display = 'block'; }
-        function toggleMapType() { if (mapType === 'hybrid') { map.removeLayer(hybridLayer); L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map); mapType = 'normal'; document.getElementById('layerBtn').innerText = "🛰️"; } else { hybridLayer.addTo(map); mapType = 'hybrid'; document.getElementById('layerBtn').innerText = "🗺️"; } }
+        function toggleMapType() { if (mapType === 'hybrid') { map.removeLayer(hybridLayer); mapType = 'normal'; document.getElementById('layerBtn').innerText = "🛰️"; } else { hybridLayer.addTo(map); mapType = 'hybrid'; document.getElementById('layerBtn').innerText = "🗺️"; } }
         function analyzeMap() { const nowDay = new Date().getDay(); const nowHour = new Date().getHours(); let count = 0; Object.keys(allSpots).forEach(id => { const s = allSpots[id]; const isRel = (s.day === nowDay && Math.abs(s.hour - nowHour) <= 2); if (mapMarkers[id]) { if (isRel) { mapMarkers[id].setRadius(18); mapMarkers[id].setStyle({ weight: 5, color: '#000' }); count++; } else { mapMarkers[id].setRadius(10); mapMarkers[id].setStyle({ weight: 2, color: '#fff' }); } } }); alert(`分析結果: ${count}件強調`); }
         function startLocationWatch() { navigator.geolocation.watchPosition(p => { const pos = [p.coords.latitude, p.coords.longitude]; if (!currentPosMarker) { currentPosMarker = L.circleMarker(pos, { radius: 8, fillColor: "#3498db", color: "#fff", weight: 3, fillOpacity: 1 }).addTo(map); } else currentPosMarker.setLatLng(pos); window.latestPos = pos; }, null, { enableHighAccuracy: true }); }
         function goToCurrentLocation() { if (window.latestPos) map.flyTo(window.latestPos, 17); }
         function updateSubCat() { const m = document.getElementById('mainCat').value, s = document.getElementById('subCat'), g = document.getElementById('subCatGroup'), l = document.getElementById('subCatLabel'); s.innerHTML = ""; if (m === "待機") { l.innerText = "鳴りやすさ"; s.innerHTML = '<option value="鳴る">鳴るエリア</option><option value="鳴らない">鳴らない</option>'; g.style.display = "block"; } else if (m === "ピック" || m === "ドロップ" || m === "休憩") { l.innerText = "評価"; s.innerHTML = '<option value="最高">最高</option><option value="普通">普通</option><option value="要注意">要注意</option>'; g.style.display = "block"; } else g.style.display = "none"; }
-        function openSpotModal(lat, lng, id = null) {
-            editTargetId = id; document.getElementById('spotModal').style.display = 'block'; document.getElementById('deleteBtn').style.display = id ? 'block' : 'none';
-            if (id) { const s = allSpots[id]; document.getElementById('spotName').value = s.spotName || ""; document.getElementById('spotKana').value = s.spotKana || ""; document.getElementById('mainCat').value = s.mainCat; updateSubCat(); document.getElementById('subCat').value = s.subCat; document.getElementById('parkingStatus').value = s.parkingStatus || "不明"; document.getElementById('parkingNote').value = s.parkingNote || ""; document.getElementById('spotComment').value = s.comment || ""; window.tempLat = s.lat; window.tempLng = s.lng; } 
-            else { document.getElementById('spotName').value = ""; document.getElementById('spotKana').value = ""; document.getElementById('mainCat').value = ""; document.getElementById('subCatGroup').style.display = "none"; document.getElementById('parkingStatus').value = "不明"; document.getElementById('parkingNote').value = ""; document.getElementById('spotComment').value = ""; window.tempLat = lat; window.tempLng = lng; }
-        }
+        function openSpotModal(lat, lng, id = null) { editTargetId = id; document.getElementById('spotModal').style.display = 'block'; document.getElementById('deleteBtn').style.display = id ? 'block' : 'none'; if (id) { const s = allSpots[id]; document.getElementById('spotName').value = s.spotName || ""; document.getElementById('spotKana').value = s.spotKana || ""; document.getElementById('mainCat').value = s.mainCat; updateSubCat(); document.getElementById('subCat').value = s.subCat; document.getElementById('parkingStatus').value = s.parkingStatus || "不明"; document.getElementById('parkingNote').value = s.parkingNote || ""; document.getElementById('spotComment').value = s.comment || ""; window.tempLat = s.lat; window.tempLng = s.lng; } 
+            else { document.getElementById('spotName').value = ""; document.getElementById('spotKana').value = ""; document.getElementById('mainCat').value = ""; document.getElementById('subCatGroup').style.display = "none"; document.getElementById('parkingStatus').value = "不明"; document.getElementById('parkingNote').value = ""; document.getElementById('spotComment').value = ""; window.tempLat = lat; window.tempLng = lng; } }
         function closeSpotModal() { document.getElementById('spotModal').style.display = 'none'; }
         async function saveSpot() { const spot = { lat: window.tempLat, lng: window.tempLng, spotName: document.getElementById('spotName').value, spotKana: document.getElementById('spotKana').value, mainCat: document.getElementById('mainCat').value, subCat: document.getElementById('subCat').value, parkingStatus: document.getElementById('parkingStatus').value, parkingNote: document.getElementById('parkingNote').value, comment: document.getElementById('spotComment').value, rider: RIDERS[currentRiderIdx], time: new Date().toLocaleString(), day: new Date().getDay(), hour: new Date().getHours() }; await fetch(editTargetId ? `${DB_MAP.replace('.json', `/${editTargetId}.json`)}` : DB_MAP, { method: editTargetId?'PUT':'POST', body: JSON.stringify(spot) }); closeSpotModal(); loadAllSpots(); }
         async function deleteSpot() { if(!confirm("削除？")) return; await fetch(`${DB_MAP.replace('.json', `/${editTargetId}.json`)}`, { method: 'DELETE' }); closeSpotModal(); loadAllSpots(); }
-        async function loadAllSpots() {
-            const res = await fetch(DB_MAP); allSpots = await res.json() || {}; Object.values(mapMarkers).forEach(m => map.removeLayer(m));
-            Object.keys(allSpots).forEach(id => { const s = allSpots[id]; let color = (s.subCat === "最高" || s.subCat === "鳴る") ? "#2ecc71" : (s.subCat === "要注意" || s.subCat === "鳴らない") ? "#e74c3c" : "#f1c40f"; const m = L.circleMarker([s.lat, s.lng], { radius: 10, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.8 }).addTo(map); if (s.spotName || s.comment) m.bindTooltip(s.spotName || s.comment, { permanent: true, direction: 'right', className: 'leaflet-tooltip-own' }).openTooltip(); m.on('click', () => openSpotModal(s.lat, s.lng, id)); mapMarkers[id] = m; });
-        }
-        function openAnalysisModal() {
-            const name = RIDERS[currentRiderIdx]; const salesData = (allData[name] && allData[name].sales) ? allData[name].sales : {};
-            const daySum = { 0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[] }; const weatherSum = { "大雨":[], "雨":[], "小雨":[], "曇り":[], "晴れ":[] };
-            Object.keys(salesData).forEach(dateStr => { const s = salesData[dateStr]; const dh = s.hours || 0; if (dh > 0) { const ds = (s.uber||0)+(s.demae||0)+(s.menu||0)+(s.rocket||0); const salesHourly = ds / dh; const day = new Date(dateStr).getDay(); daySum[day].push(salesHourly); if (s.weather && weatherSum[s.weather] !== undefined) weatherSum[s.weather].push(salesHourly); } });
-            const dayAvg = [1,2,3,4,5,6,0].map(d => daySum[d].length ? Math.round(daySum[d].reduce((a,b)=>a+b)/daySum[d].length) : 0); const weatherAvg = ["大雨","雨","小雨","曇り","晴れ"].map(w => weatherSum[w].length ? Math.round(weatherSum[w].reduce((a,b)=>a+b)/weatherSum[w].length) : 0);
-            document.getElementById('analysisModal').style.display = 'block'; const chartOpt = { responsive: true, maintainAspectRatio: false, plugins: { legend: false }, scales: { y: { beginAtZero: true } } };
-            if (dayAnalysisChart) dayAnalysisChart.destroy(); dayAnalysisChart = new Chart(document.getElementById('dayAnalysisChart'), { type: 'bar', data: { labels: ['月','火','水','木','金','土','日'], datasets: [{ data: dayAvg, backgroundColor: '#3498db' }] }, options: chartOpt });
-            if (weatherAnalysisChart) weatherAnalysisChart.destroy(); weatherAnalysisChart = new Chart(document.getElementById('weatherAnalysisChart'), { type: 'bar', data: { labels: ['大雨','雨','小雨','曇','晴'], datasets: [{ data: weatherAvg, backgroundColor: ['#6c5ce7','#0984e3','#00cec9','#636e72','#f39c12'] }] }, options: chartOpt });
-        }
-        function closeAnalysisModal() { document.getElementById('analysisModal').style.display = 'none'; }
+        async function loadAllSpots() { const res = await fetch(DB_MAP); allSpots = await res.json() || {}; Object.values(mapMarkers).forEach(m => map.removeLayer(m)); Object.keys(allSpots).forEach(id => { const s = allSpots[id]; let color = (s.subCat === "最高" || s.subCat === "鳴る") ? "#2ecc71" : (s.subCat === "要注意" || s.subCat === "鳴らない") ? "#e74c3c" : "#f1c40f"; const m = L.circleMarker([s.lat, s.lng], { radius: 10, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.8 }).addTo(map); if (s.spotName || s.comment) m.bindTooltip(s.spotName || s.comment, { permanent: true, direction: 'right', className: 'leaflet-tooltip-own' }).openTooltip(); m.on('click', () => openSpotModal(s.lat, s.lng, id)); mapMarkers[id] = m; }); }
         async function saveSales() { const n = RIDERS[currentRiderIdx], dk = document.getElementById('inputDate').value; if(!allData[n]) allData[n] = { sales: {}, goals: {} }; allData[n].sales[dk] = { hours: Number(document.getElementById('inputHours').value), gas: Number(document.getElementById('inputGas').value), otherExp: Number(document.getElementById('inputOtherExp').value), uber: Number(document.getElementById('inputUber').value), demae: Number(document.getElementById('inputDemae').value), menu: Number(document.getElementById('inputMenu').value), rocket: Number(document.getElementById('inputRocket').value), weather: selectedWeather }; renderApp(); await fetch(DB_SALES, { method: 'PUT', body: JSON.stringify(allData) }); closeInputModal(); }
         function loadExistingData() { const n = RIDERS[currentRiderIdx], dk = document.getElementById('inputDate').value; const d = (allData[n] && allData[n].sales && allData[n].sales[dk]) ? allData[n].sales[dk] : {}; document.getElementById('inputHours').value = d.hours || ""; document.getElementById('inputGas').value = d.gas || ""; document.getElementById('inputOtherExp').value = d.otherExp || ""; document.getElementById('inputUber').value = d.uber || ""; document.getElementById('inputDemae').value = d.demae || ""; document.getElementById('inputMenu').value = d.menu || ""; document.getElementById('inputRocket').value = d.rocket || ""; setWeather(d.weather || ""); }
         function openInputModal() { document.getElementById('inputModal').style.display='block'; loadExistingData(); }
