@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Goal Rider Biz - V1.05.2</title>
+    <title>Goal Rider Biz - V1.05.3</title>
 
     <link rel="icon" href="https://img.icons8.com/clouds/256/delivery-man.png" type="image/png">
     <link rel="apple-touch-icon" href="https://img.icons8.com/clouds/256/delivery-man.png">
@@ -58,7 +58,6 @@
         .rule-btn { background: #f1c40f; border: none; color: #2c3e50; padding: 4px 10px; border-radius: 20px; font-size: 0.75em; font-weight: bold; cursor: pointer; }
         .analysis-chart-box { height: 180px; margin-bottom: 20px; }
 
-        /* スポット一覧：フィルタ・要注意(最低)抽出対応 */
         .filter-tabs { display: flex; gap: 2px; margin-bottom: 8px; background: #eee; padding: 2px; border-radius: 8px; overflow-x: auto; }
         .filter-btn { flex: 1; border: none; background: none; padding: 6px 4px; font-size: 0.65em; font-weight: bold; border-radius: 6px; color: #777; cursor: pointer; white-space: nowrap; }
         .filter-btn.active { background: white; color: #2c3e50; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
@@ -99,7 +98,7 @@
         <button id="tabMap" class="tab-btn" onclick="showPage('map')">マップ</button>
     </div>
     
-    <div class="version-bar">GoalRider V1.05.2</div>
+    <div class="version-bar">GoalRider V1.05.3</div>
 
     <div id="pageSales" class="content-area active">
         <div class="rider-selector">
@@ -186,7 +185,10 @@
             <h3 id="spotModalTitle">地点メモ</h3>
             <div id="spotInfo" style="font-size: 0.65em; color: #666; margin-bottom: 8px;"></div>
             
-            <div class="input-group"><label>施設名 / 店舗名</label><input type="text" id="spotName" placeholder="〇〇マンション / 〇〇店"></div>
+            <div class="compact-grid">
+                <div class="input-group"><label>施設名 / 店舗名</label><input type="text" id="spotName" placeholder="〇〇マンション / 〇〇店"></div>
+                <div class="input-group"><label>施設名 (カナ)</label><input type="text" id="spotKana" placeholder="ササキビル"></div>
+            </div>
             
             <div class="compact-grid">
                 <div class="input-group">
@@ -365,6 +367,7 @@
             if (myHourlyChart) myHourlyChart.destroy(); myHourlyChart = new Chart(document.getElementById('hourlyChart'), { type: 'line', data: { labels, datasets: [{ data: chartHourly, borderColor: '#f39c12', tension: 0.3 }]}, options: opt });
         }
 
+        // --- フィルタロジック ---
         function getKanaHead(str) {
             if (!str) return "他";
             const c = str.charAt(0);
@@ -402,35 +405,23 @@
             const listDiv = document.getElementById('spotList'); listDiv.innerHTML = "";
             Object.keys(allSpots).reverse().forEach(id => {
                 const s = allSpots[id];
-                
-                // 要注意(最低)フィルタ
                 if (currentFilter === '要注意') {
                     if (!(s.subCat === '最低' || s.subCat === '鳴らない')) return;
                 } else if (currentFilter !== 'すべて' && s.mainCat !== currentFilter) {
                     return;
                 }
 
-                // 50音フィルタ (施設名またはコメントで判別)
+                // 50音フィルタ：フリガナ(spotKana)を最優先、なければ施設名(spotName)、最後はコメント
                 if (currentKana !== '全') {
-                    const head = getKanaHead(s.spotName || s.comment);
+                    const targetStr = s.spotKana || s.spotName || s.comment || "";
+                    const head = getKanaHead(targetStr);
                     if (head !== currentKana) return;
                 }
 
                 const item = document.createElement('div'); item.className = "list-item";
                 item.onclick = () => { document.getElementById('listModal').style.display='none'; map.flyTo([s.lat, s.lng], 18); setTimeout(() => openSpotModal(s.lat, s.lng, id), 500); };
-                
                 const pTag = (s.parkingStatus && s.parkingStatus !== '不明') ? `<div class="list-parking">🅿️ ${s.parkingStatus}${s.parkingNote ? ` (${s.parkingNote})` : ''}</div>` : '';
-                
-                item.innerHTML = `
-                    <div class="list-info">
-                        ${s.spotName ? `<div class="list-spot-name">${s.spotName}</div>` : ''}
-                        <div class="list-title"><span class="cat-tag tag-${s.mainCat}">${s.mainCat}</span><span>${s.subCat}</span></div>
-                        ${pTag}
-                        <div class="list-meta">${s.rider} / ${s.time}</div>
-                        ${s.comment ? `<div class="list-comment">${s.comment}</div>` : ''}
-                    </div>
-                    <div style="color:#3498db;align-self:center;padding-left:10px;">🔍</div>
-                `;
+                item.innerHTML = `<div class="list-info">${s.spotName ? `<div class="list-spot-name">${s.spotName}</div>` : ''}<div class="list-title"><span class="cat-tag tag-${s.mainCat}">${s.mainCat}</span><span>${s.subCat}</span></div>${pTag}<div class="list-meta">${s.rider} / ${s.time}</div>${s.comment ? `<div class="list-comment">${s.comment}</div>` : ''}</div><div style="color:#3498db;align-self:center;padding-left:10px;">🔍</div>`;
                 listDiv.appendChild(item);
             });
             if (listDiv.innerHTML === "") listDiv.innerHTML = "<p style='text-align:center; color:#999; font-size:0.8em; margin:20px 0;'>該当するデータはありません</p>";
@@ -438,6 +429,7 @@
 
         function openSpotList() { renderSpotList(); document.getElementById('listModal').style.display = 'block'; }
 
+        // --- MAP機能 ---
         function toggleMapType() { 
             if (mapType === 'hybrid') { map.removeLayer(hybridLayer); baseLayer.addTo(map); mapType = 'normal'; document.getElementById('layerBtn').innerText = "🛰️"; }
             else { map.removeLayer(baseLayer); hybridLayer.addTo(map); mapType = 'hybrid'; document.getElementById('layerBtn').innerText = "🗺️"; } 
@@ -471,6 +463,7 @@
             if (id) {
                 const s = allSpots[id]; 
                 document.getElementById('spotName').value = s.spotName || "";
+                document.getElementById('spotKana').value = s.spotKana || "";
                 document.getElementById('mainCat').value = s.mainCat; updateSubCat(); 
                 document.getElementById('subCat').value = s.subCat; 
                 document.getElementById('parkingStatus').value = s.parkingStatus || "不明";
@@ -478,7 +471,7 @@
                 document.getElementById('spotComment').value = s.comment || "";
                 window.tempLat = s.lat; window.tempLng = s.lng;
             } else {
-                document.getElementById('spotName').value = "";
+                document.getElementById('spotName').value = ""; document.getElementById('spotKana').value = "";
                 document.getElementById('mainCat').value = ""; document.getElementById('subCatGroup').style.display = "none"; 
                 document.getElementById('parkingStatus').value = "不明"; document.getElementById('parkingNote').value = "";
                 document.getElementById('spotComment').value = "";
@@ -492,6 +485,7 @@
             const spot = { 
                 lat: window.tempLat, lng: window.tempLng, 
                 spotName: document.getElementById('spotName').value,
+                spotKana: document.getElementById('spotKana').value,
                 mainCat: document.getElementById('mainCat').value, 
                 subCat: document.getElementById('subCat').value, 
                 parkingStatus: document.getElementById('parkingStatus').value,
@@ -519,7 +513,7 @@
             });
         }
 
-        // --- 共通分析・入力系 ---
+        // --- 共通分析・売上系 ---
         function openAnalysisModal() {
             const name = RIDERS[currentRiderIdx]; const salesData = (allData[name] && allData[name].sales) ? allData[name].sales : {};
             const daySum = { 0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[] }; const weatherSum = { "大雨":[], "雨":[], "小雨":[], "曇り":[], "晴れ":[] };
