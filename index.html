@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Goal Rider Biz - V1.06.3</title>
+    <title>Goal Rider Biz - V1.06.4</title>
 
     <link rel="icon" href="https://img.icons8.com/clouds/256/delivery-man.png" type="image/png">
     <link rel="apple-touch-icon" href="https://img.icons8.com/clouds/256/delivery-man.png">
@@ -46,18 +46,20 @@
         .map-ui { position: absolute; bottom: 85px; right: 15px; display: flex; flex-direction: column; gap: 10px; z-index: 1000; }
         .ui-btn { width: 50px; height: 50px; border-radius: 25px; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; font-size: 1.1em; cursor: pointer; }
         
-        /* V1.06.3 横長ツールチップ調整 */
+        /* V1.06.4 横長コメントボックスの決定版設定 */
         .leaflet-tooltip-own { 
             background: white; 
             border: 1px solid #333; 
             border-radius: 4px; 
-            padding: 4px 8px; 
-            font-size: 9px; 
+            padding: 6px 10px; 
+            font-size: 10px; 
             font-weight: bold; 
             white-space: normal; 
-            max-width: 250px; /* 120pxから拡大して横長に */
-            line-height: 1.3;
-            box-shadow: 0 1px 5px rgba(0,0,0,0.3);
+            min-width: 200px; /* 最小幅を確保 */
+            max-width: 300px; /* 最大幅を広げて横長に */
+            line-height: 1.4;
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+            color: #333;
         }
 
         .comment-ctrl-bar { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; gap: 4px; z-index: 1000; overflow-x: auto; background: rgba(255,255,255,0.9); padding: 5px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
@@ -90,18 +92,8 @@
         .tag-ピック { background: #e67e22; }
         .tag-ドロップ { background: #2980b9; }
         .tag-休憩 { background: #27ae60; }
-        .list-meta { font-size: 0.65em; color: #999; margin-top: 2px; }
         .list-parking { font-size: 0.7em; color: #27ae60; font-weight: bold; margin-top: 2px; display: flex; align-items: center; gap: 3px; }
         .list-comment { font-size: 0.8em; color: #555; margin-top: 4px; background: #fcfcfc; padding: 4px; border-radius: 4px; border-left: 3px solid #ddd; }
-
-        .weather-selector { display: flex; gap: 4px; margin-bottom: 12px; justify-content: space-between; }
-        .weather-btn { flex: 1; padding: 10px 0; border: 2px solid #eee; border-radius: 10px; background: white; cursor: pointer; font-size: 1.4em; display: flex; align-items: center; justify-content: center; filter: grayscale(100%); }
-        .weather-btn.active { filter: grayscale(0%); color: white; border-color: transparent; }
-        .weather-btn.active[data-w="大雨"] { background: #6c5ce7 !important; }
-        .weather-btn.active[data-w="雨"] { background: #0984e3 !important; }
-        .weather-btn.active[data-w="小雨"] { background: #00cec9 !important; }
-        .weather-btn.active[data-w="曇り"] { background: #636e72 !important; }
-        .weather-btn.active[data-w="晴れ"] { background: #f39c12 !important; }
     </style>
 </head>
 <body>
@@ -111,7 +103,7 @@
         <button id="tabMap" class="tab-btn" onclick="showPage('map')">マップ</button>
     </div>
     
-    <div class="version-bar">GoalRider V1.06.3</div>
+    <div class="version-bar">GoalRider V1.06.4</div>
 
     <div id="pageSales" class="content-area active">
         <div class="rider-selector">
@@ -229,7 +221,7 @@
         <div class="modal-content">
             <h3>実績入力</h3>
             <div class="input-group"><label>日付</label><input type="date" id="inputDate" onchange="loadExistingData()"></div>
-            <div class="weather-selector">
+            <div class="weather-selector" id="weatherSelector">
                 <button class="weather-btn" data-w="大雨" onclick="setWeather('大雨')">⛈️</button>
                 <button class="weather-btn" data-w="雨" onclick="setWeather('雨')">🌧️</button>
                 <button class="weather-btn" data-w="小雨" onclick="setWeather('小雨')">🌦️</button>
@@ -241,14 +233,13 @@
                 <div class="input-group"><label>ガソリン</label><input type="number" id="inputGas"></div>
             </div>
             <div class="input-group"><label>その他経費</label><input type="number" id="inputOtherExp"></div>
-            <hr style="border:0; border-top:1px solid #eee;">
             <div class="compact-grid">
                 <div class="input-group"><label>Uber</label><input type="number" id="inputUber"></div>
                 <div class="input-group"><label>出前館</label><input type="number" id="inputDemae"></div>
                 <div class="input-group"><label>Menu</label><input type="number" id="inputMenu"></div>
                 <div class="input-group"><label>ロケット</label><input type="number" id="inputRocket"></div>
             </div>
-            <button class="btn-modal-primary" onclick="saveSales()">保存</button>
+            <button class="btn-modal-primary" onclick="saveSales()">保存して閉じる</button>
             <button onclick="closeInputModal()" style="width:100%; border:none; background:none; color:#777; padding:10px;">閉じる</button>
         </div>
     </div>
@@ -325,7 +316,6 @@
             const data = allData[name]; let labels = [], chartSales = [], chartExp = [], chartHourly = [], tSales = 0, tExp = 0, tHours = 0;
             const y = referenceDate.getFullYear(), m = referenceDate.getMonth();
             const goal = data.goals ? (data.goals[`${y}-${String(m+1).padStart(2,'0')}`] || DEFAULT_GOAL) : DEFAULT_GOAL;
-
             if (currentView === 'month') {
                 const last = new Date(y, m + 1, 0).getDate();
                 document.getElementById('periodLabel').innerText = `${y}年${m + 1}月`;
@@ -363,7 +353,6 @@
             document.getElementById('displayRemaining').innerText = Math.max(0, goal - tSales).toLocaleString() + "円";
             document.getElementById('avgHourly').innerText = tHours > 0 ? Math.round(tSales/tHours).toLocaleString() + "円" : "0円";
             document.getElementById('netHourly').innerText = tHours > 0 ? Math.round((tSales-tExp)/tHours).toLocaleString() + "円" : "0円";
-
             if (myChart) myChart.destroy(); myChart = new Chart(document.getElementById('salesChart'), { type: 'bar', data: { labels, datasets: [{ data: chartSales, backgroundColor: '#3498db' }] }, options: optCharts });
             if (myExpChart) myExpChart.destroy(); myExpChart = new Chart(document.getElementById('expenseChart'), { type: 'bar', data: { labels, datasets: [{ data: chartExp, backgroundColor: '#e06287' }] }, options: optCharts });
             if (myHourlyChart) myHourlyChart.destroy(); myHourlyChart = new Chart(document.getElementById('hourlyChart'), { type: 'line', data: { labels, datasets: [{ data: chartHourly, borderColor: '#f39c12', tension: 0.3 }]}, options: optCharts });
@@ -381,7 +370,7 @@
             if (/[まみむめもまみむめもマミムメモ]/.test(c)) return "ま";
             if (/[やゆよゃゅょやゆよゃゅょヤユヨャュョ]/.test(c)) return "や";
             if (/[らりるれろらりるれろラリルレロ]/.test(c)) return "ら";
-            if (/[わをんゎヮわをん]/.test(c) || /[ワヲン]/.test(c)) return "わ";
+            if (/[わをんゎヮわをんワヲン]/.test(c)) return "わ";
             return "他";
         }
         function filterKana(k) { currentKana = k; document.querySelectorAll('.kana-btn').forEach(b => { b.classList.remove('active'); if(b.innerText === k) b.classList.add('active'); }); renderSpotList(); }
@@ -403,24 +392,17 @@
                 item.innerHTML = `<div class="list-info">${s.spotName ? `<div class="list-spot-name">${s.spotName}</div>` : ''}<div class="list-title"><span class="cat-tag tag-${s.mainCat}">${s.mainCat}</span><span>${s.subCat}</span></div>${pTag}<div class="list-meta">${s.rider} / ${s.time}</div>${s.comment ? `<div class="list-comment">${s.comment}</div>` : ''}</div><div style="color:#3498db;align-self:center;padding-left:10px;">🔍</div>`;
                 listDiv.appendChild(item);
             });
-            if (listDiv.innerHTML === "") listDiv.innerHTML = "<p style='text-align:center; color:#999; font-size:0.8em; margin:20px 0;'>該当するデータはありません</p>";
         }
         function openSpotList() { renderSpotList(); document.getElementById('listModal').style.display = 'block'; }
-        
         function analyzeMap() { const nowDay = new Date().getDay(), nowHour = new Date().getHours(); let count = 0; Object.keys(allSpots).forEach(id => { const s = allSpots[id], isRel = (s.day === nowDay && Math.abs(s.hour - nowHour) <= 2); if (mapMarkers[id]) { if (isRel) { mapMarkers[id].setRadius(18); mapMarkers[id].setStyle({ weight: 5, color: '#000' }); count++; } else { mapMarkers[id].setRadius(10); mapMarkers[id].setStyle({ weight: 2, color: '#fff' }); } } }); alert(`分析結果: ${count}件強調`); }
         function startLocationWatch() { navigator.geolocation.watchPosition(p => { const pos = [p.coords.latitude, p.coords.longitude]; if (!currentPosMarker) { currentPosMarker = L.circleMarker(pos, { radius: 8, fillColor: "#3498db", color: "#fff", weight: 3, fillOpacity: 1 }).addTo(map); } else currentPosMarker.setLatLng(pos); window.latestPos = pos; }, null, { enableHighAccuracy: true }); }
         function goToCurrentLocation() { if (window.latestPos) map.flyTo(window.latestPos, 17); }
         function updateSubCat() { const m = document.getElementById('mainCat').value, s = document.getElementById('subCat'), g = document.getElementById('subCatGroup'), l = document.getElementById('subCatLabel'); s.innerHTML = ""; if (m === "待機") { l.innerText = "鳴りやすさ"; s.innerHTML = '<option value="鳴る">鳴るエリア</option><option value="鳴らない">鳴らない</option>'; g.style.display = "block"; } else if (m === "ピック" || m === "ドロップ" || m === "休憩") { l.innerText = "評価"; s.innerHTML = '<option value="最高">最高</option><option value="普通">普通</option><option value="要注意">要注意</option>'; g.style.display = "block"; } else g.style.display = "none"; }
-        
-        function openSpotModal(lat, lng, id = null) {
-            editTargetId = id; document.getElementById('spotModal').style.display = 'block'; document.getElementById('deleteBtn').style.display = id ? 'block' : 'none';
-            if (id) { const s = allSpots[id]; document.getElementById('spotName').value = s.spotName || ""; document.getElementById('spotKana').value = s.spotKana || ""; document.getElementById('mainCat').value = s.mainCat; updateSubCat(); document.getElementById('subCat').value = s.subCat; document.getElementById('parkingStatus').value = s.parkingStatus || "不明"; document.getElementById('parkingNote').value = s.parkingNote || ""; document.getElementById('spotComment').value = s.comment || ""; window.tempLat = s.lat; window.tempLng = s.lng; } 
-            else { document.getElementById('spotName').value = ""; document.getElementById('spotKana').value = ""; document.getElementById('mainCat').value = ""; document.getElementById('subCatGroup').style.display = "none"; document.getElementById('parkingStatus').value = "不明"; document.getElementById('parkingNote').value = ""; document.getElementById('spotComment').value = ""; window.tempLat = lat; window.tempLng = lng; }
-        }
+        function openSpotModal(lat, lng, id = null) { editTargetId = id; document.getElementById('spotModal').style.display = 'block'; document.getElementById('deleteBtn').style.display = id ? 'block' : 'none'; if (id) { const s = allSpots[id]; document.getElementById('spotName').value = s.spotName || ""; document.getElementById('spotKana').value = s.spotKana || ""; document.getElementById('mainCat').value = s.mainCat; updateSubCat(); document.getElementById('subCat').value = s.subCat; document.getElementById('parkingStatus').value = s.parkingStatus || "不明"; document.getElementById('parkingNote').value = s.parkingNote || ""; document.getElementById('spotComment').value = s.comment || ""; window.tempLat = s.lat; window.tempLng = s.lng; } 
+            else { document.getElementById('spotName').value = ""; document.getElementById('spotKana').value = ""; document.getElementById('mainCat').value = ""; document.getElementById('subCatGroup').style.display = "none"; document.getElementById('parkingStatus').value = "不明"; document.getElementById('parkingNote').value = ""; document.getElementById('spotComment').value = ""; window.tempLat = lat; window.tempLng = lng; } }
         function closeSpotModal() { document.getElementById('spotModal').style.display = 'none'; }
         async function saveSpot() { const spot = { lat: window.tempLat, lng: window.tempLng, spotName: document.getElementById('spotName').value, spotKana: document.getElementById('spotKana').value, mainCat: document.getElementById('mainCat').value, subCat: document.getElementById('subCat').value, parkingStatus: document.getElementById('parkingStatus').value, parkingNote: document.getElementById('parkingNote').value, comment: document.getElementById('spotComment').value, rider: RIDERS[currentRiderIdx], time: new Date().toLocaleString(), day: new Date().getDay(), hour: new Date().getHours() }; await fetch(editTargetId ? `${DB_MAP.replace('.json', `/${editTargetId}.json`)}` : DB_MAP, { method: editTargetId?'PUT':'POST', body: JSON.stringify(spot) }); closeSpotModal(); loadAllSpots(); }
         async function deleteSpot() { if(!confirm("削除？")) return; await fetch(`${DB_MAP.replace('.json', `/${editTargetId}.json`)}`, { method: 'DELETE' }); closeSpotModal(); loadAllSpots(); }
-        
         async function loadAllSpots() {
             const res = await fetch(DB_MAP); allSpots = await res.json() || {}; Object.values(mapMarkers).forEach(m => map.removeLayer(m));
             Object.keys(allSpots).forEach(id => {
@@ -438,7 +420,7 @@
             const daySum = { 0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[] }, weatherSum = { "大雨":[], "雨":[], "小雨":[], "曇り":[], "晴れ":[] };
             Object.keys(salesData).forEach(dateStr => { const s = salesData[dateStr]; const dh = s.hours || 0; if (dh > 0) { const ds = (s.uber||0)+(s.demae||0)+(s.menu||0)+(s.rocket||0), sh = ds / dh, d = new Date(dateStr).getDay(); daySum[d].push(sh); if (s.weather && weatherSum[s.weather] !== undefined) weatherSum[s.weather].push(sh); } });
             const dayAvg = [1,2,3,4,5,6,0].map(d => daySum[d].length ? Math.round(daySum[d].reduce((a,b)=>a+b)/daySum[d].length) : 0), weatherAvg = ["大雨","雨","小雨","曇り","晴れ"].map(w => weatherSum[w].length ? Math.round(weatherSum[w].reduce((a,b)=>a+b)/weatherSum[w].length) : 0);
-            document.getElementById('analysisModal').style.display = 'block';
+            document.getElementById('analysisModal').style.display = 'block'; 
             if (dayAnalysisChart) dayAnalysisChart.destroy(); dayAnalysisChart = new Chart(document.getElementById('dayAnalysisChart'), { type: 'bar', data: { labels: ['月','火','水','木','金','土','日'], datasets: [{ data: dayAvg, backgroundColor: '#3498db' }] }, options: optCharts });
             if (weatherAnalysisChart) weatherAnalysisChart.destroy(); weatherAnalysisChart = new Chart(document.getElementById('weatherAnalysisChart'), { type: 'bar', data: { labels: ['大雨','雨','小雨','曇','晴'], datasets: [{ data: weatherAvg, backgroundColor: ['#6c5ce7','#0984e3','#00cec9','#636e72','#f39c12'] }] }, options: optCharts });
         }
