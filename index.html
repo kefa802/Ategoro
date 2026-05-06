@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Goal Rider Biz - V1.05.4</title>
+    <title>Goal Rider Biz - V1.05.4.1</title>
 
     <link rel="icon" href="https://img.icons8.com/clouds/256/delivery-man.png" type="image/png">
     <link rel="apple-touch-icon" href="https://img.icons8.com/clouds/256/delivery-man.png">
@@ -57,16 +57,14 @@
         input, select, textarea { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; font-size: 1em; }
         .rule-btn { background: #f1c40f; border: none; color: #2c3e50; padding: 4px 10px; border-radius: 20px; font-size: 0.75em; font-weight: bold; cursor: pointer; }
 
-        /* スポット一覧：フィルタ強化版 */
         .filter-tabs { display: flex; gap: 2px; margin-bottom: 8px; background: #eee; padding: 2px; border-radius: 8px; overflow-x: auto; }
         .filter-btn { flex: 1; border: none; background: none; padding: 6px 4px; font-size: 0.65em; font-weight: bold; border-radius: 6px; color: #777; cursor: pointer; white-space: nowrap; }
         .filter-btn.active { background: white; color: #2c3e50; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .filter-btn.alert { color: #e74c3c; }
         .filter-btn.alert.active { background: #e74c3c; color: white; }
         
-        /* あかさたなフィルタUI */
         .kana-tabs { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; margin-bottom: 12px; background: #f0f0f0; padding: 2px; border-radius: 8px; }
-        .kana-btn { border: none; background: white; padding: 6px 0; font-size: 0.65em; border-radius: 4px; color: #666; cursor: pointer; font-weight: bold; }
+        .kana-btn { border: none; background: white; padding: 4px 0; font-size: 0.65em; border-radius: 4px; color: #666; cursor: pointer; font-weight: bold; }
         .kana-btn.active { background: #3498db; color: white; }
 
         .list-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; }
@@ -99,7 +97,7 @@
         <button id="tabMap" class="tab-btn" onclick="showPage('map')">マップ</button>
     </div>
     
-    <div class="version-bar">GoalRider V1.05.4</div>
+    <div class="version-bar">GoalRider V1.05.4.1</div>
 
     <div id="pageSales" class="content-area active">
         <div class="rider-selector">
@@ -155,7 +153,13 @@
             <h3 id="spotModalTitle">地点メモ</h3>
             <div id="spotInfo" style="font-size: 0.65em; color: #666; margin-bottom: 8px;"></div>
             
-            <div class="input-group"><label>施設名 / 店舗名</label><input type="text" id="spotName" placeholder="〇〇マンション / 〇〇店"></div>
+            <div class="compact-grid">
+                <div class="input-group"><label>施設名 / 店舗名</label><input type="text" id="spotName" placeholder="〇〇マンション / 〇〇店"></div>
+                <div class="input-group">
+                    <label>施設名 (カナ) <span style="font-weight:normal; font-size:0.85em; color:#888;">※任意</span></label>
+                    <input type="text" id="spotKana" placeholder="ササキビル">
+                </div>
+            </div>
             
             <div class="compact-grid">
                 <div class="input-group">
@@ -365,7 +369,6 @@
             if (myHourlyChart) myHourlyChart.destroy(); myHourlyChart = new Chart(document.getElementById('hourlyChart'), { type: 'line', data: { labels, datasets: [{ data: chartHourly, borderColor: '#f39c12', tension: 0.3 }]}, options: opt });
         }
 
-        // --- 50音フィルタロジック ---
         function getKanaHead(str) {
             if (!str) return "他";
             const c = str.charAt(0);
@@ -406,7 +409,7 @@
                     return;
                 }
                 if (currentKana !== '全') {
-                    const targetStr = s.spotName || s.comment || "";
+                    const targetStr = s.spotKana || s.spotName || s.comment || "";
                     if (getKanaHead(targetStr) !== currentKana) return;
                 }
                 const item = document.createElement('div'); item.className = "list-item";
@@ -436,6 +439,7 @@
         }
         function startLocationWatch() { navigator.geolocation.watchPosition(p => { const pos = [p.coords.latitude, p.coords.longitude]; if (!currentPosMarker) { currentPosMarker = L.circleMarker(pos, { radius: 8, fillColor: "#3498db", color: "#fff", weight: 3, fillOpacity: 1 }).addTo(map); } else currentPosMarker.setLatLng(pos); window.latestPos = pos; }, null, { enableHighAccuracy: true }); }
         function goToCurrentLocation() { if (window.latestPos) map.flyTo(window.latestPos, 17); }
+
         function updateSubCat() {
             const m = document.getElementById('mainCat').value, s = document.getElementById('subCat'), g = document.getElementById('subCatGroup'), l = document.getElementById('subCatLabel');
             s.innerHTML = "";
@@ -443,15 +447,18 @@
             else if (m === "ピック" || m === "ドロップ" || m === "休憩") { l.innerText = "評価"; s.innerHTML = '<option value="最高">最高</option><option value="普通">普通</option><option value="要注意">要注意</option>'; g.style.display = "block"; }
             else g.style.display = "none";
         }
+
         function openSpotModal(lat, lng, id = null) {
             editTargetId = id; document.getElementById('spotModal').style.display = 'block'; document.getElementById('deleteBtn').style.display = id ? 'block' : 'none';
             if (id) {
-                const s = allSpots[id]; document.getElementById('spotName').value = s.spotName || "";
+                const s = allSpots[id]; 
+                document.getElementById('spotName').value = s.spotName || "";
+                document.getElementById('spotKana').value = s.spotKana || "";
                 document.getElementById('mainCat').value = s.mainCat; updateSubCat(); document.getElementById('subCat').value = s.subCat; 
                 document.getElementById('parkingStatus').value = s.parkingStatus || "不明"; document.getElementById('parkingNote').value = s.parkingNote || "";
                 document.getElementById('spotComment').value = s.comment || ""; window.tempLat = s.lat; window.tempLng = s.lng;
             } else {
-                document.getElementById('spotName').value = ""; 
+                document.getElementById('spotName').value = ""; document.getElementById('spotKana').value = "";
                 document.getElementById('mainCat').value = ""; document.getElementById('subCatGroup').style.display = "none"; 
                 document.getElementById('parkingStatus').value = "不明"; document.getElementById('parkingNote').value = "";
                 document.getElementById('spotComment').value = ""; window.tempLat = lat; window.tempLng = lng;
@@ -459,7 +466,12 @@
         }
         function closeSpotModal() { document.getElementById('spotModal').style.display = 'none'; }
         async function saveSpot() {
-            const spot = { lat: window.tempLat, lng: window.tempLng, spotName: document.getElementById('spotName').value, mainCat: document.getElementById('mainCat').value, subCat: document.getElementById('subCat').value, parkingStatus: document.getElementById('parkingStatus').value, parkingNote: document.getElementById('parkingNote').value, comment: document.getElementById('spotComment').value, rider: RIDERS[currentRiderIdx], time: new Date().toLocaleString(), day: new Date().getDay(), hour: new Date().getHours() };
+            const spot = { 
+                lat: window.tempLat, lng: window.tempLng, spotName: document.getElementById('spotName').value, spotKana: document.getElementById('spotKana').value,
+                mainCat: document.getElementById('mainCat').value, subCat: document.getElementById('subCat').value, parkingStatus: document.getElementById('parkingStatus').value,
+                parkingNote: document.getElementById('parkingNote').value, comment: document.getElementById('spotComment').value, rider: RIDERS[currentRiderIdx], 
+                time: new Date().toLocaleString(), day: new Date().getDay(), hour: new Date().getHours() 
+            };
             await fetch(editTargetId ? `${DB_MAP.replace('.json', `/${editTargetId}.json`)}` : DB_MAP, { method: editTargetId?'PUT':'POST', body: JSON.stringify(spot) });
             closeSpotModal(); loadAllSpots();
         }
