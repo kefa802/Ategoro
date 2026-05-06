@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Goal Rider Biz - V1.05.3</title>
+    <title>Goal Rider Biz - V1.05.3.1</title>
 
     <link rel="icon" href="https://img.icons8.com/clouds/256/delivery-man.png" type="image/png">
     <link rel="apple-touch-icon" href="https://img.icons8.com/clouds/256/delivery-man.png">
@@ -98,7 +98,7 @@
         <button id="tabMap" class="tab-btn" onclick="showPage('map')">マップ</button>
     </div>
     
-    <div class="version-bar">GoalRider V1.05.3</div>
+    <div class="version-bar">GoalRider V1.05.3.1</div>
 
     <div id="pageSales" class="content-area active">
         <div class="rider-selector">
@@ -149,37 +149,6 @@
         </div>
     </div>
 
-    <div id="inputModal" class="modal">
-        <div class="modal-content">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <h3 style="margin: 0; font-size: 1.2em;">実績入力</h3>
-                <button class="rule-btn" onclick="alert('【判定ルール】\n1時間以上雨が降っていたら雨を選択。\n1時間以内なら「曇り」または「晴れ」を選択してください。')">💡判定ルール</button>
-            </div>
-            <div class="input-group"><label>日付</label><input type="date" id="inputDate" onchange="loadExistingData()"></div>
-            <div class="weather-selector" id="weatherSelector">
-                <button class="weather-btn" data-w="大雨" onclick="setWeather('大雨')">⛈️</button>
-                <button class="weather-btn" data-w="雨" onclick="setWeather('雨')">🌧️</button>
-                <button class="weather-btn" data-w="小雨" onclick="setWeather('小雨')">🌦️</button>
-                <button class="weather-btn" data-w="曇り" onclick="setWeather('曇り')">☁️</button>
-                <button class="weather-btn" data-w="晴れ" onclick="setWeather('晴れ')">☀️</button>
-            </div>
-            <div class="compact-grid">
-                <div class="input-group"><label>稼働(h)</label><input type="number" id="inputHours" step="0.5"></div>
-                <div class="input-group"><label>ガソリン</label><input type="number" id="inputGas"></div>
-            </div>
-            <div class="input-group"><label>その他経費</label><input type="number" id="inputOtherExp"></div>
-            <hr style="border:0; border-top:1px solid #eee; margin:10px 0;">
-            <div class="compact-grid">
-                <div class="input-group"><label>Uber</label><input type="number" id="inputUber"></div>
-                <div class="input-group"><label>出前館</label><input type="number" id="inputDemae"></div>
-                <div class="input-group"><label>Menu</label><input type="number" id="inputMenu"></div>
-                <div class="input-group"><label>ロケット</label><input type="number" id="inputRocket"></div>
-            </div>
-            <button class="btn-modal-primary" style="margin-top:10px;" onclick="saveSales()">保存して閉じる</button>
-            <button onclick="closeInputModal()" style="width:100%; border:none; background:none; color:#777; padding:10px;">閉じる</button>
-        </div>
-    </div>
-
     <div id="spotModal" class="modal">
         <div class="modal-content">
             <h3 id="spotModalTitle">地点メモ</h3>
@@ -187,7 +156,10 @@
             
             <div class="compact-grid">
                 <div class="input-group"><label>施設名 / 店舗名</label><input type="text" id="spotName" placeholder="〇〇マンション / 〇〇店"></div>
-                <div class="input-group"><label>施設名 (カナ)</label><input type="text" id="spotKana" placeholder="ササキビル"></div>
+                <div class="input-group">
+                    <label>施設名 (カナ) <span style="font-weight:normal; font-size:0.85em; color:#888;">※任意</span></label>
+                    <input type="text" id="spotKana" placeholder="ササキビル">
+                </div>
             </div>
             
             <div class="compact-grid">
@@ -227,6 +199,37 @@
         </div>
     </div>
     
+    <div id="inputModal" class="modal">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h3 style="margin: 0; font-size: 1.2em;">実績入力</h3>
+                <button class="rule-btn" onclick="alert('【判定ルール】\n1時間以上雨が降っていたら雨を選択。\n1時間以内なら「曇り」または「晴れ」を選択してください。')">💡判定ルール</button>
+            </div>
+            <div class="input-group"><label>日付</label><input type="date" id="inputDate" onchange="loadExistingData()"></div>
+            <div class="weather-selector" id="weatherSelector">
+                <button class="weather-btn" data-w="大雨" onclick="setWeather('大雨')">⛈️</button>
+                <button class="weather-btn" data-w="雨" onclick="setWeather('雨')">🌧️</button>
+                <button class="weather-btn" data-w="小雨" onclick="setWeather('小雨')">🌦️</button>
+                <button class="weather-btn" data-w="曇り" onclick="setWeather('曇り')">☁️</button>
+                <button class="weather-btn" data-w="晴れ" onclick="setWeather('晴れ')">☀️</button>
+            </div>
+            <div class="compact-grid">
+                <div class="input-group"><label>稼働(h)</label><input type="number" id="inputHours" step="0.5"></div>
+                <div class="input-group"><label>ガソリン</label><input type="number" id="inputGas"></div>
+            </div>
+            <div class="input-group"><label>その他経費</label><input type="number" id="inputOtherExp"></div>
+            <hr style="border:0; border-top:1px solid #eee; margin:10px 0;">
+            <div class="compact-grid">
+                <div class="input-group"><label>Uber</label><input type="number" id="inputUber"></div>
+                <div class="input-group"><label>出前館</label><input type="number" id="inputDemae"></div>
+                <div class="input-group"><label>Menu</label><input type="number" id="inputMenu"></div>
+                <div class="input-group"><label>ロケット</label><input type="number" id="inputRocket"></div>
+            </div>
+            <button class="btn-modal-primary" style="margin-top:10px;" onclick="saveSales()">保存して閉じる</button>
+            <button onclick="closeInputModal()" style="width:100%; border:none; background:none; color:#777; padding:10px;">閉じる</button>
+        </div>
+    </div>
+
     <div id="listModal" class="modal">
         <div class="modal-content">
             <h3 style="margin-top:0;">スポット一覧</h3>
@@ -367,7 +370,6 @@
             if (myHourlyChart) myHourlyChart.destroy(); myHourlyChart = new Chart(document.getElementById('hourlyChart'), { type: 'line', data: { labels, datasets: [{ data: chartHourly, borderColor: '#f39c12', tension: 0.3 }]}, options: opt });
         }
 
-        // --- フィルタロジック ---
         function getKanaHead(str) {
             if (!str) return "他";
             const c = str.charAt(0);
@@ -386,10 +388,7 @@
 
         function filterKana(k) {
             currentKana = k;
-            document.querySelectorAll('.kana-btn').forEach(b => {
-                b.classList.remove('active');
-                if(b.innerText === k) b.classList.add('active');
-            });
+            document.querySelectorAll('.kana-btn').forEach(b => { b.classList.remove('active'); if(b.innerText === k) b.classList.add('active'); });
             renderSpotList();
         }
 
@@ -410,14 +409,11 @@
                 } else if (currentFilter !== 'すべて' && s.mainCat !== currentFilter) {
                     return;
                 }
-
-                // 50音フィルタ：フリガナ(spotKana)を最優先、なければ施設名(spotName)、最後はコメント
                 if (currentKana !== '全') {
                     const targetStr = s.spotKana || s.spotName || s.comment || "";
                     const head = getKanaHead(targetStr);
                     if (head !== currentKana) return;
                 }
-
                 const item = document.createElement('div'); item.className = "list-item";
                 item.onclick = () => { document.getElementById('listModal').style.display='none'; map.flyTo([s.lat, s.lng], 18); setTimeout(() => openSpotModal(s.lat, s.lng, id), 500); };
                 const pTag = (s.parkingStatus && s.parkingStatus !== '不明') ? `<div class="list-parking">🅿️ ${s.parkingStatus}${s.parkingNote ? ` (${s.parkingNote})` : ''}</div>` : '';
@@ -428,13 +424,10 @@
         }
 
         function openSpotList() { renderSpotList(); document.getElementById('listModal').style.display = 'block'; }
-
-        // --- MAP機能 ---
         function toggleMapType() { 
             if (mapType === 'hybrid') { map.removeLayer(hybridLayer); baseLayer.addTo(map); mapType = 'normal'; document.getElementById('layerBtn').innerText = "🛰️"; }
             else { map.removeLayer(baseLayer); hybridLayer.addTo(map); mapType = 'hybrid'; document.getElementById('layerBtn').innerText = "🗺️"; } 
         }
-
         function analyzeMap() {
             const nowDay = new Date().getDay(); const nowHour = new Date().getHours(); let count = 0;
             Object.keys(allSpots).forEach(id => {
@@ -461,47 +454,29 @@
         function openSpotModal(lat, lng, id = null) {
             editTargetId = id; document.getElementById('spotModal').style.display = 'block'; document.getElementById('deleteBtn').style.display = id ? 'block' : 'none';
             if (id) {
-                const s = allSpots[id]; 
-                document.getElementById('spotName').value = s.spotName || "";
-                document.getElementById('spotKana').value = s.spotKana || "";
-                document.getElementById('mainCat').value = s.mainCat; updateSubCat(); 
-                document.getElementById('subCat').value = s.subCat; 
-                document.getElementById('parkingStatus').value = s.parkingStatus || "不明";
-                document.getElementById('parkingNote').value = s.parkingNote || "";
-                document.getElementById('spotComment').value = s.comment || "";
-                window.tempLat = s.lat; window.tempLng = s.lng;
+                const s = allSpots[id]; document.getElementById('spotName').value = s.spotName || ""; document.getElementById('spotKana').value = s.spotKana || "";
+                document.getElementById('mainCat').value = s.mainCat; updateSubCat(); document.getElementById('subCat').value = s.subCat; 
+                document.getElementById('parkingStatus').value = s.parkingStatus || "不明"; document.getElementById('parkingNote').value = s.parkingNote || "";
+                document.getElementById('spotComment').value = s.comment || ""; window.tempLat = s.lat; window.tempLng = s.lng;
             } else {
                 document.getElementById('spotName').value = ""; document.getElementById('spotKana').value = "";
                 document.getElementById('mainCat').value = ""; document.getElementById('subCatGroup').style.display = "none"; 
                 document.getElementById('parkingStatus').value = "不明"; document.getElementById('parkingNote').value = "";
-                document.getElementById('spotComment').value = "";
-                window.tempLat = lat; window.tempLng = lng;
+                document.getElementById('spotComment').value = ""; window.tempLat = lat; window.tempLng = lng;
             }
         }
-
         function closeSpotModal() { document.getElementById('spotModal').style.display = 'none'; }
-
         async function saveSpot() {
             const spot = { 
-                lat: window.tempLat, lng: window.tempLng, 
-                spotName: document.getElementById('spotName').value,
-                spotKana: document.getElementById('spotKana').value,
-                mainCat: document.getElementById('mainCat').value, 
-                subCat: document.getElementById('subCat').value, 
-                parkingStatus: document.getElementById('parkingStatus').value,
-                parkingNote: document.getElementById('parkingNote').value,
-                comment: document.getElementById('spotComment').value, 
-                rider: RIDERS[currentRiderIdx], 
-                time: new Date().toLocaleString(), 
-                day: new Date().getDay(), 
-                hour: new Date().getHours() 
+                lat: window.tempLat, lng: window.tempLng, spotName: document.getElementById('spotName').value, spotKana: document.getElementById('spotKana').value,
+                mainCat: document.getElementById('mainCat').value, subCat: document.getElementById('subCat').value, parkingStatus: document.getElementById('parkingStatus').value,
+                parkingNote: document.getElementById('parkingNote').value, comment: document.getElementById('spotComment').value, rider: RIDERS[currentRiderIdx], 
+                time: new Date().toLocaleString(), day: new Date().getDay(), hour: new Date().getHours() 
             };
             await fetch(editTargetId ? `${DB_MAP.replace('.json', `/${editTargetId}.json`)}` : DB_MAP, { method: editTargetId?'PUT':'POST', body: JSON.stringify(spot) });
             closeSpotModal(); loadAllSpots();
         }
-
         async function deleteSpot() { if(!confirm("削除しますか？")) return; await fetch(`${DB_MAP.replace('.json', `/${editTargetId}.json`)}`, { method: 'DELETE' }); closeSpotModal(); loadAllSpots(); }
-        
         async function loadAllSpots() {
             const res = await fetch(DB_MAP); allSpots = await res.json() || {};
             Object.values(mapMarkers).forEach(m => map.removeLayer(m));
@@ -512,8 +487,6 @@
                 m.on('click', () => openSpotModal(s.lat, s.lng, id)); mapMarkers[id] = m;
             });
         }
-
-        // --- 共通分析・売上系 ---
         function openAnalysisModal() {
             const name = RIDERS[currentRiderIdx]; const salesData = (allData[name] && allData[name].sales) ? allData[name].sales : {};
             const daySum = { 0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[] }; const weatherSum = { "大雨":[], "雨":[], "小雨":[], "曇り":[], "晴れ":[] };
