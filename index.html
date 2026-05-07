@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Goal Rider Biz - V1.07</title>
+    <title>Goal Rider Biz - V1.07.1</title>
 
     <link rel="icon" href="https://img.icons8.com/clouds/256/delivery-man.png" type="image/png">
     <link rel="apple-touch-icon" href="https://img.icons8.com/clouds/256/delivery-man.png">
@@ -98,7 +98,7 @@
         <button id="tabMap" class="tab-btn" onclick="showPage('map')">マップ</button>
     </div>
     
-    <div class="version-bar">GoalRider V1.07</div>
+    <div class="version-bar">GoalRider V1.07.1</div>
 
     <div id="pageSales" class="content-area active">
         <div class="rider-selector">
@@ -162,10 +162,7 @@
             <div id="spotInfo" style="font-size: 0.65em; color: #666; margin-bottom: 8px;"></div>
             <div class="compact-grid">
                 <div class="input-group"><label>施設名 / 店舗名</label><input type="text" id="spotName" placeholder="漢字/ひらがな"></div>
-                <div class="input-group">
-                    <label>施設名 (カナ) <span style="font-weight:normal; font-size:0.85em; color:#888;">※任意</span></label>
-                    <input type="text" id="spotKana" placeholder="ササキビル">
-                </div>
+                <div class="input-group"><label>施設名 (カナ) <span style="font-weight:normal; font-size:0.85em; color:#888;">※任意</span></label><input type="text" id="spotKana" placeholder="ササキビル"></div>
             </div>
             <div class="compact-grid">
                 <div class="input-group"><label>カテゴリ</label><select id="mainCat" onchange="updateSubCat()"><option value="">選択...</option><option value="待機">待機</option><option value="ピック">ピック</option><option value="ドロップ">ドロップ</option><option value="休憩">休憩場所</option></select></div>
@@ -197,7 +194,13 @@
                 <button class="weather-btn" data-w="晴れ" onclick="setWeather('晴れ')">☀️</button>
             </div>
             <div class="compact-grid">
-                <div class="input-group"><label>稼働(h)</label><input type="number" id="inputHours" step="0.5"></div>
+                <div class="input-group">
+                    <label style="display:flex; justify-content:space-between; align-items:center;">
+                        <span>稼働(h)</span>
+                        <button type="button" onclick="fetchOutHour()" style="background:#3498db; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:0.8em; font-weight:bold; cursor:pointer;">取得</button>
+                    </label>
+                    <input type="number" id="inputHours" step="0.5">
+                </div>
                 <div class="input-group"><label>ガソリン</label><input type="number" id="inputGas"></div>
             </div>
             <div class="input-group"><label>その他経費</label><input type="number" id="inputOtherExp"></div>
@@ -245,7 +248,7 @@
 
     <div id="analysisModal" class="modal">
         <div class="modal-content">
-            <h3>時給分析</h3>
+            <h3 style="margin: 0 0 15px 0;">時給分析</h3>
             <div style="height:180px; margin-bottom:20px;"><canvas id="dayAnalysisChart"></canvas></div>
             <div style="height:180px;"><canvas id="weatherAnalysisChart"></canvas></div>
             <button class="btn-modal-primary" onclick="closeAnalysisModal()" style="margin-top:20px;">閉じる</button>
@@ -272,7 +275,13 @@
         function switchRider(idx) { currentRiderIdx = idx; localStorage.setItem('goalRider_idx', idx); document.querySelectorAll('.rider-btn').forEach((b, i) => b.className = i === idx ? 'rider-btn rider-active' : 'rider-btn'); document.getElementById('riderDisplayName').innerText = RIDERS[idx]; if(allData[RIDERS[idx]]) renderApp(); }
         function switchView(v) { currentView = v; document.getElementById('btnWeek').className = v === 'week' ? 'view-btn active-view' : 'view-btn'; document.getElementById('btnMonth').className = v === 'month' ? 'view-btn active-view' : 'view-btn'; renderApp(); }
         function navigatePeriod(dir) { if (currentView === 'month') referenceDate.setMonth(referenceDate.getMonth() + dir); else referenceDate.setDate(referenceDate.getDate() + (dir * 7)); renderApp(); }
-        function showPage(page) { document.querySelectorAll('.content-area, .tab-btn').forEach(el => el.classList.remove('active')); document.getElementById(page === 'sales' ? 'pageSales' : 'pageMap').classList.add('active'); document.getElementById(page === 'sales' ? 'tabSales' : 'tabMap').classList.add('active'); if(page === 'map') { if(!map) initMap(); else setTimeout(() => map.invalidateSize(), 300); } }
+
+        function showPage(page) {
+            document.querySelectorAll('.content-area, .tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(page === 'sales' ? 'pageSales' : 'pageMap').classList.add('active');
+            document.getElementById(page === 'sales' ? 'tabSales' : 'tabMap').classList.add('active');
+            if(page === 'map') { if(!map) initMap(); else setTimeout(() => map.invalidateSize(), 300); }
+        }
 
         function initMap() {
             map = L.map('map', { zoomControl: false, maxZoom: 19 }).setView([35.7289, 139.7104], 15);
@@ -318,6 +327,22 @@
                 else if (mode === 'rest' && s.mainCat === '休憩') show = true;
                 if (show) m.openTooltip(); else m.closeTooltip();
             });
+        }
+
+        // V1.07.1: GoalGPSからの稼働時間取得ロジック
+        async function fetchOutHour() {
+            try {
+                const res = await fetch('http://localhost:8080/logs');
+                if (!res.ok) throw new Error('Network Error');
+                const data = await res.json();
+                if (data && data.length > 0 && data[0].out_hour) {
+                    document.getElementById('inputHours').value = parseFloat(data[0].out_hour);
+                } else {
+                    alert("取得できるデータがありませんでした。");
+                }
+            } catch (e) {
+                alert("GoalGPSからの取得に失敗しました。\n(アプリが起動しているか確認してください)");
+            }
         }
 
         async function fetchCloudSales() { try { const res = await fetch(DB_SALES); allData = await res.json() || {}; renderApp(); } catch (e) {} }
