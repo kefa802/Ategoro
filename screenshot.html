@@ -24,7 +24,6 @@
 
         .upload-area { background: white; border-radius: 8px; padding: 20px; text-align: center; border: 2px dashed #ccc; margin-bottom: 15px; }
         
-        /* V1.09.2 Googleマップ連携ボタン */
         .map-btn { background: #27ae60; color: white; border: none; padding: 15px 20px; font-size: 1.1em; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; box-sizing: border-box; box-shadow: 0 2px 5px rgba(0,0,0,0.2); margin-bottom: 15px; display: flex; justify-content: center; align-items: center; gap: 8px; }
         .upload-btn { background: #3498db; color: white; border: none; padding: 15px 20px; font-size: 1.1em; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; box-sizing: border-box; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         
@@ -61,7 +60,7 @@
             <button class="map-btn" onclick="openTimeline()">📍 マップのタイムラインを開く</button>
 
             <input type="file" id="fileInput" accept="image/*" multiple style="display: none;" onchange="handleFileSelect(event)">
-            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">📁 スクロショを追加する</button>
+            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">📁 スクショを追加する</button>
         </div>
 
         <div id="loadingMsg" class="loading">⏳ 処理中...</div>
@@ -92,13 +91,11 @@
             window.location.href = 'index.html';
         }
 
-        // V1.09.2 タイムラインを開く処理
         function openTimeline() {
             const d = new Date(targetDate);
             const y = d.getFullYear();
             const m = d.getMonth() + 1;
             const day = d.getDate();
-            // Googleマップのタイムラインを該当の日付で開く（ブラウザ経由でアプリに飛ぶ）
             const url = `https://www.google.com/maps/timeline?pb=!1m2!1m1!1s${y}-${m}-${day}`;
             window.open(url, '_blank');
         }
