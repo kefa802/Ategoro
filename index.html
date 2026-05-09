@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Goal Rider Biz - V1.08.1</title>
+    <title>Goal Rider Biz - V1.09</title>
 
     <link rel="icon" href="https://img.icons8.com/clouds/256/delivery-man.png" type="image/png">
     <link rel="apple-touch-icon" href="https://img.icons8.com/clouds/256/delivery-man.png">
@@ -98,7 +98,7 @@
         <button id="tabMap" class="tab-btn" onclick="showPage('map')">マップ</button>
     </div>
     
-    <div class="version-bar">GoalRider V1.08.1</div>
+    <div class="version-bar">GoalRider V1.09</div>
 
     <div id="pageSales" class="content-area active">
         <div class="rider-selector">
@@ -275,7 +275,13 @@
         function switchRider(idx) { currentRiderIdx = idx; localStorage.setItem('goalRider_idx', idx); document.querySelectorAll('.rider-btn').forEach((b, i) => b.className = i === idx ? 'rider-btn rider-active' : 'rider-btn'); document.getElementById('riderDisplayName').innerText = RIDERS[idx]; if(allData[RIDERS[idx]]) renderApp(); }
         function switchView(v) { currentView = v; document.getElementById('btnWeek').className = v === 'week' ? 'view-btn active-view' : 'view-btn'; document.getElementById('btnMonth').className = v === 'month' ? 'view-btn active-view' : 'view-btn'; renderApp(); }
         function navigatePeriod(dir) { if (currentView === 'month') referenceDate.setMonth(referenceDate.getMonth() + dir); else referenceDate.setDate(referenceDate.getDate() + (dir * 7)); renderApp(); }
-        function showPage(page) { document.querySelectorAll('.content-area, .tab-btn').forEach(el => el.classList.remove('active')); document.getElementById(page === 'sales' ? 'pageSales' : 'pageMap').classList.add('active'); document.getElementById(page === 'sales' ? 'tabSales' : 'tabMap').classList.add('active'); if(page === 'map') { if(!map) initMap(); else setTimeout(() => map.invalidateSize(), 300); } }
+
+        function showPage(page) {
+            document.querySelectorAll('.content-area, .tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(page === 'sales' ? 'pageSales' : 'pageMap').classList.add('active');
+            document.getElementById(page === 'sales' ? 'tabSales' : 'tabMap').classList.add('active');
+            if(page === 'map') { if(!map) initMap(); else setTimeout(() => map.invalidateSize(), 300); }
+        }
 
         function initMap() {
             map = L.map('map', { zoomControl: false, maxZoom: 19 }).setView([35.7289, 139.7104], 15);
@@ -345,7 +351,7 @@
             const data = allData[name]; let labels = [], chartSales = [], chartExp = [], chartHourly = [], chartHours = [], tSales = 0, tExp = 0, tHours = 0;
             const y = referenceDate.getFullYear(), m = referenceDate.getMonth(), mk = `${y}-${String(m+1).padStart(2,'0')}`;
             const goal = data.goals ? (data.goals[mk] || DEFAULT_GOAL) : DEFAULT_GOAL;
-
+            
             if (currentView === 'month') {
                 const last = new Date(y, m + 1, 0).getDate();
                 document.getElementById('periodLabel').innerText = `${y}年${m + 1}月`;
@@ -383,10 +389,9 @@
             document.getElementById('displayRemaining').innerText = Math.max(0, goal - tSales).toLocaleString() + "円";
             document.getElementById('avgHourly').innerText = tHours > 0 ? Math.round(tSales/tHours).toLocaleString() + "円" : "0円";
             document.getElementById('netHourly').innerText = tHours > 0 ? Math.round((tSales-tExp)/tHours).toLocaleString() + "円" : "0円";
-
+            
             const optC = { responsive: true, maintainAspectRatio: false, plugins: { legend: false }, scales: { y: { beginAtZero: true, ticks: { font: { size: 8 } } }, x: { ticks: { font: { size: 7 } } } } };
             
-            // V1.08.1 時給＆稼働時間の複合グラフ設定
             const optHourly = { 
                 responsive: true, 
                 maintainAspectRatio: false, 
@@ -401,7 +406,6 @@
             if (myChart) myChart.destroy(); myChart = new Chart(document.getElementById('salesChart'), { type: 'bar', data: { labels, datasets: [{ label: '売上', data: chartSales, backgroundColor: '#3498db' }] }, options: optC });
             if (myExpChart) myExpChart.destroy(); myExpChart = new Chart(document.getElementById('expenseChart'), { type: 'bar', data: { labels, datasets: [{ label: '経費', data: chartExp, backgroundColor: '#e06287' }] }, options: optC });
             
-            // 時給と稼働時間を組み合わせたチャート
             if (myHourlyChart) myHourlyChart.destroy(); 
             myHourlyChart = new Chart(document.getElementById('hourlyChart'), { 
                 type: 'bar', 
@@ -445,7 +449,7 @@
                 const item = document.createElement('div'); item.className = "list-item";
                 item.onclick = () => { document.getElementById('listModal').style.display='none'; map.flyTo([s.lat, s.lng], 18); setTimeout(() => openSpotModal(s.lat, s.lng, id), 500); };
                 const pTag = (s.parkingStatus && s.parkingStatus !== '不明') ? `<div class="list-parking">🅿️ ${s.parkingStatus}${s.parkingNote ? ` (${s.parkingNote})` : ''}</div>` : '';
-                item.innerHTML = `<div class="list-info">${s.spotName ? `<div class="list-spot-name">${s.spotName}</div>` : ''}<div class="list-title"><span class="cat-tag tag-${s.mainCat}">${s.mainCat}</span><span>${s.subCat}</span></div>${pTag}<div class="list-meta">${s.rider} / ${s.time}</div>${s.comment ? `<div class="comment-text">${s.comment}</div>` : ''}</div><div style="color:#3498db;align-self:center;padding-left:10px;">🔍</div>`;
+                item.innerHTML = `<div class="list-info">${s.spotName ? `<div class="list-spot-name">${s.spotName}</div>` : ''}<div class="list-title"><span class="cat-tag tag-${s.mainCat}">${s.mainCat}</span><span>${s.subCat}</span></div>${pTag}<div class="list-meta">${s.rider} / ${s.time}</div>${s.comment ? `<div class="list-comment">${s.comment}</div>` : ''}</div><div style="color:#3498db;align-self:center;padding-left:10px;">🔍</div>`;
                 listDiv.appendChild(item);
             });
             if (listDiv.innerHTML === "") listDiv.innerHTML = "<p style='text-align:center; color:#999; font-size:0.8em; margin:20px 0;'>該当なし</p>";
@@ -475,7 +479,7 @@
             const daySum = { 0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[] }, weatherSum = { "大雨":[], "雨":[], "小雨":[], "曇り":[], "晴れ":[] };
             Object.keys(salesData).forEach(dateStr => { const s = salesData[dateStr]; const dh = s.hours || 0; if (dh > 0) { const ds = (s.uber||0)+(s.demae||0)+(s.menu||0)+(s.rocket||0), sh = ds / dh, d = new Date(dateStr).getDay(); daySum[d].push(sh); if (s.weather && weatherSum[s.weather] !== undefined) weatherSum[s.weather].push(sh); } });
             const dayAvg = [1,2,3,4,5,6,0].map(d => daySum[d].length ? Math.round(daySum[d].reduce((a,b)=>a+b)/daySum[d].length) : 0), weatherAvg = ["大雨","雨","小雨","曇り","晴れ"].map(w => weatherSum[w].length ? Math.round(weatherSum[w].reduce((a,b)=>a+b)/weatherSum[w].length) : 0);
-            document.getElementById('analysisModal').style.display = 'block'; 
+            document.getElementById('analysisModal').style.display = 'block';
             if (dayAnalysisChart) dayAnalysisChart.destroy(); dayAnalysisChart = new Chart(document.getElementById('dayAnalysisChart'), { type: 'bar', data: { labels: ['月','火','水','木','金','土','日'], datasets: [{ label: '時給', data: dayAvg, backgroundColor: '#3498db' }] }, options: { responsive: true, maintainAspectRatio: false } });
             if (weatherAnalysisChart) weatherAnalysisChart.destroy(); weatherAnalysisChart = new Chart(document.getElementById('weatherAnalysisChart'), { type: 'bar', data: { labels: ['大雨','雨','小雨','曇','晴'], datasets: [{ label: '時給', data: weatherAvg, backgroundColor: ['#6c5ce7','#0984e3','#00cec9','#636e72','#f39c12'] }] }, options: { responsive: true, maintainAspectRatio: false } });
         }
