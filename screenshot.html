@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Goal Rider Biz - スクショ管理</title>
+    <meta name="theme-color" content="#2c3e50">
+    <style>
+        body { font-family: sans-serif; background: #f4f4f4; margin: 0; padding: 0; color: #333; }
+        .header { background: #2c3e50; padding: 15px; color: white; display: flex; align-items: center; justify-content: space-between; }
+        .back-btn { background: #34495e; color: white; border: 1px solid #7f8c8d; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .container { padding: 15px; max-width: 600px; margin: 0 auto; }
+        
+        .info-card { background: white; border-radius: 8px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 15px; text-align: center; }
+        .date-display { font-size: 1.2em; font-weight: bold; color: #2980b9; margin-bottom: 5px; }
+        .rider-display { font-size: 0.9em; color: #7f8c8d; }
+
+        .upload-area { background: white; border-radius: 8px; padding: 20px; text-align: center; border: 2px dashed #ccc; margin-bottom: 15px; }
+        .upload-btn { background: #3498db; color: white; border: none; padding: 12px 20px; font-size: 1em; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; width: 100%; box-sizing: border-box; }
+        
+        .preview-area { display: none; margin-top: 15px; text-align: center; }
+        .preview-img { max-width: 100%; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        
+        .action-row { display: flex; gap: 10px; margin-top: 15px; }
+        .save-btn { flex: 2; background: #2ecc71; color: white; border: none; padding: 12px; font-size: 1em; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .delete-btn { flex: 1; background: #e74c3c; color: white; border: none; padding: 12px; font-size: 1em; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+        .loading { display: none; text-align: center; padding: 20px; color: #7f8c8d; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <button class="back-btn" onclick="goBack()">◀ 戻る</button>
+        <div style="font-weight: bold;">スクショ管理</div>
+        <div style="width: 60px;"></div> </div>
+
+    <div class="container">
+        <div class="info-card">
+            <div class="date-display" id="displayDate">----/--/--</div>
+            <div class="rider-display" id="displayRider">----</div>
+        </div>
+
+        <div id="loadingMsg" class="loading">⏳ データを読み込み中...</div>
+
+        <div id="uploadSection" class="upload-area" style="display: none;">
+            <p style="color: #666; font-size: 0.9em; margin-top: 0;">この日のスクショを選択してください</p>
+            <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">📁 画像を選ぶ</button>
+        </div>
+
+        <div id="previewSection" class="preview-area">
+            <img id="previewImage" class="preview-img" src="">
+            <div class="action-row">
+                <button id="saveBtn" class="save-btn" onclick="saveImage()" style="display: none;">💾 保存する</button>
+                <button id="deleteBtn" class="delete-btn" onclick="deleteImage()" style="display: none;">🗑️ 削除</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const DB_BASE = "https://goalrider-81f01-default-rtdb.firebaseio.com/screenshots";
+        const RIDERS = ["工藤正臣", "高瀬戒兜"];
+        
+        let targetDate = "";
+        let riderName = "";
+        let currentBase64 = null;
+        let isExisting = false; // すでにDBに保存されている画像かどうか
+
+        window.onload = () => {
+            // URLから日付とライダーを取得
+            const params = new URLSearchParams(window.location.search);
+            targetDate = params.get('date');
+            const riderIdx = params.get('rider') || 0;
+            riderName = RIDERS[riderIdx];
+
+            if (!targetDate) {
+                targetDate = new Date().toISOString().split('T')[0];
+            }
+
+            document.getElementById('displayDate').innerText = targetDate;
+            document.getElementById('displayRider').innerText = riderName;
+
+            loadExistingImage();
+        };
+
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+
+        async function loadExistingImage() {
+            showLoading(true);
+            try {
+                const url = `${DB_BASE}/${riderName}/${targetDate}.json`;
+                const res = await fetch(url);
+                const data = await res.json();
+
+                if (data && data.base64) {
+                    // DBに画像が存在する場合
+                    isExisting = true;
+                    showPreview(data.base64);
+                    document.getElementById('deleteBtn').style.display = 'block';
+                    document.getElementById('saveBtn').style.display = 'none';
+                    document.getElementById('uploadSection').style.display = 'none';
+                } else {
+                    // DBに画像がない場合
+                    resetView();
+                }
+            } catch (e) {
+                alert("読み込みエラーが発生しました。");
+                resetView();
+            }
+            showLoading(false);
+        }
+
+        // ファイル選択時の処理（Canvasで自動圧縮）
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            showLoading(true);
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let w = img.width;
+                    let h = img.height;
+                    const max_size = 800; // スマホ表示用に最大800pxに圧縮
+
+                    if (w > h && w > max_size) {
+                        h *= max_size / w;
+                        w = max_size;
+                    } else if (h > max_size) {
+                        w *= max_size / h;
+                        h = max_size;
+                    }
+
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    
+                    // JPEGの画質60%で圧縮（DB容量節約のため）
+                    currentBase64 = canvas.toDataURL('image/jpeg', 0.6);
+                    
+                    isExisting = false;
+                    showPreview(currentBase64);
+                    document.getElementById('saveBtn').style.display = 'block';
+                    document.getElementById('deleteBtn').style.display = 'none';
+                    document.getElementById('uploadSection').style.display = 'none';
+                    showLoading(false);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function showPreview(src) {
+            const imgEl = document.getElementById('previewImage');
+            imgEl.src = src;
+            document.getElementById('previewSection').style.display = 'block';
+        }
+
+        function resetView() {
+            isExisting = false;
+            currentBase64 = null;
+            document.getElementById('previewSection').style.display = 'none';
+            document.getElementById('uploadSection').style.display = 'block';
+            document.getElementById('fileInput').value = ""; // リセット
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingMsg').style.display = show ? 'block' : 'none';
+            if(show) {
+                document.getElementById('uploadSection').style.display = 'none';
+                document.getElementById('previewSection').style.display = 'none';
+            }
+        }
+
+        async function saveImage() {
+            if (!currentBase64) return;
+            
+            showLoading(true);
+            try {
+                const url = `${DB_BASE}/${riderName}/${targetDate}.json`;
+                const payload = {
+                    base64: currentBase64,
+                    timestamp: new Date().toISOString()
+                };
+
+                const res = await fetch(url, {
+                    method: 'PUT',
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    alert("保存しました！");
+                    isExisting = true;
+                    document.getElementById('saveBtn').style.display = 'none';
+                    document.getElementById('deleteBtn').style.display = 'block';
+                } else {
+                    throw new Error("保存失敗");
+                }
+            } catch (e) {
+                alert("保存に失敗しました。");
+            }
+            showLoading(false);
+            showPreview(currentBase64);
+        }
+
+        async function deleteImage() {
+            if (!confirm("本当に削除しますか？")) return;
+
+            showLoading(true);
+            try {
+                const url = `${DB_BASE}/${riderName}/${targetDate}.json`;
+                const res = await fetch(url, { method: 'DELETE' });
+
+                if (res.ok) {
+                    alert("削除しました。");
+                    resetView();
+                } else {
+                    throw new Error("削除失敗");
+                }
+            } catch (e) {
+                alert("削除に失敗しました。");
+            }
+            showLoading(false);
+        }
+    </script>
+</body>
+</html>
