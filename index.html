@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Goal Rider Biz - V1.08</title>
+    <title>Goal Rider Biz - V1.08.1</title>
 
     <link rel="icon" href="https://img.icons8.com/clouds/256/delivery-man.png" type="image/png">
     <link rel="apple-touch-icon" href="https://img.icons8.com/clouds/256/delivery-man.png">
@@ -98,7 +98,7 @@
         <button id="tabMap" class="tab-btn" onclick="showPage('map')">マップ</button>
     </div>
     
-    <div class="version-bar">GoalRider V1.08</div>
+    <div class="version-bar">GoalRider V1.08.1</div>
 
     <div id="pageSales" class="content-area active">
         <div class="rider-selector">
@@ -162,10 +162,7 @@
             <div id="spotInfo" style="font-size: 0.65em; color: #666; margin-bottom: 8px;"></div>
             <div class="compact-grid">
                 <div class="input-group"><label>施設名 / 店舗名</label><input type="text" id="spotName" placeholder="漢字/ひらがな"></div>
-                <div class="input-group">
-                    <label>施設名 (カナ) <span style="font-weight:normal; font-size:0.85em; color:#888;">※任意</span></label>
-                    <input type="text" id="spotKana" placeholder="ササキビル">
-                </div>
+                <div class="input-group"><label>施設名 (カナ) <span style="font-weight:normal; font-size:0.85em; color:#888;">※任意</span></label><input type="text" id="spotKana" placeholder="ササキビル"></div>
             </div>
             <div class="compact-grid">
                 <div class="input-group"><label>カテゴリ</label><select id="mainCat" onchange="updateSubCat()"><option value="">選択...</option><option value="待機">待機</option><option value="ピック">ピック</option><option value="ドロップ">ドロップ</option><option value="休憩">休憩場所</option></select></div>
@@ -278,13 +275,7 @@
         function switchRider(idx) { currentRiderIdx = idx; localStorage.setItem('goalRider_idx', idx); document.querySelectorAll('.rider-btn').forEach((b, i) => b.className = i === idx ? 'rider-btn rider-active' : 'rider-btn'); document.getElementById('riderDisplayName').innerText = RIDERS[idx]; if(allData[RIDERS[idx]]) renderApp(); }
         function switchView(v) { currentView = v; document.getElementById('btnWeek').className = v === 'week' ? 'view-btn active-view' : 'view-btn'; document.getElementById('btnMonth').className = v === 'month' ? 'view-btn active-view' : 'view-btn'; renderApp(); }
         function navigatePeriod(dir) { if (currentView === 'month') referenceDate.setMonth(referenceDate.getMonth() + dir); else referenceDate.setDate(referenceDate.getDate() + (dir * 7)); renderApp(); }
-
-        function showPage(page) {
-            document.querySelectorAll('.content-area, .tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(page === 'sales' ? 'pageSales' : 'pageMap').classList.add('active');
-            document.getElementById(page === 'sales' ? 'tabSales' : 'tabMap').classList.add('active');
-            if(page === 'map') { if(!map) initMap(); else setTimeout(() => map.invalidateSize(), 300); }
-        }
+        function showPage(page) { document.querySelectorAll('.content-area, .tab-btn').forEach(el => el.classList.remove('active')); document.getElementById(page === 'sales' ? 'pageSales' : 'pageMap').classList.add('active'); document.getElementById(page === 'sales' ? 'tabSales' : 'tabMap').classList.add('active'); if(page === 'map') { if(!map) initMap(); else setTimeout(() => map.invalidateSize(), 300); } }
 
         function initMap() {
             map = L.map('map', { zoomControl: false, maxZoom: 19 }).setView([35.7289, 139.7104], 15);
@@ -351,9 +342,10 @@
 
         function renderApp() {
             const name = RIDERS[currentRiderIdx]; if (!allData[name]) allData[name] = { sales: {}, goals: {} };
-            const data = allData[name]; let labels = [], chartSales = [], chartExp = [], chartHourly = [], tSales = 0, tExp = 0, tHours = 0;
+            const data = allData[name]; let labels = [], chartSales = [], chartExp = [], chartHourly = [], chartHours = [], tSales = 0, tExp = 0, tHours = 0;
             const y = referenceDate.getFullYear(), m = referenceDate.getMonth(), mk = `${y}-${String(m+1).padStart(2,'0')}`;
             const goal = data.goals ? (data.goals[mk] || DEFAULT_GOAL) : DEFAULT_GOAL;
+
             if (currentView === 'month') {
                 const last = new Date(y, m + 1, 0).getDate();
                 document.getElementById('periodLabel').innerText = `${y}年${m + 1}月`;
@@ -361,7 +353,7 @@
                     let key = `${y}-${String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
                     labels.push(i); const s = data.sales[key] || {};
                     const ds = (s.uber||0)+(s.demae||0)+(s.menu||0)+(s.rocket||0), de = (s.gas||0)+(s.otherExp||0), dh = s.hours || 0;
-                    chartSales.push(ds); chartExp.push(de); chartHourly.push(dh > 0 ? Math.round(ds/dh) : 0);
+                    chartSales.push(ds); chartExp.push(de); chartHourly.push(dh > 0 ? Math.round(ds/dh) : 0); chartHours.push(dh);
                     tSales += ds; tExp += de; tHours += dh;
                 }
                 const today = new Date(); let drStr = "---";
@@ -381,7 +373,7 @@
                     let d = new Date(mon); d.setDate(d.getDate() + i); let key = d.toISOString().split('T')[0];
                     labels.push(['月','火','水','木','金','土','日'][i]); const s = data.sales[key] || {};
                     const ds = (s.uber||0)+(s.demae||0)+(s.menu||0)+(s.rocket||0), de = (s.gas||0)+(s.otherExp||0), dh = s.hours || 0;
-                    chartSales.push(ds); chartExp.push(de); chartHourly.push(dh > 0 ? Math.round(ds/dh) : 0);
+                    chartSales.push(ds); chartExp.push(de); chartHourly.push(dh > 0 ? Math.round(ds/dh) : 0); chartHours.push(dh);
                     tSales += ds; tExp += de; tHours += dh;
                 }
             }
@@ -391,10 +383,37 @@
             document.getElementById('displayRemaining').innerText = Math.max(0, goal - tSales).toLocaleString() + "円";
             document.getElementById('avgHourly').innerText = tHours > 0 ? Math.round(tSales/tHours).toLocaleString() + "円" : "0円";
             document.getElementById('netHourly').innerText = tHours > 0 ? Math.round((tSales-tExp)/tHours).toLocaleString() + "円" : "0円";
+
             const optC = { responsive: true, maintainAspectRatio: false, plugins: { legend: false }, scales: { y: { beginAtZero: true, ticks: { font: { size: 8 } } }, x: { ticks: { font: { size: 7 } } } } };
+            
+            // V1.08.1 時給＆稼働時間の複合グラフ設定
+            const optHourly = { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { legend: false }, 
+                scales: { 
+                    y: { type: 'linear', display: true, position: 'left', beginAtZero: true, ticks: { font: { size: 8 } } }, 
+                    y1: { type: 'linear', display: true, position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, ticks: { font: { size: 8 } } }, 
+                    x: { ticks: { font: { size: 7 } } } 
+                } 
+            };
+
             if (myChart) myChart.destroy(); myChart = new Chart(document.getElementById('salesChart'), { type: 'bar', data: { labels, datasets: [{ label: '売上', data: chartSales, backgroundColor: '#3498db' }] }, options: optC });
             if (myExpChart) myExpChart.destroy(); myExpChart = new Chart(document.getElementById('expenseChart'), { type: 'bar', data: { labels, datasets: [{ label: '経費', data: chartExp, backgroundColor: '#e06287' }] }, options: optC });
-            if (myHourlyChart) myHourlyChart.destroy(); myHourlyChart = new Chart(document.getElementById('hourlyChart'), { type: 'line', data: { labels, datasets: [{ label: '時給', data: chartHourly, borderColor: '#f39c12', tension: 0.3 }]}, options: optC });
+            
+            // 時給と稼働時間を組み合わせたチャート
+            if (myHourlyChart) myHourlyChart.destroy(); 
+            myHourlyChart = new Chart(document.getElementById('hourlyChart'), { 
+                type: 'bar', 
+                data: { 
+                    labels, 
+                    datasets: [
+                        { type: 'line', label: '時給', data: chartHourly, borderColor: '#f39c12', backgroundColor: '#f39c12', tension: 0.3, yAxisID: 'y', order: 1 },
+                        { type: 'bar', label: '稼働時間', data: chartHours, backgroundColor: 'rgba(189, 195, 199, 0.7)', yAxisID: 'y1', order: 2 }
+                    ]
+                }, 
+                options: optHourly 
+            });
         }
 
         function getKanaHead(str) {
@@ -426,7 +445,7 @@
                 const item = document.createElement('div'); item.className = "list-item";
                 item.onclick = () => { document.getElementById('listModal').style.display='none'; map.flyTo([s.lat, s.lng], 18); setTimeout(() => openSpotModal(s.lat, s.lng, id), 500); };
                 const pTag = (s.parkingStatus && s.parkingStatus !== '不明') ? `<div class="list-parking">🅿️ ${s.parkingStatus}${s.parkingNote ? ` (${s.parkingNote})` : ''}</div>` : '';
-                item.innerHTML = `<div class="list-info">${s.spotName ? `<div class="list-spot-name">${s.spotName}</div>` : ''}<div class="list-title"><span class="cat-tag tag-${s.mainCat}">${s.mainCat}</span><span>${s.subCat}</span></div>${pTag}<div class="list-meta">${s.rider} / ${s.time}</div>${s.comment ? `<div class="list-comment">${s.comment}</div>` : ''}</div><div style="color:#3498db;align-self:center;padding-left:10px;">🔍</div>`;
+                item.innerHTML = `<div class="list-info">${s.spotName ? `<div class="list-spot-name">${s.spotName}</div>` : ''}<div class="list-title"><span class="cat-tag tag-${s.mainCat}">${s.mainCat}</span><span>${s.subCat}</span></div>${pTag}<div class="list-meta">${s.rider} / ${s.time}</div>${s.comment ? `<div class="comment-text">${s.comment}</div>` : ''}</div><div style="color:#3498db;align-self:center;padding-left:10px;">🔍</div>`;
                 listDiv.appendChild(item);
             });
             if (listDiv.innerHTML === "") listDiv.innerHTML = "<p style='text-align:center; color:#999; font-size:0.8em; margin:20px 0;'>該当なし</p>";
