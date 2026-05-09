@@ -7,25 +7,24 @@
     <meta name="theme-color" content="#2c3e50">
     <style>
         body { font-family: sans-serif; background: #f4f4f4; margin: 0; padding: 0; color: #333; }
-        .header { background: #2c3e50; padding: 15px; color: white; display: flex; align-items: center; justify-content: space-between; }
+        .header { background: #2c3e50; padding: 15px; color: white; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 1000; }
         .back-btn { background: #34495e; color: white; border: 1px solid #7f8c8d; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .container { padding: 15px; max-width: 600px; margin: 0 auto; }
         
         .info-card { background: white; border-radius: 8px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 15px; text-align: center; }
-        .date-display { font-size: 1.2em; font-weight: bold; color: #2980b9; margin-bottom: 5px; }
-        .rider-display { font-size: 0.9em; color: #7f8c8d; }
+        .date-input { font-size: 1.2em; font-weight: bold; color: #2980b9; margin-bottom: 5px; padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; text-align: center; width: 80%; max-width: 250px; box-sizing: border-box; }
+        .rider-display { font-size: 0.9em; color: #7f8c8d; margin-top: 5px; }
 
         .upload-area { background: white; border-radius: 8px; padding: 20px; text-align: center; border: 2px dashed #ccc; margin-bottom: 15px; }
-        .upload-btn { background: #3498db; color: white; border: none; padding: 12px 20px; font-size: 1em; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; width: 100%; box-sizing: border-box; }
+        .upload-btn { background: #3498db; color: white; border: none; padding: 15px 20px; font-size: 1.1em; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; box-sizing: border-box; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         
-        .preview-area { display: none; margin-top: 15px; text-align: center; }
-        .preview-img { max-width: 100%; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        
-        .action-row { display: flex; gap: 10px; margin-top: 15px; }
-        .save-btn { flex: 2; background: #2ecc71; color: white; border: none; padding: 12px; font-size: 1em; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .delete-btn { flex: 1; background: #e74c3c; color: white; border: none; padding: 12px; font-size: 1em; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .gallery { display: flex; flex-direction: column; gap: 15px; }
+        .gallery-item { background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .gallery-item img { width: 100%; border-radius: 6px; display: block; margin-bottom: 10px; }
+        .delete-btn { width: 100%; background: #e74c3c; color: white; border: none; padding: 12px; font-size: 1em; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 5px; }
 
         .loading { display: none; text-align: center; padding: 20px; color: #7f8c8d; font-weight: bold; }
+        .empty-msg { text-align: center; color: #999; padding: 20px; font-size: 0.9em; background: white; border-radius: 8px; border: 1px dashed #ccc; }
     </style>
 </head>
 <body>
@@ -37,25 +36,19 @@
 
     <div class="container">
         <div class="info-card">
-            <div class="date-display" id="displayDate">----/--/--</div>
+            <input type="date" id="dateSelector" class="date-input" onchange="changeDate()">
             <div class="rider-display" id="displayRider">----</div>
         </div>
 
-        <div id="loadingMsg" class="loading">⏳ データを読み込み中...</div>
-
-        <div id="uploadSection" class="upload-area" style="display: none;">
-            <p style="color: #666; font-size: 0.9em; margin-top: 0;">この日のスクショを選択してください</p>
-            <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
-            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">📁 画像を選ぶ</button>
+        <div class="upload-area">
+            <p style="color: #666; font-size: 0.85em; margin-top: 0; margin-bottom: 10px;">複数枚の追加が可能です</p>
+            <input type="file" id="fileInput" accept="image/*" multiple style="display: none;" onchange="handleFileSelect(event)">
+            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">📁 画像を追加する</button>
         </div>
 
-        <div id="previewSection" class="preview-area">
-            <img id="previewImage" class="preview-img" src="">
-            <div class="action-row">
-                <button id="saveBtn" class="save-btn" onclick="saveImage()" style="display: none;">💾 保存する</button>
-                <button id="deleteBtn" class="delete-btn" onclick="deleteImage()" style="display: none;">🗑️ 削除</button>
-            </div>
-        </div>
+        <div id="loadingMsg" class="loading">⏳ 処理中...</div>
+
+        <div id="imageGallery" class="gallery"></div>
     </div>
 
     <script>
@@ -64,169 +57,179 @@
         
         let targetDate = "";
         let riderName = "";
-        let currentBase64 = null;
-        let isExisting = false; // すでにDBに保存されている画像かどうか
 
         window.onload = () => {
-            // URLから日付とライダーを取得
             const params = new URLSearchParams(window.location.search);
-            targetDate = params.get('date');
+            targetDate = params.get('date') || new Date().toISOString().split('T')[0];
             const riderIdx = params.get('rider') || 0;
             riderName = RIDERS[riderIdx];
 
-            if (!targetDate) {
-                targetDate = new Date().toISOString().split('T')[0];
-            }
-
-            document.getElementById('displayDate').innerText = targetDate;
+            document.getElementById('dateSelector').value = targetDate;
             document.getElementById('displayRider').innerText = riderName;
 
-            loadExistingImage();
+            loadExistingImages();
         };
 
         function goBack() {
             window.location.href = 'index.html';
         }
 
-        async function loadExistingImage() {
+        function changeDate() {
+            targetDate = document.getElementById('dateSelector').value;
+            // URLパラメータも一応更新しておく
+            const newUrl = new URL(window.location);
+            newUrl.searchParams.set('date', targetDate);
+            window.history.replaceState({}, '', newUrl);
+            
+            loadExistingImages();
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingMsg').style.display = show ? 'block' : 'none';
+        }
+
+        async function loadExistingImages() {
             showLoading(true);
+            const gallery = document.getElementById('imageGallery');
+            gallery.innerHTML = ''; 
+
             try {
                 const url = `${DB_BASE}/${riderName}/${targetDate}.json`;
                 const res = await fetch(url);
                 const data = await res.json();
 
-                if (data && data.base64) {
-                    // DBに画像が存在する場合
-                    isExisting = true;
-                    showPreview(data.base64);
-                    document.getElementById('deleteBtn').style.display = 'block';
-                    document.getElementById('saveBtn').style.display = 'none';
-                    document.getElementById('uploadSection').style.display = 'none';
-                } else {
-                    // DBに画像がない場合
-                    resetView();
-                }
-            } catch (e) {
-                alert("読み込みエラーが発生しました。");
-                resetView();
-            }
-            showLoading(false);
-        }
-
-        // ファイル選択時の処理（Canvasで自動圧縮）
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            showLoading(true);
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    let w = img.width;
-                    let h = img.height;
-                    const max_size = 800; // スマホ表示用に最大800pxに圧縮
-
-                    if (w > h && w > max_size) {
-                        h *= max_size / w;
-                        w = max_size;
-                    } else if (h > max_size) {
-                        w *= max_size / h;
-                        h = max_size;
+                if (data) {
+                    let hasImages = false;
+                    // 旧フォーマット（1日1枚の直接保存データ）の互換性対応
+                    if (data.base64) {
+                        renderImage("old_format", data.base64);
+                        hasImages = true;
+                    } 
+                    // 新フォーマット（複数枚対応のリスト形式）
+                    else {
+                        Object.keys(data).forEach(key => {
+                            if (data[key] && data[key].base64) {
+                                renderImage(key, data[key].base64);
+                                hasImages = true;
+                            }
+                        });
                     }
 
-                    canvas.width = w;
-                    canvas.height = h;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, w, h);
-                    
-                    // JPEGの画質60%で圧縮（DB容量節約のため）
-                    currentBase64 = canvas.toDataURL('image/jpeg', 0.6);
-                    
-                    isExisting = false;
-                    showPreview(currentBase64);
-                    document.getElementById('saveBtn').style.display = 'block';
-                    document.getElementById('deleteBtn').style.display = 'none';
-                    document.getElementById('uploadSection').style.display = 'none';
-                    showLoading(false);
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function showPreview(src) {
-            const imgEl = document.getElementById('previewImage');
-            imgEl.src = src;
-            document.getElementById('previewSection').style.display = 'block';
-        }
-
-        function resetView() {
-            isExisting = false;
-            currentBase64 = null;
-            document.getElementById('previewSection').style.display = 'none';
-            document.getElementById('uploadSection').style.display = 'block';
-            document.getElementById('fileInput').value = ""; // リセット
-        }
-
-        function showLoading(show) {
-            document.getElementById('loadingMsg').style.display = show ? 'block' : 'none';
-            if(show) {
-                document.getElementById('uploadSection').style.display = 'none';
-                document.getElementById('previewSection').style.display = 'none';
-            }
-        }
-
-        async function saveImage() {
-            if (!currentBase64) return;
-            
-            showLoading(true);
-            try {
-                const url = `${DB_BASE}/${riderName}/${targetDate}.json`;
-                const payload = {
-                    base64: currentBase64,
-                    timestamp: new Date().toISOString()
-                };
-
-                const res = await fetch(url, {
-                    method: 'PUT',
-                    body: JSON.stringify(payload)
-                });
-
-                if (res.ok) {
-                    alert("保存しました！");
-                    isExisting = true;
-                    document.getElementById('saveBtn').style.display = 'none';
-                    document.getElementById('deleteBtn').style.display = 'block';
+                    if (!hasImages) {
+                        gallery.innerHTML = '<div class="empty-msg">保存されたスクショはありません</div>';
+                    }
                 } else {
-                    throw new Error("保存失敗");
+                    gallery.innerHTML = '<div class="empty-msg">保存されたスクショはありません</div>';
                 }
             } catch (e) {
-                alert("保存に失敗しました。");
+                gallery.innerHTML = '<div class="empty-msg" style="color:#e74c3c;">読み込みエラーが発生しました</div>';
             }
             showLoading(false);
-            showPreview(currentBase64);
         }
 
-        async function deleteImage() {
-            if (!confirm("本当に削除しますか？")) return;
+        function renderImage(key, base64Src) {
+            const gallery = document.getElementById('imageGallery');
+            
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'gallery-item';
+            itemDiv.id = `img-${key}`;
+            
+            itemDiv.innerHTML = `
+                <img src="${base64Src}" alt="Screenshot">
+                <button class="delete-btn" onclick="deleteImage('${key}')">🗑️ この画像を削除</button>
+            `;
+            gallery.appendChild(itemDiv);
+        }
+
+        // 複数ファイル選択時の処理
+        async function handleFileSelect(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            showLoading(true);
+            
+            // 1枚ずつ順番に圧縮してアップロード
+            for (let i = 0; i < files.length; i++) {
+                await processAndUpload(files[i]);
+            }
+            
+            document.getElementById('fileInput').value = ""; // 選択リセット
+            loadExistingImages(); // 全て終わったら再読み込みして表示
+        }
+
+        function processAndUpload(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = async function() {
+                        const canvas = document.createElement('canvas');
+                        let w = img.width;
+                        let h = img.height;
+                        const max_size = 800; // 圧縮サイズ上限
+
+                        if (w > h && w > max_size) {
+                            h *= max_size / w;
+                            w = max_size;
+                        } else if (h > max_size) {
+                            w *= max_size / h;
+                            h = max_size;
+                        }
+
+                        canvas.width = w;
+                        canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, w, h);
+                        
+                        const base64 = canvas.toDataURL('image/jpeg', 0.6);
+                        
+                        // 画像ごとにユニークなID（タイムスタンプ＋乱数）を生成して保存
+                        const uniqueId = `img_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+                        const url = `${DB_BASE}/${riderName}/${targetDate}/${uniqueId}.json`;
+                        
+                        const payload = {
+                            base64: base64,
+                            timestamp: new Date().toISOString()
+                        };
+
+                        try {
+                            await fetch(url, { method: 'PUT', body: JSON.stringify(payload) });
+                        } catch(err) {
+                            console.error("アップロード失敗", err);
+                        }
+                        resolve();
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function deleteImage(key) {
+            if (!confirm("本当にこの画像を削除しますか？")) return;
 
             showLoading(true);
             try {
-                const url = `${DB_BASE}/${riderName}/${targetDate}.json`;
+                let url;
+                if (key === "old_format") {
+                    // 旧フォーマットの場合はその日のノードごと消す
+                    url = `${DB_BASE}/${riderName}/${targetDate}.json`;
+                } else {
+                    // 新フォーマットの場合は特定の画像IDのノードだけ消す
+                    url = `${DB_BASE}/${riderName}/${targetDate}/${key}.json`;
+                }
+                
                 const res = await fetch(url, { method: 'DELETE' });
 
                 if (res.ok) {
-                    alert("削除しました。");
-                    resetView();
+                    loadExistingImages(); // 成功したら再読み込み
                 } else {
                     throw new Error("削除失敗");
                 }
             } catch (e) {
                 alert("削除に失敗しました。");
+                showLoading(false);
             }
-            showLoading(false);
         }
     </script>
 </body>
