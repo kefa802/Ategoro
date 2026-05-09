@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Goal Rider Biz - V1.09</title>
+    <title>Goal Rider Biz - V1.09.1</title>
 
     <link rel="icon" href="https://img.icons8.com/clouds/256/delivery-man.png" type="image/png">
     <link rel="apple-touch-icon" href="https://img.icons8.com/clouds/256/delivery-man.png">
@@ -98,7 +98,7 @@
         <button id="tabMap" class="tab-btn" onclick="showPage('map')">マップ</button>
     </div>
     
-    <div class="version-bar">GoalRider V1.09</div>
+    <div class="version-bar">GoalRider V1.09.1</div>
 
     <div id="pageSales" class="content-area active">
         <div class="rider-selector">
@@ -185,7 +185,15 @@
                 <h3 style="margin:0;">実績入力</h3>
                 <button class="rule-btn" onclick="alert('【判定ルール】\n1時間以上雨が降っていたら雨を選択。\n1時間以内なら「曇り」または「晴れ」を選択してください。')">💡判定ルール</button>
             </div>
-            <div class="input-group"><label>日付</label><input type="date" id="inputDate" onchange="loadExistingData()"></div>
+            
+            <div class="input-group">
+                <label style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>日付</span>
+                    <button type="button" onclick="goToScreenshot()" style="background:#f39c12; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:0.8em; font-weight:bold; cursor:pointer;">📷 スクショ</button>
+                </label>
+                <input type="date" id="inputDate" onchange="loadExistingData()">
+            </div>
+
             <div class="weather-selector" id="weatherSelector">
                 <button class="weather-btn" data-w="大雨" onclick="setWeather('大雨')">⛈️</button>
                 <button class="weather-btn" data-w="雨" onclick="setWeather('雨')">🌧️</button>
@@ -271,6 +279,12 @@
             switchRider(currentRiderIdx);
             fetchCloudSales();
         };
+
+        // V1.09.1 新規ジャンプ用関数
+        function goToScreenshot() {
+            const date = document.getElementById('inputDate').value;
+            window.location.href = `screenshot.html?date=${date}&rider=${currentRiderIdx}`;
+        }
 
         function switchRider(idx) { currentRiderIdx = idx; localStorage.setItem('goalRider_idx', idx); document.querySelectorAll('.rider-btn').forEach((b, i) => b.className = i === idx ? 'rider-btn rider-active' : 'rider-btn'); document.getElementById('riderDisplayName').innerText = RIDERS[idx]; if(allData[RIDERS[idx]]) renderApp(); }
         function switchView(v) { currentView = v; document.getElementById('btnWeek').className = v === 'week' ? 'view-btn active-view' : 'view-btn'; document.getElementById('btnMonth').className = v === 'month' ? 'view-btn active-view' : 'view-btn'; renderApp(); }
@@ -479,7 +493,7 @@
             const daySum = { 0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[] }, weatherSum = { "大雨":[], "雨":[], "小雨":[], "曇り":[], "晴れ":[] };
             Object.keys(salesData).forEach(dateStr => { const s = salesData[dateStr]; const dh = s.hours || 0; if (dh > 0) { const ds = (s.uber||0)+(s.demae||0)+(s.menu||0)+(s.rocket||0), sh = ds / dh, d = new Date(dateStr).getDay(); daySum[d].push(sh); if (s.weather && weatherSum[s.weather] !== undefined) weatherSum[s.weather].push(sh); } });
             const dayAvg = [1,2,3,4,5,6,0].map(d => daySum[d].length ? Math.round(daySum[d].reduce((a,b)=>a+b)/daySum[d].length) : 0), weatherAvg = ["大雨","雨","小雨","曇り","晴れ"].map(w => weatherSum[w].length ? Math.round(weatherSum[w].reduce((a,b)=>a+b)/weatherSum[w].length) : 0);
-            document.getElementById('analysisModal').style.display = 'block';
+            document.getElementById('analysisModal').style.display = 'block'; 
             if (dayAnalysisChart) dayAnalysisChart.destroy(); dayAnalysisChart = new Chart(document.getElementById('dayAnalysisChart'), { type: 'bar', data: { labels: ['月','火','水','木','金','土','日'], datasets: [{ label: '時給', data: dayAvg, backgroundColor: '#3498db' }] }, options: { responsive: true, maintainAspectRatio: false } });
             if (weatherAnalysisChart) weatherAnalysisChart.destroy(); weatherAnalysisChart = new Chart(document.getElementById('weatherAnalysisChart'), { type: 'bar', data: { labels: ['大雨','雨','小雨','曇','晴'], datasets: [{ label: '時給', data: weatherAvg, backgroundColor: ['#6c5ce7','#0984e3','#00cec9','#636e72','#f39c12'] }] }, options: { responsive: true, maintainAspectRatio: false } });
         }
