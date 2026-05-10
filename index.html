@@ -6,7 +6,7 @@
     <title>当五郎</title>
     <style>
         :root { --blue: #01579b; --gold: #ffc107; --bg: #f0f2f5; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; color: #333; padding-bottom: 80px; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; color: #333; padding-bottom: 20px; }
         .header { background: var(--blue); color: white; padding: 20px; text-align: center; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
         .ver { position: absolute; top: 5px; right: 10px; font-size: 0.6rem; opacity: 0.7; }
         .container { padding: 10px; max-width: 600px; margin: auto; }
@@ -15,27 +15,30 @@
         .btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #d4a017; }
         .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 20px; border-left: 6px solid var(--blue); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .race-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
-        .race-box { background: #f8f9fa; border: 1px solid #eee; padding: 10px 5px; border-radius: 8px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
-        .pred { display: block; color: #d32f2f; font-weight: bold; margin-top: 8px; }
-        .teleboat-btn { display: block; background: var(--blue); color: white; text-align: center; padding: 15px; text-decoration: none; font-weight: bold; border-radius: 30px; margin: 20px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        .race-box { background: #f8f9fa; border: 1px solid #eee; padding: 10px 5px; border-radius: 8px; text-align: center; }
+        .pred-list { font-size: 0.85rem; color: #d32f2f; font-weight: bold; margin-top: 5px; line-height: 1.2; }
+        .exp-val { font-size: 0.65rem; color: #666; font-weight: normal; margin-bottom: 4px; display: block; }
+        .app-link { display: block; background: #2196F3; color: white; text-align: center; padding: 12px; text-decoration: none; font-weight: bold; border-radius: 10px; margin: 10px; font-size: 0.9rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
 <div class="header">
-    <span class="ver">Ver 2.0.5</span>
+    <span class="ver">Ver 2.0.6</span>
     <h1 style="margin:0;">当五郎</h1>
-    <p style="margin:5px 0 0; font-size: 0.8rem; opacity: 0.9;">期待度2点買いモデル</p>
+    <p style="margin:5px 0 0; font-size: 0.8rem; opacity: 0.9;">4点予想・期待度解析モデル</p>
 </div>
+
 <div class="container">
+    <a href="jp.boatrace.teleboat://" class="app-link">🚤 公式ボートレースアプリを起動</a>
+
     <div class="setup-box">
         <p style="margin-top:0; font-weight:bold; color:#555;">本日の全レース予想</p>
         <button class="btn" onclick="go()">予想を開始する</button>
     </div>
     <div id="s" style="text-align:center; font-weight:bold; margin:15px; color:var(--blue);"></div>
     <div id="o"></div>
-    
-    <a href="https://www.boatrace.jp/owpc/pc/login" target="_blank" class="teleboat-btn" id="tb-btn" style="display:none;">🚤 公式テレボートを開く</a>
 </div>
+
 <script>
     const STADIUMS = {
         1:"桐生", 2:"戸田", 3:"江戸川", 4:"平和島", 5:"多摩川", 6:"浜名湖",
@@ -47,10 +50,8 @@
     async function go() {
         const status = document.getElementById('s');
         const output = document.getElementById('o');
-        const tbBtn = document.getElementById('tb-btn');
         status.innerText = "🚀 出走表を解析中...";
         output.innerHTML = "";
-        tbBtn.style.display = "none";
 
         const targetUrl = "https://boatraceopenapi.github.io/programs/v2/today.json";
         const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent(targetUrl);
@@ -58,84 +59,68 @@
         try {
             let res = await fetch(targetUrl + "?t=" + new Date().getTime());
             let data;
-            
             if (res.ok) {
                 data = await res.json();
             } else {
-                status.innerText = "🔄 接続経路を変更中...";
                 res = await fetch(proxyUrl + "&t=" + new Date().getTime());
-                if (!res.ok) throw new Error("Proxy Error");
                 const proxyData = await res.json();
                 data = JSON.parse(proxyData.contents);
             }
 
             const programs = data.programs;
             if (!programs || programs.length === 0) {
-                status.innerText = "⚠️ 本日のデータがまだ公開されていません。";
+                status.innerText = "⚠️ データがまだ公開されていません。";
                 return;
             }
 
-            status.innerText = "✅ 取得成功しました！";
-            tbBtn.style.display = "block";
+            status.innerText = "✅ 取得成功";
             
             let venuesMap = {};
             programs.forEach(race => {
                 let sId = race.race_stadium_number;
-                if (!venuesMap[sId]) {
-                    venuesMap[sId] = { name: STADIUMS[sId] || ("会場 " + sId), races: [] };
-                }
+                if (!venuesMap[sId]) venuesMap[sId] = { name: STADIUMS[sId] || ("会場 " + sId), races: [] };
                 venuesMap[sId].races.push(race);
             });
 
-            let sortedVenues = Object.keys(venuesMap).sort((a,b) => a - b).map(k => venuesMap[k]);
-
-            sortedVenues.forEach(st => {
+            Object.keys(venuesMap).sort((a,b) => a - b).forEach(key => {
+                const st = venuesMap[key];
                 st.races.sort((a,b) => a.race_number - b.race_number);
-                
                 let grid = '';
                 st.races.forEach(r => {
-                    // 時刻の抽出（"2026-05-10 11:40:00" から "11:40" を切り出す）
-                    let timeStr = "";
-                    if (r.race_closed_at) {
-                        timeStr = " " + r.race_closed_at.substring(11, 16);
-                    }
-
+                    let timeStr = r.race_closed_at ? r.race_closed_at.substring(11, 16) : "";
                     grid += `<div class="race-box">
-                                <small style="color:#888;font-weight:bold;">${r.race_number}R${timeStr}</small>
-                                <div class="pred">${calc(r.boats)}</div>
+                                <small style="color:#888;font-weight:bold;">${r.race_number}R ${timeStr}</small>
+                                <div class="pred-list">${calc(r.boats)}</div>
                              </div>`;
                 });
-                
                 const div = document.createElement('div');
                 div.className = 'card';
-                div.innerHTML = `<div style="font-size:1.3rem;font-weight:bold;color:#01579b;border-bottom:1px solid #eee;padding-bottom:10px;margin-bottom:15px;">${st.name}</div><div class="race-grid">${grid}</div>`;
+                div.innerHTML = `<div style="font-size:1.1rem;font-weight:bold;color:#01579b;border-bottom:1px solid #eee;padding-bottom:10px;margin-bottom:10px;">${st.name}</div><div class="race-grid">${grid}</div>`;
                 output.appendChild(div);
             });
-
         } catch (err) {
-            status.innerText = "❌ データの読み込みに失敗しました。";
-            console.error(err);
+            status.innerText = "❌ 通信失敗";
         }
     }
 
     function calc(boats) {
         if (!boats || boats.length === 0) return "---";
-        
-        let p = boats.map(x => {
-            let n = x.racer_boat_number;
-            let nRate = parseFloat(x.racer_national_top_2_percent || 0);
-            let lRate = parseFloat(x.racer_local_top_2_percent || 0);
-            return { n: n, s: nRate * 0.8 + lRate * 0.2 };
-        }).sort((a,b) => b.s - a.s);
-        
-        if (p.length < 3 || p[0].s === 0) return "---";
-        
-        let bet1 = `${p[0].n}-${p[1].n}-${p[2].n}`;
-        let bet2 = `${p[0].n}-${p[2].n}-${p[1].n}`;
-        let conf = p[0].s.toFixed(1);
+        let p = boats.map(x => ({
+            n: x.racer_boat_number,
+            s: (parseFloat(x.racer_national_top_2_percent || 0) * 0.8) + (parseFloat(x.racer_local_top_2_percent || 0) * 0.2)
+        })).sort((a,b) => b.s - a.s);
 
-        return `<span style="font-size:1.1rem; line-height:1.4;">${bet1}<br>${bet2}</span>
-                <span style="display:block; font-size:0.75rem; color:#01579b; margin-top:6px; font-weight:normal;">期待度 ${conf}%</span>`;
+        if (p.length < 4 || p[0].s === 0) return "---";
+
+        // 買い目4点を選出
+        const bets = [
+            { code: `${p[0].n}-${p[1].n}-${p[2].n}`, prob: (p[0].s * 0.5 + p[1].s * 0.3 + p[2].s * 0.2) },
+            { code: `${p[0].n}-${p[2].n}-${p[1].n}`, prob: (p[0].s * 0.5 + p[2].s * 0.3 + p[1].s * 0.2) },
+            { code: `${p[0].n}-${p[1].n}-${p[3].n}`, prob: (p[0].s * 0.5 + p[1].s * 0.3 + p[3].s * 0.2) },
+            { code: `${p[0].n}-${p[3].n}-${p[1].n}`, prob: (p[0].s * 0.5 + p[3].s * 0.3 + p[1].s * 0.2) }
+        ];
+
+        return bets.map(b => `<div>${b.code}<br><span class="exp-val">${b.prob.toFixed(1)}%</span></div>`).join("");
     }
 </script>
 </body>
