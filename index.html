@@ -17,14 +17,13 @@
         .race-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
         .race-box { background: #f8f9fa; border: 1px solid #eee; padding: 10px 5px; border-radius: 8px; text-align: center; }
         .pred { display: block; font-size: 0.95rem; color: #d32f2f; font-weight: bold; margin-top: 5px; }
-        .debug-box { word-break: break-all; font-size: 0.75rem; color: #555; background: #fff; padding: 15px; border-radius: 8px; border: 2px dashed #d32f2f; margin-top: 20px; }
     </style>
 </head>
 <body>
 <div class="header">
-    <span class="ver">Ver 2.0.2</span>
+    <span class="ver">Ver 2.0.3</span>
     <h1 style="margin:0;">当五郎</h1>
-    <p style="margin:5px 0 0; font-size: 0.8rem; opacity: 0.9;">工藤専用・構造解析モデル</p>
+    <p style="margin:5px 0 0; font-size: 0.8rem; opacity: 0.9;">工藤専用・完全解析モデル</p>
 </div>
 <div class="container">
     <div class="setup-box">
@@ -35,6 +34,14 @@
     <div id="o"></div>
 </div>
 <script>
+    // 会場番号と名前の変換表
+    const STADIUMS = {
+        1:"桐生", 2:"戸田", 3:"江戸川", 4:"平和島", 5:"多摩川", 6:"浜名湖",
+        7:"蒲郡", 8:"常滑", 9:"津", 10:"三国", 11:"びわこ", 12:"住之江",
+        13:"尼崎", 14:"鳴門", 15:"丸亀", 16:"児島", 17:"宮島", 18:"徳山",
+        19:"下関", 20:"若松", 21:"芦屋", 22:"福岡", 23:"唐津", 24:"大村"
+    };
+
     async function go() {
         const status = document.getElementById('s');
         const output = document.getElementById('o');
@@ -58,59 +65,41 @@
                 data = JSON.parse(proxyData.contents);
             }
 
-            if (!data || Object.keys(data).length === 0) {
+            const programs = data.programs;
+            if (!programs || programs.length === 0) {
                 status.innerText = "⚠️ 本日のデータがまだ公開されていません。";
                 return;
             }
 
             status.innerText = "✅ 取得成功しました！";
             
-            let htmlCount = 0;
-            let venues = [];
-
-            // 配列の場所を推測して探し出す
-            if (Array.isArray(data)) {
-                venues = data;
-            } else {
-                venues = data.stadiums || data.places || data.data || data.venues || [];
-                if (venues.length === 0) {
-                    for (let key in data) {
-                        if (Array.isArray(data[key])) {
-                            venues = data[key];
-                            break;
-                        }
-                    }
+            // 全レースをごちゃ混ぜのデータから「会場ごと」に整理する
+            let venuesMap = {};
+            programs.forEach(race => {
+                let sId = race.race_stadium_number;
+                if (!venuesMap[sId]) {
+                    venuesMap[sId] = { name: STADIUMS[sId] || ("会場 " + sId), races: [] };
                 }
-            }
-            
-            venues.forEach(st => {
-                let grid = '';
-                let races = st.races || st.race || st.raceList || [];
-                if (races.length === 0) return;
-                
-                races.forEach(r => {
-                    let raceNo = r.raceNo || r.raceNumber || r.no || "?";
-                    let players = r.players || r.entries || r.boat || r.racer || [];
-                    grid += `<div class="race-box"><small style="color:#888;font-weight:bold;">${raceNo}R</small><span class="pred">${calc(players)}</span></div>`;
-                });
-                
-                if (grid !== '') {
-                    const div = document.createElement('div');
-                    div.className = 'card';
-                    let vName = st.stadiumName || st.placeName || st.name || st.jyoName || '会場';
-                    div.innerHTML = `<div style="font-size:1.3rem;font-weight:bold;color:#01579b;border-bottom:1px solid #eee;padding-bottom:10px;margin-bottom:15px;">${vName}</div><div class="race-grid">${grid}</div>`;
-                    output.appendChild(div);
-                    htmlCount++;
-                }
+                venuesMap[sId].races.push(race);
             });
 
-            // もし画面に1つも表示されなかったら、原因を特定するために生データを表示する
-            if (htmlCount === 0) {
-                output.innerHTML = `<div class="debug-box">
-                    <strong style="color:#d32f2f;">⚠️予想の生成に必要な項目名が違います。<br>以下のデータをスクリーンショットしてください：</strong><br><br>
-                    ${JSON.stringify(data).substring(0, 1500)}
-                </div>`;
-            }
+            // 会場番号順に並べ替えて表示
+            let sortedVenues = Object.keys(venuesMap).sort((a,b) => a - b).map(k => venuesMap[k]);
+
+            sortedVenues.forEach(st => {
+                // レース番号順に並べ替え
+                st.races.sort((a,b) => a.race_number - b.race_number);
+                
+                let grid = '';
+                st.races.forEach(r => {
+                    grid += `<div class="race-box"><small style="color:#888;font-weight:bold;">${r.race_number}R</small><span class="pred">${calc(r.boats)}</span></div>`;
+                });
+                
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.innerHTML = `<div style="font-size:1.3rem;font-weight:bold;color:#01579b;border-bottom:1px solid #eee;padding-bottom:10px;margin-bottom:15px;">${st.name}</div><div class="race-grid">${grid}</div>`;
+                output.appendChild(div);
+            });
 
         } catch (err) {
             status.innerText = "❌ データの読み込みに失敗しました。";
@@ -118,13 +107,14 @@
         }
     }
 
-    function calc(players) {
-        if (!players || players.length === 0) return "---";
+    function calc(boats) {
+        if (!boats || boats.length === 0) return "---";
         
-        let p = players.map(x => {
-            let n = x.bracketNo || x.bracket || x.teiban || x.waku || "?";
-            let nRate = parseFloat(x.nationalWinRate || x.zenkoku || x.zenkokuShoritsu || x.rate_national || 0);
-            let lRate = parseFloat(x.localWinRate || x.tochi || x.tochiShoritsu || x.rate_local || 0);
+        let p = boats.map(x => {
+            let n = x.racer_boat_number;
+            // 全国勝率の代わりに全国2連対率、当地勝率の代わりに当地2連対率を使用
+            let nRate = parseFloat(x.racer_national_win_rate || x.racer_national_top_2_percent || 0);
+            let lRate = parseFloat(x.racer_local_win_rate || x.racer_local_top_2_percent || 0);
             return { n: n, s: nRate * 0.8 + lRate * 0.2 };
         }).sort((a,b) => b.s - a.s);
         
