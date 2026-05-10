@@ -14,7 +14,6 @@
         .setup-box { background: white; padding: 12px; border-radius: 10px; margin: 5px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .date-input { padding: 8px; border-radius: 5px; border: 1px solid #ccc; font-size: 1rem; margin-bottom: 10px; width: 80%; text-align: center; }
         
-        /* アクションボタン群 */
         .action-row { display: flex; gap: 6px; justify-content: center; align-items: stretch; margin-bottom: 5px; }
         .btn { background: var(--gold); color: #333; border: none; border-radius: 8px; font-weight: bold; flex-grow: 1; cursor: pointer; font-size: 0.95rem; box-shadow: 0 3px 0 #d4a017; padding: 10px 0; margin: 0; }
         .btn-verify { background: #e0e0e0; box-shadow: 0 3px 0 #bdbdbd; }
@@ -23,7 +22,6 @@
         .logic-btn:active { transform: translateY(2px); box-shadow: 0 0 0 transparent; }
         .logic-desc { display: none; text-align: left; background: #f8f9fa; padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.8rem; color: #444; border: 1px solid #eee; line-height: 1.4; }
         
-        /* 収支（勝率）パネル */
         .summary-box { display: none; background: #fffde7; border: 2px solid #fbc02d; padding: 12px; border-radius: 10px; margin: 10px 5px; text-align: center; }
         .sum-title { font-weight: bold; color: #f57f17; margin-bottom: 8px; font-size: 1.05rem; }
         .sum-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
@@ -32,14 +30,12 @@
         .sum-val { font-size: 1.3rem; font-weight: bold; color: var(--blue); }
         .val-high { color: var(--red); }
 
-        /* レースカード */
         .card { background: white; border-radius: 10px; padding: 10px; margin: 5px 5px 15px 5px; border-left: 5px solid var(--blue); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .card-title { font-size: 1.1rem; font-weight: bold; color: var(--blue); border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 8px; }
         .race-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
         .race-box { background: #f8f9fa; border: 1px solid #eee; padding: 4px; border-radius: 6px; display: flex; flex-direction: column; }
         .race-title { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.75rem; color: #555; font-weight: bold; text-align: center; border-bottom: 1px dashed #ccc; padding-bottom: 4px; margin-bottom: 4px; line-height: 1.2; }
         
-        /* 予想と期待度 */
         .mark-area { height: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 2px; }
         .pred-item { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; }
         .pred-code { font-size: 0.85rem; font-weight: bold; color: var(--red); }
@@ -48,17 +44,18 @@
         .mark-geki { color: white; background: #d32f2f; font-size: 0.6rem; padding: 1px 4px; border-radius: 3px; font-weight: bold; }
         .mark-atsu { color: white; background: #f57c00; font-size: 0.6rem; padding: 1px 4px; border-radius: 3px; font-weight: bold; }
         
-        /* 的中・ハズレ枠 */
         .hit-box { background: #e8f5e9; border: 1px dashed #4caf50; padding: 3px; margin-top: auto; border-radius: 4px; text-align: center; }
         .hit-text { color: var(--green); font-size: 0.75rem; font-weight: bold; display: block; }
         .miss-box { background: #ffebee; border: 1px dashed #ef9a9a; padding: 3px; margin-top: auto; border-radius: 4px; text-align: center; }
         .miss-text { color: #d32f2f; font-size: 0.7rem; font-weight: bold; display: block; }
         .wait-box { background: #f5f5f5; border: 1px dashed #ccc; padding: 3px; margin-top: auto; border-radius: 4px; text-align: center; color: #888; font-size: 0.7rem; }
+        
+        .debug-box { word-break: break-all; font-size: 0.75rem; color: #555; background: #fff; padding: 15px; border-radius: 8px; border: 2px dashed #d32f2f; margin: 15px 5px; }
     </style>
 </head>
 <body>
 <div class="header">
-    <span class="ver">Ver 3.0.1</span>
+    <span class="ver">Ver 3.0.2</span>
     <h1 style="margin:0; font-size:1.3rem;">当五郎</h1>
     <p style="margin:2px 0 0; font-size: 0.7rem; opacity: 0.9;">全レース勝率・バックテストモデル</p>
 </div>
@@ -113,7 +110,7 @@
 
     window.onload = () => {
         let d = new Date();
-        d.setDate(d.getDate() - 1); // デフォルトを昨日に
+        d.setDate(d.getDate() - 1); 
         document.getElementById('simDate').value = d.toISOString().split('T')[0];
     };
 
@@ -167,7 +164,11 @@
         if (isVerify) {
             status.innerText = "🔍 結果データを取得中...";
             let resUrl = `https://boatraceopenapi.github.io/results/v3/${yyyy}/${ymd}.json`;
+            let resUrlFallback = `https://boatraceopenapi.github.io/results/v3/${ymd}.json`;
+            
             resultsData = await fetchJson(resUrl);
+            if (!resultsData) resultsData = await fetchJson(resUrlFallback);
+
             if (!resultsData) {
                 status.innerText = "⚠️ 指定日の結果データがまだ公開されていません。";
                 return;
@@ -177,7 +178,6 @@
         status.innerText = ""; 
         let programs = data.programs;
         
-        // アツマーク付与のための期待度ランキング作成
         let allRacesRank = [];
         programs.forEach(race => {
             if (race.boats && race.boats.length > 0) {
@@ -199,31 +199,58 @@
             else if (i < 8) marks[r.key] = '<span class="mark-atsu">アツ🔥</span>';
         });
 
-        // 結果データの解析（検証モード時）
+        // 結果データの解析ロジック（強化版）
         let resultParsedMap = {};
-        if (isVerify && resultsData && resultsData.results) {
-            resultsData.results.forEach(r => {
-                let rKey = r.race_stadium_number + "-" + r.race_number;
-                try {
-                    let payouts = r.payouts || r.refunds || r.pay || r.payout || {};
-                    let trifecta = payouts.trifecta || payouts.sanrentan || payouts.top_3 || [];
-                    if (!Array.isArray(trifecta)) trifecta = [trifecta];
-                    if (trifecta.length > 0) {
-                        let t = trifecta[0];
-                        let resCode = t.result || t.combination || t.code || t.bracket_number_combination || "";
-                        if (typeof resCode !== "string") resCode = resCode.join("-");
-                        resCode = resCode.replace(/[^0-9]/g, "-").replace(/--+/g, "-");
-                        resultParsedMap[rKey] = { code: resCode };
-                    }
-                } catch(e) {}
-            });
+        let debugRaw = "";
+
+        if (isVerify && resultsData) {
+            let resArray = [];
+            // データ構造の推測
+            if (Array.isArray(resultsData)) resArray = resultsData;
+            else if (resultsData.results) resArray = resultsData.results;
+            else if (resultsData.races) resArray = resultsData.races;
+            else if (resultsData.programs) resArray = resultsData.programs;
+            else {
+                for (let key in resultsData) {
+                    if (Array.isArray(resultsData[key])) { resArray = resultsData[key]; break; }
+                }
+            }
+
+            if (resArray.length === 0) {
+                debugRaw = "【配列が見つかりません】\n" + JSON.stringify(resultsData).substring(0, 500);
+            } else {
+                resArray.forEach(r => {
+                    let sId = r.race_stadium_number || r.stadium || r.place;
+                    let rNo = r.race_number || r.raceNo || r.no;
+                    let rKey = sId + "-" + rNo;
+                    try {
+                        let payouts = r.payouts || r.refunds || r.pay || r.payout || r;
+                        let trifecta = payouts.trifecta || payouts.sanrentan || payouts.top_3 || payouts.sanren_tan || [];
+                        if (!Array.isArray(trifecta)) trifecta = [trifecta];
+                        
+                        if (trifecta.length > 0 && trifecta[0]) {
+                            let t = trifecta[0];
+                            let resCode = t.result || t.combination || t.code || t.bracket_number_combination || t.bracket_number || t.b_num || "";
+                            if (Array.isArray(resCode)) resCode = resCode.join("-");
+                            else if (typeof resCode === "string") resCode = resCode.replace(/[^0-9]/g, "-").replace(/--+/g, "-");
+                            
+                            if (resCode.length >= 5) {
+                                resultParsedMap[rKey] = { code: resCode };
+                            }
+                        }
+                    } catch(e) {}
+                });
+
+                if (Object.keys(resultParsedMap).length === 0) {
+                    debugRaw = "【3連単の項目が見つかりません】\n" + JSON.stringify(resArray[0]).substring(0, 500);
+                }
+            }
         }
 
-        // 描画と勝率計算
         let totalVerifyRaces = 0;
         let totalHits = 0;
-
         let venuesMap = {};
+        
         programs.forEach(race => {
             let sId = race.race_stadium_number;
             if (!venuesMap[sId]) venuesMap[sId] = { sId: sId, name: STADIUMS[sId] || ("会場 " + sId), races: [] };
@@ -241,11 +268,10 @@
                 let p = calcScores(r.boats || []);
                 let bets = p.length >= 4 && p[0].s > 0 ? generateBets(p) : [];
                 
-                // 検証ボックスの作成
                 let resultBoxHtml = "";
                 if (isVerify && bets.length > 0) {
                     let rp = resultParsedMap[rKey];
-                    if (rp && rp.code && rp.code.length >= 5) {
+                    if (rp && rp.code) {
                         totalVerifyRaces++;
                         let betCodes = bets.map(b => b.code);
                         if (betCodes.includes(rp.code)) {
@@ -259,7 +285,6 @@
                     }
                 }
 
-                // 予想HTMLの作成
                 let betsHtml = bets.length === 0 ? "---" : bets.map(b => `
                     <div class="pred-item">
                         <span class="pred-code">${b.code}</span>
@@ -282,15 +307,19 @@
             output.appendChild(div);
         });
 
-        // パネルの更新
         if (isVerify) {
             document.getElementById('sumTotal').innerText = totalVerifyRaces + "R";
             document.getElementById('sumHit').innerText = totalHits + "R";
             let rate = totalVerifyRaces > 0 ? ((totalHits / totalVerifyRaces) * 100).toFixed(1) : 0.0;
             let rateElem = document.getElementById('sumRate');
             rateElem.innerText = rate + "%";
-            rateElem.className = rate >= 15 ? "sum-val val-high" : "sum-val"; // 4点買いで15%超えなら赤字
+            rateElem.className = rate >= 15 ? "sum-val val-high" : "sum-val";
             summary.style.display = "block";
+
+            // 解析エラー時のデバッグ表示
+            if (debugRaw !== "") {
+                output.innerHTML += `<div class="debug-box"><strong>⚠️結果データの構造が異なります。この枠をスクショしてください：</strong><br>${debugRaw}</div>`;
+            }
         }
     }
 
