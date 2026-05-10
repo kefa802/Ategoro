@@ -13,45 +13,54 @@
         
         .setup-box { background: white; padding: 12px; border-radius: 10px; margin: 5px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .date-input { padding: 8px; border-radius: 5px; border: 1px solid #ccc; font-size: 1rem; margin-bottom: 10px; width: 80%; text-align: center; }
-        .action-row { display: flex; gap: 8px; justify-content: center; margin-bottom: 5px; }
-        .btn { background: var(--gold); color: #333; border: none; border-radius: 8px; font-weight: bold; flex-grow: 1; cursor: pointer; font-size: 1rem; box-shadow: 0 3px 0 #d4a017; padding: 12px 0; }
-        .btn-verify { background: #e0e0e0; box-shadow: 0 3px 0 #bdbdbd; }
-        .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 transparent; }
         
-        .summary-box { display: none; background: #fffde7; border: 2px solid #fbc02d; padding: 15px; border-radius: 10px; margin: 10px 5px; text-align: center; }
-        .sum-title { font-weight: bold; color: #f57f17; margin-bottom: 10px; font-size: 1.1rem; }
+        /* アクションボタン群 */
+        .action-row { display: flex; gap: 6px; justify-content: center; align-items: stretch; margin-bottom: 5px; }
+        .btn { background: var(--gold); color: #333; border: none; border-radius: 8px; font-weight: bold; flex-grow: 1; cursor: pointer; font-size: 0.95rem; box-shadow: 0 3px 0 #d4a017; padding: 10px 0; margin: 0; }
+        .btn-verify { background: #e0e0e0; box-shadow: 0 3px 0 #bdbdbd; }
+        .logic-btn { background: #fff; color: var(--blue); border: 1px solid var(--blue); border-radius: 8px; font-weight: bold; font-size: 0.75rem; padding: 0 8px; cursor: pointer; box-shadow: 0 2px 0 var(--blue); margin: 0; line-height: 1.2; white-space: nowrap; }
+        .btn:active, .btn-verify:active { transform: translateY(2px); box-shadow: 0 1px 0 transparent; }
+        .logic-btn:active { transform: translateY(2px); box-shadow: 0 0 0 transparent; }
+        .logic-desc { display: none; text-align: left; background: #f8f9fa; padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.8rem; color: #444; border: 1px solid #eee; line-height: 1.4; }
+        
+        /* 収支（勝率）パネル */
+        .summary-box { display: none; background: #fffde7; border: 2px solid #fbc02d; padding: 12px; border-radius: 10px; margin: 10px 5px; text-align: center; }
+        .sum-title { font-weight: bold; color: #f57f17; margin-bottom: 8px; font-size: 1.05rem; }
         .sum-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
-        .sum-item { background: white; padding: 10px 5px; border-radius: 5px; border: 1px solid #eee; }
+        .sum-item { background: white; padding: 8px 2px; border-radius: 5px; border: 1px solid #eee; }
         .sum-label { font-size: 0.7rem; color: #777; display: block; }
-        .sum-val { font-size: 1.2rem; font-weight: bold; }
-        .val-plus { color: var(--red); }
-        .val-minus { color: var(--blue); }
+        .sum-val { font-size: 1.3rem; font-weight: bold; color: var(--blue); }
+        .val-high { color: var(--red); }
 
+        /* レースカード */
         .card { background: white; border-radius: 10px; padding: 10px; margin: 5px 5px 15px 5px; border-left: 5px solid var(--blue); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .card-title { font-size: 1.1rem; font-weight: bold; color: var(--blue); border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 8px; }
         .race-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
-        .race-box { background: #f8f9fa; border: 1px solid #eee; padding: 4px; border-radius: 6px; }
-        .race-title { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.75rem; color: #555; font-weight: bold; text-align: center; border-bottom: 1px dashed #ccc; padding-bottom: 4px; margin-bottom: 4px; }
+        .race-box { background: #f8f9fa; border: 1px solid #eee; padding: 4px; border-radius: 6px; display: flex; flex-direction: column; }
+        .race-title { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.75rem; color: #555; font-weight: bold; text-align: center; border-bottom: 1px dashed #ccc; padding-bottom: 4px; margin-bottom: 4px; line-height: 1.2; }
+        
+        /* 予想と期待度 */
         .mark-area { height: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 2px; }
         .pred-item { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; }
-        .pred-code { font-size: 0.85rem; font-weight: bold; color: var(--blue); }
+        .pred-code { font-size: 0.85rem; font-weight: bold; color: var(--red); }
+        .pred-exp { font-size: 0.55rem; color: var(--blue); white-space: nowrap; }
         
         .mark-geki { color: white; background: #d32f2f; font-size: 0.6rem; padding: 1px 4px; border-radius: 3px; font-weight: bold; }
         .mark-atsu { color: white; background: #f57c00; font-size: 0.6rem; padding: 1px 4px; border-radius: 3px; font-weight: bold; }
         
-        .hit-box { background: #e8f5e9; border: 1px solid #4caf50; padding: 5px; margin-top: 5px; border-radius: 4px; text-align: center; }
-        .hit-text { color: var(--green); font-size: 0.8rem; font-weight: bold; display: block; }
-        .miss-box { background: #ffebee; border: 1px solid #ef9a9a; padding: 5px; margin-top: 5px; border-radius: 4px; text-align: center; }
-        .miss-text { color: #d32f2f; font-size: 0.8rem; font-weight: bold; display: block; }
-
-        .debug-box { word-break: break-all; font-size: 0.75rem; color: #555; background: #fff; padding: 15px; border-radius: 8px; border: 2px dashed #d32f2f; margin-top: 20px; }
+        /* 的中・ハズレ枠 */
+        .hit-box { background: #e8f5e9; border: 1px dashed #4caf50; padding: 3px; margin-top: auto; border-radius: 4px; text-align: center; }
+        .hit-text { color: var(--green); font-size: 0.75rem; font-weight: bold; display: block; }
+        .miss-box { background: #ffebee; border: 1px dashed #ef9a9a; padding: 3px; margin-top: auto; border-radius: 4px; text-align: center; }
+        .miss-text { color: #d32f2f; font-size: 0.7rem; font-weight: bold; display: block; }
+        .wait-box { background: #f5f5f5; border: 1px dashed #ccc; padding: 3px; margin-top: auto; border-radius: 4px; text-align: center; color: #888; font-size: 0.7rem; }
     </style>
 </head>
 <body>
 <div class="header">
-    <span class="ver">Ver 3.0.0</span>
+    <span class="ver">Ver 3.0.1</span>
     <h1 style="margin:0; font-size:1.3rem;">当五郎</h1>
-    <p style="margin:2px 0 0; font-size: 0.7rem; opacity: 0.9;">シミュレーション＆収支検証モデル</p>
+    <p style="margin:2px 0 0; font-size: 0.7rem; opacity: 0.9;">全レース勝率・バックテストモデル</p>
 </div>
 
 <div class="container">
@@ -59,24 +68,33 @@
         <input type="date" id="simDate" class="date-input">
         <div class="action-row">
             <button class="btn" onclick="run(false)">予想のみ</button>
-            <button class="btn btn-verify" onclick="run(true)">収支を検証</button>
+            <button class="btn btn-verify" onclick="run(true)">全レース検証</button>
+            <button class="logic-btn" onclick="toggleLogic()">ロジック<br>説明</button>
+        </div>
+        <div id="logicDesc" class="logic-desc">
+            <strong>【当五郎 3連率ベース総合判定】</strong><br>
+            ① 選手力：全国3連対率(80%) ＋ 当地3連対率(20%)<br>
+            ② モーター力：モーター3連対率<br>
+            ③ ベース値：選手力(60%) ＋ モーター力(40%)<br>
+            ④ 枠番補正：内枠にボーナス加算<br>
+            これらを総合し、上位4点を表示。
         </div>
     </div>
 
     <div id="summary" class="summary-box">
-        <div class="sum-title">対象8レース（計32点）検証結果</div>
+        <div class="sum-title">全レース 検証結果（4点買い）</div>
         <div class="sum-grid">
             <div class="sum-item">
-                <span class="sum-label">総投資</span>
-                <span class="sum-val">3,200円</span>
+                <span class="sum-label">対象レース</span>
+                <span id="sumTotal" class="sum-val">0R</span>
             </div>
             <div class="sum-item">
-                <span class="sum-label">払戻合計</span>
-                <span id="sumReturn" class="sum-val">0円</span>
+                <span class="sum-label">的中数</span>
+                <span id="sumHit" class="sum-val">0R</span>
             </div>
             <div class="sum-item">
-                <span class="sum-label">収支</span>
-                <span id="sumProfit" class="sum-val">0円</span>
+                <span class="sum-label">的中率（勝率）</span>
+                <span id="sumRate" class="sum-val">0.0%</span>
             </div>
         </div>
     </div>
@@ -94,11 +112,15 @@
     };
 
     window.onload = () => {
-        // デフォルトを昨日に設定（結果が出ているため）
         let d = new Date();
-        d.setDate(d.getDate() - 1);
+        d.setDate(d.getDate() - 1); // デフォルトを昨日に
         document.getElementById('simDate').value = d.toISOString().split('T')[0];
     };
+
+    function toggleLogic() {
+        const desc = document.getElementById('logicDesc');
+        desc.style.display = desc.style.display === 'block' ? 'none' : 'block';
+    }
 
     async function fetchJson(url) {
         const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent(url);
@@ -127,13 +149,11 @@
         let yyyy = d.getFullYear();
         let ymd = dateVal.replace(/-/g, '');
 
-        // 過去の日付でも取れるようにURLを構築
         let progUrl = `https://boatraceopenapi.github.io/programs/v2/${yyyy}/${ymd}.json`;
-        // v2がYYYYフォルダを使っていない場合へのフォールバック用
         let progUrlFallback = `https://boatraceopenapi.github.io/programs/v2/${ymd}.json`;
 
         let data = await fetchJson(progUrl);
-        if (!data) data = await fetchJson(progUrlFallback); // 失敗したら別URLを試す
+        if (!data) data = await fetchJson(progUrlFallback);
         if (!data && dateVal === new Date().toISOString().split('T')[0]) {
             data = await fetchJson("https://boatraceopenapi.github.io/programs/v2/today.json");
         }
@@ -157,7 +177,7 @@
         status.innerText = ""; 
         let programs = data.programs;
         
-        // 期待度ランキング作成
+        // アツマーク付与のための期待度ランキング作成
         let allRacesRank = [];
         programs.forEach(race => {
             if (race.boats && race.boats.length > 0) {
@@ -166,75 +186,43 @@
                     let topProb = p[0].s * 0.5 + p[1].s * 0.3 + p[2].s * 0.2;
                     allRacesRank.push({
                         key: race.race_stadium_number + "-" + race.race_number,
-                        prob: topProb,
-                        bets: generateBets(p)
+                        prob: topProb
                     });
                 }
             }
         });
-
         allRacesRank.sort((a,b) => b.prob - a.prob);
 
         let marks = {};
-        let targetRaces = {}; // 検証対象の8レース
         allRacesRank.forEach((r, i) => {
-            if (i < 3) {
-                marks[r.key] = '<span class="mark-geki">激アツ🔥</span>';
-                targetRaces[r.key] = r;
-            } else if (i < 8) {
-                marks[r.key] = '<span class="mark-atsu">アツ🔥</span>';
-                targetRaces[r.key] = r;
-            }
+            if (i < 3) marks[r.key] = '<span class="mark-geki">激アツ🔥</span>';
+            else if (i < 8) marks[r.key] = '<span class="mark-atsu">アツ🔥</span>';
         });
 
-        // 検証ロジック
-        let totalReturn = 0;
-        let debugResultRaw = "";
+        // 結果データの解析（検証モード時）
         let resultParsedMap = {};
-
         if (isVerify && resultsData && resultsData.results) {
             resultsData.results.forEach(r => {
                 let rKey = r.race_stadium_number + "-" + r.race_number;
-                if (targetRaces[rKey]) {
-                    // 3連単の結果と払戻を探す（未知の構造に対応するための探索）
-                    try {
-                        let payouts = r.payouts || r.refunds || r.pay || {};
-                        let trifecta = payouts.trifecta || payouts.sanrentan || payouts.top_3 || [];
-                        if (!Array.isArray(trifecta)) trifecta = [trifecta];
-                        
-                        if (trifecta.length > 0 && trifecta[0].amount) {
-                            let resCode = trifecta[0].result || trifecta[0].combination || trifecta[0].code || "";
-                            if (typeof resCode !== "string") resCode = resCode.join("-");
-                            resCode = resCode.replace(/[^0-9]/g, "-").replace(/--/g, "-");
-                            let amt = parseInt(trifecta[0].amount || trifecta[0].payout || 0);
-                            
-                            resultParsedMap[rKey] = { code: resCode, amount: amt };
-                            
-                            // 買った4点の中に当たりがあるかチェック
-                            let betCodes = targetRaces[rKey].bets.map(b => b.code);
-                            if (betCodes.includes(resCode)) {
-                                totalReturn += amt; // 100円買っていた場合の払戻
-                                resultParsedMap[rKey].hit = true;
-                            }
-                        } else {
-                            debugResultRaw = JSON.stringify(r).substring(0, 500);
-                        }
-                    } catch(e) {
-                        debugResultRaw = JSON.stringify(r).substring(0, 500);
+                try {
+                    let payouts = r.payouts || r.refunds || r.pay || r.payout || {};
+                    let trifecta = payouts.trifecta || payouts.sanrentan || payouts.top_3 || [];
+                    if (!Array.isArray(trifecta)) trifecta = [trifecta];
+                    if (trifecta.length > 0) {
+                        let t = trifecta[0];
+                        let resCode = t.result || t.combination || t.code || t.bracket_number_combination || "";
+                        if (typeof resCode !== "string") resCode = resCode.join("-");
+                        resCode = resCode.replace(/[^0-9]/g, "-").replace(/--+/g, "-");
+                        resultParsedMap[rKey] = { code: resCode };
                     }
-                }
+                } catch(e) {}
             });
-
-            // 収支パネルの更新
-            let profit = totalReturn - 3200;
-            document.getElementById('sumReturn').innerText = totalReturn.toLocaleString() + "円";
-            let pElem = document.getElementById('sumProfit');
-            pElem.innerText = (profit > 0 ? "+" : "") + profit.toLocaleString() + "円";
-            pElem.className = profit > 0 ? "sum-val val-plus" : (profit < 0 ? "sum-val val-minus" : "sum-val");
-            summary.style.display = "block";
         }
 
-        // HTML描画
+        // 描画と勝率計算
+        let totalVerifyRaces = 0;
+        let totalHits = 0;
+
         let venuesMap = {};
         programs.forEach(race => {
             let sId = race.race_stadium_number;
@@ -246,27 +234,45 @@
             const st = venuesMap[key];
             st.races.sort((a,b) => a.race_number - b.race_number);
             let grid = '';
+            
             st.races.forEach(r => {
                 let rKey = st.sId + "-" + r.race_number;
                 let markHtml = marks[rKey] || "";
+                let p = calcScores(r.boats || []);
+                let bets = p.length >= 4 && p[0].s > 0 ? generateBets(p) : [];
                 
-                // 検証モードかつ、対象レースの場合のみ結果ボックスを表示
+                // 検証ボックスの作成
                 let resultBoxHtml = "";
-                if (isVerify && marks[rKey] && resultParsedMap[rKey]) {
+                if (isVerify && bets.length > 0) {
                     let rp = resultParsedMap[rKey];
-                    if (rp.hit) {
-                        resultBoxHtml = `<div class="hit-box"><span class="hit-text">🎯 的中<br>${rp.amount.toLocaleString()}円</span></div>`;
+                    if (rp && rp.code && rp.code.length >= 5) {
+                        totalVerifyRaces++;
+                        let betCodes = bets.map(b => b.code);
+                        if (betCodes.includes(rp.code)) {
+                            totalHits++;
+                            resultBoxHtml = `<div class="hit-box"><span class="hit-text">🎯 的中</span></div>`;
+                        } else {
+                            resultBoxHtml = `<div class="miss-box"><span class="miss-text">結果: ${rp.code}</span></div>`;
+                        }
                     } else {
-                        resultBoxHtml = `<div class="miss-box"><span class="miss-text">結果: ${rp.code}<br>ハズレ</span></div>`;
+                        resultBoxHtml = `<div class="wait-box">結果未確定</div>`;
                     }
                 }
+
+                // 予想HTMLの作成
+                let betsHtml = bets.length === 0 ? "---" : bets.map(b => `
+                    <div class="pred-item">
+                        <span class="pred-code">${b.code}</span>
+                        <span class="pred-exp">期待度${b.prob.toFixed(1)}%</span>
+                    </div>
+                `).join("");
 
                 grid += `<div class="race-box">
                             <div class="race-title">
                                 <div class="mark-area">${markHtml}</div>
                                 <span>${r.race_number}R</span>
                             </div>
-                            ${generateHtml(r.boats)}
+                            ${betsHtml}
                             ${resultBoxHtml}
                          </div>`;
             });
@@ -276,9 +282,15 @@
             output.appendChild(div);
         });
 
-        // 構造が違って読めなかった場合のエラー吐き出し
-        if (isVerify && debugResultRaw !== "") {
-            output.innerHTML += `<div class="debug-box"><strong>⚠️結果データの項目名が異なります。スクリーンショットをお願いします：</strong><br>${debugResultRaw}</div>`;
+        // パネルの更新
+        if (isVerify) {
+            document.getElementById('sumTotal').innerText = totalVerifyRaces + "R";
+            document.getElementById('sumHit').innerText = totalHits + "R";
+            let rate = totalVerifyRaces > 0 ? ((totalHits / totalVerifyRaces) * 100).toFixed(1) : 0.0;
+            let rateElem = document.getElementById('sumRate');
+            rateElem.innerText = rate + "%";
+            rateElem.className = rate >= 15 ? "sum-val val-high" : "sum-val"; // 4点買いで15%超えなら赤字
+            summary.style.display = "block";
         }
     }
 
@@ -305,19 +317,11 @@
 
     function generateBets(p) {
         return [
-            { code: `${p[0].n}-${p[1].n}-${p[2].n}` },
-            { code: `${p[0].n}-${p[2].n}-${p[1].n}` },
-            { code: `${p[0].n}-${p[1].n}-${p[3].n}` },
-            { code: `${p[0].n}-${p[3].n}-${p[1].n}` }
+            { code: `${p[0].n}-${p[1].n}-${p[2].n}`, prob: (p[0].s * 0.5 + p[1].s * 0.3 + p[2].s * 0.2) },
+            { code: `${p[0].n}-${p[2].n}-${p[1].n}`, prob: (p[0].s * 0.5 + p[2].s * 0.3 + p[1].s * 0.2) },
+            { code: `${p[0].n}-${p[1].n}-${p[3].n}`, prob: (p[0].s * 0.5 + p[1].s * 0.3 + p[3].s * 0.2) },
+            { code: `${p[0].n}-${p[3].n}-${p[1].n}`, prob: (p[0].s * 0.5 + p[3].s * 0.3 + p[1].s * 0.2) }
         ];
-    }
-
-    function generateHtml(boats) {
-        if (!boats || boats.length === 0) return "---";
-        let p = calcScores(boats);
-        if (p.length < 4 || p[0].s <= 0) return "---";
-        let bets = generateBets(p);
-        return bets.map(b => `<div class="pred-item"><span class="pred-code">${b.code}</span></div>`).join("");
     }
 </script>
 </body>
