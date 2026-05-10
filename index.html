@@ -50,13 +50,12 @@
         .miss-text { color: #d32f2f; font-size: 0.7rem; font-weight: bold; display: block; }
         .wait-box { background: #f5f5f5; border: 1px dashed #ccc; padding: 3px; margin-top: auto; border-radius: 4px; text-align: center; color: #888; font-size: 0.7rem; }
         
-        /* 強制デバッグボックスのスタイル */
         .debug-box { word-break: break-all; font-size: 0.75rem; color: #555; background: #fff; padding: 15px; border-radius: 8px; border: 2px dashed #d32f2f; margin: 10px 5px; line-height: 1.3; }
     </style>
 </head>
 <body>
 <div class="header">
-    <span class="ver">Ver 3.0.4</span>
+    <span class="ver">Ver 3.0.5</span>
     <h1 style="margin:0; font-size:1.3rem;">当五郎</h1>
     <p style="margin:2px 0 0; font-size: 0.7rem; opacity: 0.9;">全レース勝率・バックテストモデル</p>
 </div>
@@ -143,7 +142,7 @@
         status.innerText = "🚀 番組データを取得中...";
         output.innerHTML = "";
         summary.style.display = "none";
-        debugArea.innerHTML = ""; // 毎回クリア
+        debugArea.innerHTML = "";
 
         let dateVal = document.getElementById('simDate').value;
         if(!dateVal) return;
@@ -204,42 +203,45 @@
             else if (i < 8) marks[r.key] = '<span class="mark-atsu">アツ🔥</span>';
         });
 
-        // 結果データの解析ロジック
+        // ==========================================
+        // ★修正: 結果データの解析ロジック
+        // ==========================================
         let resultParsedMap = {};
 
         if (isVerify && resultsData) {
             let resArray = [];
             if (Array.isArray(resultsData)) resArray = resultsData;
             else if (resultsData.results) resArray = resultsData.results;
-            else if (resultsData.races) resArray = resultsData.races;
-            else if (resultsData.programs) resArray = resultsData.programs;
-            else {
-                for (let key in resultsData) {
-                    if (Array.isArray(resultsData[key])) { resArray = resultsData[key]; break; }
-                }
-            }
 
-            resArray.forEach(r => {
-                let sId = r.race_stadium_number || r.stadium || r.place || r.stadium_code;
-                let rNo = r.race_number || r.raceNo || r.no;
-                let rKey = sId + "-" + rNo;
-                try {
-                    let payouts = r.payouts || r.refunds || r.pay || r.payout || r;
-                    let trifecta = payouts.trifecta || payouts.sanrentan || payouts.top_3 || payouts.sanren_tan || [];
-                    if (!Array.isArray(trifecta)) trifecta = [trifecta];
+            if (resArray.length > 0) {
+                resArray.forEach(r => {
+                    // 会場番号とレース番号の取得 (APIのキー名に合わせる)
+                    let sId = r.stadium_number || r.race_stadium_number;
+                    let rNo = r.number || r.race_number;
+                    let rKey = sId + "-" + rNo;
                     
-                    if (trifecta.length > 0 && trifecta[0]) {
-                        let t = trifecta[0];
-                        let resCode = t.result || t.combination || t.code || t.bracket_number_combination || t.bracket_number || t.b_num || "";
-                        if (Array.isArray(resCode)) resCode = resCode.join("-");
-                        else if (typeof resCode === "string") resCode = resCode.replace(/[^0-9]/g, "-").replace(/--+/g, "-");
+                    // ボートの着順データから1〜3着を抽出して「1-2-3」の文字列を作る
+                    if (r.boats && Array.isArray(r.boats)) {
+                        // 1〜6着のボートだけを抽出（FやLなどの失格を除外）
+                        let finishedBoats = r.boats.filter(b => {
+                            let p = parseInt(b.racer_place_number);
+                            return !isNaN(p) && p >= 1 && p <= 6;
+                        });
                         
-                        if (resCode.length >= 5) {
+                        // 着順で並び替え
+                        finishedBoats.sort((a, b) => parseInt(a.racer_place_number) - parseInt(b.racer_place_number));
+                        
+                        // 3着までゴールしていれば結果として採用
+                        if (finishedBoats.length >= 3) {
+                            let first = finishedBoats[0].racer_boat_number;
+                            let second = finishedBoats[1].racer_boat_number;
+                            let third = finishedBoats[2].racer_boat_number;
+                            let resCode = `${first}-${second}-${third}`;
                             resultParsedMap[rKey] = { code: resCode };
                         }
                     }
-                } catch(e) {}
-            });
+                });
+            }
         }
 
         let totalVerifyRaces = 0;
@@ -311,10 +313,9 @@
             rateElem.className = rate >= 15 ? "sum-val val-high" : "sum-val";
             summary.style.display = "block";
 
-            // ★照合できたレースが0件の場合、絶対に生データを強制表示する
             if (totalVerifyRaces === 0) {
                 let dumpText = typeof resultsData === 'object' ? JSON.stringify(resultsData).substring(0, 1000) : "取得失敗";
-                debugArea.innerHTML = `<div class="debug-box"><strong>⚠️データ照合エラー（キー不一致）。この赤枠をスクショしてください：</strong><br><br>${dumpText}</div>`;
+                debugArea.innerHTML = `<div class="debug-box"><strong>⚠️データ照合エラー。まだ一致していません：</strong><br><br>${dumpText}</div>`;
             }
         }
     }
