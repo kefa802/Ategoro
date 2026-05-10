@@ -21,9 +21,9 @@
 </head>
 <body>
 <div class="header">
-    <span class="ver">Ver 2.0.0</span>
+    <span class="ver">Ver 2.0.1</span>
     <h1 style="margin:0;">当五郎</h1>
-    <p style="margin:5px 0 0; font-size: 0.8rem; opacity: 0.9;">工藤専用・APIダイレクト接続モデル</p>
+    <p style="margin:5px 0 0; font-size: 0.8rem; opacity: 0.9;">工藤専用・APIハイブリッド接続モデル</p>
 </div>
 <div class="container">
     <div class="setup-box">
@@ -34,51 +34,66 @@
     <div id="o"></div>
 </div>
 <script>
-    function go() {
+    async function go() {
         const status = document.getElementById('s');
         const output = document.getElementById('o');
-        status.innerText = "🚀 新APIからデータを取得中...";
+        status.innerText = "🚀 出走表を取得中...";
         output.innerHTML = "";
 
-        // GASを捨てて、スマホから直接JSONデータを読みに行きます
-        const targetUrl = "https://boatraceopenapi.github.io/previews/v2/today.json";
-        
-        // 常に最新データを取るためのタイムスタンプ
-        const fetchUrl = targetUrl + "?t=" + new Date().getTime();
+        // previews(直前情報)ではなくprograms(出走表)のURLを使用
+        const targetUrl = "https://boatraceopenapi.github.io/programs/v2/today.json";
+        const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent(targetUrl);
 
-        fetch(fetchUrl)
-            .then(res => {
-                if (!res.ok) throw new Error("ネットワークエラー");
-                return res.json();
-            })
-            .then(data => {
-                if (!data || data.length === 0) {
-                    status.innerText = "⚠️ 本日のデータがまだ公開されていません。";
-                    return;
-                }
-                status.innerText = "✅ 取得成功しました！";
+        try {
+            // まずは直接アクセスを試みる
+            let res = await fetch(targetUrl + "?t=" + new Date().getTime());
+            let data;
+            
+            if (res.ok) {
+                data = await res.json();
+            } else {
+                // 直接アクセスがブロックされた場合は中継サーバー経由に自動切り替え
+                status.innerText = "🔄 接続経路を変更中...";
+                res = await fetch(proxyUrl + "&t=" + new Date().getTime());
+                if (!res.ok) throw new Error("Proxy Error");
+                const proxyData = await res.json();
+                data = JSON.parse(proxyData.contents);
+            }
+
+            if (!data || data.length === 0) {
+                status.innerText = "⚠️ 本日のデータがまだ公開されていません。";
+                return;
+            }
+
+            status.innerText = "✅ 取得成功しました！";
+            
+            let stadiums = Array.isArray(data) ? data : (data.stadiums || []);
+            
+            stadiums.forEach(st => {
+                let grid = '';
+                if (!st.races) return; 
                 
-                data.forEach(st => {
-                    let grid = '';
-                    st.races.forEach(r => {
-                        grid += `<div class="race-box"><small style="color:#888;font-weight:bold;">${r.raceNo}R</small><span class="pred">${calc(r.players)}</span></div>`;
-                    });
+                st.races.forEach(r => {
+                    grid += `<div class="race-box"><small style="color:#888;font-weight:bold;">${r.raceNo}R</small><span class="pred">${calc(r.players)}</span></div>`;
+                });
+                
+                if (grid !== '') {
                     const div = document.createElement('div');
                     div.className = 'card';
-                    div.innerHTML = `<div style="font-size:1.3rem;font-weight:bold;color:#01579b;border-bottom:1px solid #eee;padding-bottom:10px;margin-bottom:15px;">${st.stadiumName}</div><div class="race-grid">${grid}</div>`;
+                    div.innerHTML = `<div style="font-size:1.3rem;font-weight:bold;color:#01579b;border-bottom:1px solid #eee;padding-bottom:10px;margin-bottom:15px;">${st.stadiumName || '会場'}</div><div class="race-grid">${grid}</div>`;
                     output.appendChild(div);
-                });
-            })
-            .catch(err => {
-                status.innerText = "❌ データの読み込みに失敗しました。";
-                console.error(err);
+                }
             });
+
+        } catch (err) {
+            status.innerText = "❌ データの読み込みに失敗しました。";
+            console.error(err);
+        }
     }
 
     function calc(players) {
         if (!players || players.length === 0) return "---";
         
-        // 工藤式ロジック：全国勝率0.8 + 当地勝率0.2
         let p = players.map(x => ({
             n: x.bracketNo, 
             s: (parseFloat(x.nationalWinRate)||0) * 0.8 + (parseFloat(x.localWinRate)||0) * 0.2
@@ -86,7 +101,6 @@
         
         if (p.length < 3) return "---";
         
-        // 1号艇がトップなら「1-X-Y-全」、それ以外なら「1位-2位-3位」
         return p[0].n === 1 ? `1-${p[1].n}${p[2].n}-全` : `${p[0].n}-${p[1].n}-${p[2].n}`;
     }
 </script>
