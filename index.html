@@ -79,7 +79,7 @@
 </head>
 <body>
 <div class="header">
-    <span class="ver">Ver 3.3.0</span>
+    <span class="ver">V1.00.1</span>
     <h1 style="margin:0; font-size:1.4rem;">当五郎</h1>
     <p style="margin:2px 0 0; font-size: 0.75rem; opacity: 0.9;">タブUI・優先表示モデル</p>
 </div>
@@ -206,7 +206,11 @@
         let betsHtml = bets.length === 0 ? "---" : bets.map(b => `
             <div class="pred-item"><span class="pred-code">${b.code}</span><span class="pred-exp">期待度${b.prob.toFixed(1)}%</span></div>
         `).join("");
+
+        // 締め切り時刻の抽出と付与
+        let timeStr = race.race_closed_at ? race.race_closed_at.substring(11, 16) : "";
         let titleLabel = stName ? `${stName} ${race.race_number}R` : `${race.race_number}R`;
+        if (timeStr) titleLabel += ` ${timeStr}`;
 
         return `<div class="race-box">
                     <div class="race-title"><div class="mark-area">${markHtml}</div><span>${titleLabel}</span></div>
