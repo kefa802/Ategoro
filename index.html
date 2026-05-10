@@ -33,20 +33,27 @@
         .row-total { background: #e3f2fd; font-weight: bold; }
 
         .card { background: white; border-radius: 10px; padding: 10px; margin-bottom: 12px; border-left: 5px solid var(--blue); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .card-title { font-size: 1rem; font-weight: bold; margin-bottom: 8px; padding-bottom: 5px; border-bottom: 1px solid #eee; }
         .race-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-        .race-box { background: #f8f9fa; border: 1px solid #eee; padding: 6px 4px; border-radius: 6px; display: flex; flex-direction: column; font-size: 0.8rem; }
+        .race-box { background: #f8f9fa; border: 1px solid #eee; padding: 6px 4px; border-radius: 6px; display: flex; flex-direction: column; }
+        .race-header { text-align: center; border-bottom: 1px dashed #ccc; margin-bottom: 5px; padding-bottom: 3px; }
+        .race-name { font-weight: bold; font-size: 0.75rem; display: block; }
+        .race-time { font-size: 0.65rem; color: #666; }
+        
         .pred-item { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; }
         .pred-code { font-weight: bold; color: var(--red); font-size: 0.85rem; }
-        .pred-exp { font-size: 0.55rem; color: var(--blue); }
+        .pred-exp { font-size: 0.55rem; color: var(--blue); white-space: nowrap; }
         
         .hit-box { background: #e8f5e9; border: 1px dashed #4caf50; padding: 3px; margin-top: 4px; border-radius: 4px; text-align: center; color: var(--green); font-weight: bold; font-size: 0.7rem; }
         .miss-box { background: #ffebee; border: 1px dashed #ef9a9a; padding: 3px; margin-top: 4px; border-radius: 4px; text-align: center; color: var(--red); font-size: 0.7rem; }
         .result-code { font-weight: bold; display: block; font-size: 0.8rem; }
+        .mark-geki { color: var(--red); font-size: 0.6rem; font-weight: bold; display: block; }
+        .mark-atsu { color: var(--orange); font-size: 0.6rem; font-weight: bold; display: block; }
     </style>
 </head>
 <body>
 <div class="header">
-    <span class="ver">V1.00.6</span>
+    <span class="ver">V1.00.7</span>
     <h1 style="margin:0; font-size:1.4rem;">当五郎</h1>
     <p style="margin:2px 0 0; font-size: 0.75rem; opacity: 0.9;">投資点数シミュレーター</p>
 </div>
@@ -98,8 +105,42 @@
     window.onload = () => { let d = new Date(); d.setDate(d.getDate() - 1); let yStr = d.toISOString().split('T')[0]; document.getElementById('startDate').value = yStr; document.getElementById('endDate').value = yStr; };
     function switchTab(id) { document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active')); document.querySelector(`.tab[onclick="switchTab('${id}')"]`).classList.add('active'); document.getElementById(`${id}-section`).classList.add('active'); }
     async function fetchJson(url) { try { let res = await fetch(url + "?t=" + new Date().getTime()); if (!res.ok) { let proxy = "https://api.allorigins.win/get?url=" + encodeURIComponent(url); let pRes = await fetch(proxy); let pData = await pRes.json(); return JSON.parse(pData.contents); } return await res.json(); } catch(e) { return null; } }
-    function calcScores(boats) { return boats.map(x => { let n = x.racer_boat_number; let s = ((parseFloat(x.racer_national_top_3_percent||0)*0.8) + (parseFloat(x.racer_local_top_3_percent||0)*0.2)) * 0.6 + (parseFloat(x.racer_assigned_motor_top_3_percent||0)*0.4) + (n===1?15:n===2?8:n===3?4:n===4?0:n===5?-4:-8); return { n: n, s: s }; }).sort((a,b) => b.s - a.s); }
-    function generateBets(p, count) { let all = []; for(let i=0;i<p.length;i++) for(let j=0;j<p.length;j++) for(let k=0;k<p.length;k++) { if(i===j||j===k||i===k) continue; all.push({ code: `${p[i].n}-${p[j].n}-${p[k].n}`, prob: (p[i].s*0.5)+(p[j].s*0.3)+(p[k].s*0.2) }); } return all.sort((a,b) => b.prob - a.prob).slice(0, count); }
+    
+    function calcScores(boats) {
+        return boats.map(x => {
+            let n = x.racer_boat_number;
+            let s = ((parseFloat(x.racer_national_top_3_percent||0)*0.8) + (parseFloat(x.racer_local_top_3_percent||0)*0.2)) * 0.6 + (parseFloat(x.racer_assigned_motor_top_3_percent||0)*0.4) + (n===1?15:n===2?8:n===3?4:n===4?0:n===5?-4:-8);
+            return { n: n, s: s };
+        }).sort((a,b) => b.s - a.s);
+    }
+    
+    function generateBets(p, count) {
+        let all = [];
+        for(let i=0;i<p.length;i++) for(let j=0;j<p.length;j++) for(let k=0;k<p.length;k++) {
+            if(i===j||j===k||i===k) continue;
+            all.push({ code: `${p[i].n}-${p[j].n}-${p[k].n}`, prob: (p[i].s*0.5)+(p[j].s*0.3)+(p[k].s*0.2) });
+        }
+        return all.sort((a,b) => b.prob - a.prob).slice(0, count);
+    }
+
+    function renderRaceBox(race, stName, mark, betCount, resultBox = "") {
+        if(!race) return "";
+        let p = calcScores(race.boats||[]);
+        let bets = generateBets(p, betCount);
+        let time = race.race_closed_at ? race.race_closed_at.substring(11,16) : "--:--";
+        let bHtml = bets.map(b => `<div class="pred-item"><span class="pred-code">${b.code}</span><span class="pred-exp">期待度${b.prob.toFixed(1)}%</span></div>`).join("");
+        
+        let label = stName ? `${stName} ${race.race_number}R` : `${race.race_number}R`;
+        
+        return `<div class="race-box">
+            <div class="race-header">
+                ${mark ? `<span style="font-weight:bold;">${mark}</span>` : ""}
+                <span class="race-name">${label}</span>
+                <span class="race-time">${time}締切</span>
+            </div>
+            ${bHtml}${resultBox}
+        </div>`;
+    }
 
     async function runPrediction() {
         const area = document.getElementById('area-pred'); const status = document.getElementById('s-pred'); let betCount = parseInt(document.getElementById('predBetCount').value);
@@ -108,8 +149,15 @@
         let html = ""; let geki = "", atsu = "";
         rank.slice(0,3).forEach(rk => { let r = data.programs.find(x => x.race_stadium_number+"-"+x.race_number === rk.key); geki += renderRaceBox(r, STADIUMS[r.race_stadium_number], "激アツ🔥", betCount); });
         rank.slice(3,8).forEach(rk => { let r = data.programs.find(x => x.race_stadium_number+"-"+x.race_number === rk.key); atsu += renderRaceBox(r, STADIUMS[r.race_stadium_number], "アツ🔥", betCount); });
-        if(geki) html += `<div class="card" style="border-left-color:var(--red);"><div style="color:var(--red);font-weight:bold;margin-bottom:5px;">🔥 激アツ</div><div class="race-grid">${geki}</div></div>`;
-        if(atsu) html += `<div class="card" style="border-left-color:var(--orange);"><div style="color:var(--orange);font-weight:bold;margin-bottom:5px;">🔥 アツ</div><div class="race-grid">${atsu}</div></div>`;
+        if(geki) html += `<div class="card" style="border-left-color:var(--red);"><div class="card-title" style="color:var(--red);">🔥 激アツ レース一覧</div><div class="race-grid">${geki}</div></div>`;
+        if(atsu) html += `<div class="card" style="border-left-color:var(--orange);"><div class="card-title" style="color:var(--orange);">🔥 アツ レース一覧</div><div class="race-grid">${atsu}</div></div>`;
+        
+        let venues = {};
+        data.programs.forEach(r => { let sId = r.race_stadium_number; if(!venues[sId]) venues[sId] = { id: sId, name: STADIUMS[sId]||sId, races: [] }; venues[sId].races.push(r); });
+        Object.keys(venues).sort((a,b)=>a-b).forEach(k => {
+            let g = ""; venues[k].races.sort((a,b)=>a.race_number-b.race_number).forEach(r => { g += renderRaceBox(r, "", "", betCount); });
+            html += `<div class="card"><div class="card-title" style="color:var(--blue);">${venues[k].name}</div><div class="race-grid">${g}</div></div>`;
+        });
         area.innerHTML = html; status.innerText = "✅ 完了";
     }
 
@@ -124,13 +172,11 @@
         const counts = [1, 2, 4, 8, 12];
         counts.forEach(c => { ["geki","atsu","all"].forEach(cat => matrix[cat][c] = { invest:0, ret:0 }); });
 
-        let fullHtml = "";
-        let cDate = new Date(sDate);
+        let fullHtml = ""; let cDate = new Date(sDate);
         for(let i=0; i<diff; i++) {
             let ymd = cDate.toISOString().split('T')[0].replace(/-/g,'');
             let yyyy = cDate.getFullYear(); status.innerText = `🔄 ${ymd} 検証中...`;
             let [prog, resData] = await Promise.all([ fetchJson(`https://boatraceopenapi.github.io/programs/v2/${yyyy}/${ymd}.json`), fetchJson(`https://boatraceopenapi.github.io/results/v3/${yyyy}/${ymd}.json`) ]);
-            
             if(prog && resData) {
                 let resMap = {};
                 let resArray = Array.isArray(resData) ? resData : (resData.results || []);
@@ -144,26 +190,16 @@
                         }
                     }
                 });
-
-                let dayRank = prog.programs.map(r => {
-                    let p = calcScores(r.boats||[]);
-                    return { key: `${r.race_stadium_number}-${r.race_number}`, stadium: STADIUMS[r.race_stadium_number], num: r.race_number, boats: r.boats, prob: p.length ? (p[0].s*0.5+p[1].s*0.3+p[2].s*0.2) : 0 };
-                }).sort((a,b) => b.prob - a.prob);
-
+                let dayRank = prog.programs.map(r => { let p = calcScores(r.boats||[]); return { key: `${r.race_stadium_number}-${r.race_number}`, stadium: STADIUMS[r.race_stadium_number], num: r.race_number, boats: r.boats, prob: p.length ? (p[0].s*0.5+p[1].s*0.3+p[2].s*0.2) : 0, race_closed_at: r.race_closed_at }; }).sort((a,b) => b.prob - a.prob);
                 let dayGeki = "", dayAtsu = "";
                 dayRank.forEach((r, idx) => {
                     let real = resMap[r.key]; if(!real) return;
                     let p = calcScores(r.boats||[]);
-                    
-                    // 行列計算
                     counts.forEach(c => {
                         let hit = generateBets(p, c).some(b => b.code === real.code);
                         let update = (target) => { matrix[target][c].invest += 100 * c; if(hit) matrix[target][c].ret += real.amt; };
-                        update("all");
-                        if(idx < 3) update("geki"); else if(idx < 8) update("atsu");
+                        update("all"); if(idx < 3) update("geki"); else if(idx < 8) update("atsu");
                     });
-
-                    // 詳細表示用（指定された点数で表示）
                     let bets = generateBets(p, viewCount);
                     let isHit = bets.some(b => b.code === real.code);
                     let resBox = isHit ? `<div class="hit-box">的中！<br>¥${real.amt.toLocaleString()}</div>` : `<div class="miss-box"><span class="result-code">${real.code}</span>不的中</div>`;
@@ -178,7 +214,6 @@
             }
             cDate.setDate(cDate.getDate() + 1);
         }
-
         let tableHtml = `<tr><th>点数</th><th>激アツ回収</th><th>アツ回収</th><th>全体回収</th></tr>`;
         counts.forEach(c => {
             const getR = (cat) => matrix[cat][c].invest ? (matrix[cat][c].ret/matrix[cat][c].invest*100).toFixed(1) : "0.0";
@@ -187,11 +222,7 @@
         matrixTable.innerHTML = tableHtml; sumArea.style.display = "block"; area.innerHTML = fullHtml; status.innerText = "✅ 検証完了";
     }
 
-    function renderRaceBox(race, stName, mark, betCount, resultBox = "") {
-        let p = calcScores(race.boats||[]); let bets = generateBets(p, betCount);
-        let bHtml = bets.map(b => `<div class="pred-item"><span class="pred-code">${b.code}</span><span class="pred-exp">${b.prob.toFixed(1)}%</span></div>`).join("");
-        return `<div class="race-box"><div style="text-align:center;font-size:0.6rem;font-weight:bold;">${mark}</div><div style="font-weight:bold;text-align:center;margin-bottom:4px;font-size:0.75rem;">${stName} ${race.race_number || race.num}R</div>${bHtml}${resultBox}</div>`;
-    }
+    function switchTab(id) { document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active')); document.querySelector(`.tab[onclick="switchTab('${id}')"]`).classList.add('active'); document.getElementById(`${id}-section`).classList.add('active'); }
 </script>
 </body>
 </html>
