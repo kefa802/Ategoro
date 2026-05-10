@@ -15,15 +15,15 @@
         .btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #d4a017; }
         .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 20px; border-left: 6px solid var(--blue); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .race-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
-        .race-box { background: #f8f9fa; border: 1px solid #eee; padding: 10px 5px; border-radius: 8px; text-align: center; }
-        .pred { display: block; font-size: 0.95rem; color: #d32f2f; font-weight: bold; margin-top: 5px; }
+        .race-box { background: #f8f9fa; border: 1px solid #eee; padding: 10px 5px; border-radius: 8px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+        .pred { display: block; color: #d32f2f; font-weight: bold; margin-top: 8px; }
     </style>
 </head>
 <body>
 <div class="header">
-    <span class="ver">Ver 2.0.3</span>
+    <span class="ver">Ver 2.0.4</span>
     <h1 style="margin:0;">当五郎</h1>
-    <p style="margin:5px 0 0; font-size: 0.8rem; opacity: 0.9;">工藤専用・完全解析モデル</p>
+    <p style="margin:5px 0 0; font-size: 0.8rem; opacity: 0.9;">工藤専用・期待度2点買いモデル</p>
 </div>
 <div class="container">
     <div class="setup-box">
@@ -34,7 +34,6 @@
     <div id="o"></div>
 </div>
 <script>
-    // 会場番号と名前の変換表
     const STADIUMS = {
         1:"桐生", 2:"戸田", 3:"江戸川", 4:"平和島", 5:"多摩川", 6:"浜名湖",
         7:"蒲郡", 8:"常滑", 9:"津", 10:"三国", 11:"びわこ", 12:"住之江",
@@ -73,7 +72,6 @@
 
             status.innerText = "✅ 取得成功しました！";
             
-            // 全レースをごちゃ混ぜのデータから「会場ごと」に整理する
             let venuesMap = {};
             programs.forEach(race => {
                 let sId = race.race_stadium_number;
@@ -83,16 +81,17 @@
                 venuesMap[sId].races.push(race);
             });
 
-            // 会場番号順に並べ替えて表示
             let sortedVenues = Object.keys(venuesMap).sort((a,b) => a - b).map(k => venuesMap[k]);
 
             sortedVenues.forEach(st => {
-                // レース番号順に並べ替え
                 st.races.sort((a,b) => a.race_number - b.race_number);
                 
                 let grid = '';
                 st.races.forEach(r => {
-                    grid += `<div class="race-box"><small style="color:#888;font-weight:bold;">${r.race_number}R</small><span class="pred">${calc(r.boats)}</span></div>`;
+                    grid += `<div class="race-box">
+                                <small style="color:#888;font-weight:bold;">${r.race_number}R</small>
+                                <div class="pred">${calc(r.boats)}</div>
+                             </div>`;
                 });
                 
                 const div = document.createElement('div');
@@ -112,15 +111,22 @@
         
         let p = boats.map(x => {
             let n = x.racer_boat_number;
-            // 全国勝率の代わりに全国2連対率、当地勝率の代わりに当地2連対率を使用
-            let nRate = parseFloat(x.racer_national_win_rate || x.racer_national_top_2_percent || 0);
-            let lRate = parseFloat(x.racer_local_win_rate || x.racer_local_top_2_percent || 0);
+            let nRate = parseFloat(x.racer_national_top_2_percent || 0);
+            let lRate = parseFloat(x.racer_local_top_2_percent || 0);
             return { n: n, s: nRate * 0.8 + lRate * 0.2 };
         }).sort((a,b) => b.s - a.s);
         
         if (p.length < 3 || p[0].s === 0) return "---";
         
-        return p[0].n == 1 ? `1-${p[1].n}${p[2].n}-全` : `${p[0].n}-${p[1].n}-${p[2].n}`;
+        // 1位を頭にして、2位と3位の裏表（2点買い）
+        let bet1 = `${p[0].n}-${p[1].n}-${p[2].n}`;
+        let bet2 = `${p[0].n}-${p[2].n}-${p[1].n}`;
+        
+        // 1位のスコア（工藤式2連対率）を期待度として小数点1位まで表示
+        let conf = p[0].s.toFixed(1);
+
+        return `<span style="font-size:1.1rem; line-height:1.4;">${bet1}<br>${bet2}</span>
+                <span style="display:block; font-size:0.75rem; color:#01579b; margin-top:6px; font-weight:normal;">期待度 ${conf}%</span>`;
     }
 </script>
 </body>
