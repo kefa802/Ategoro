@@ -22,17 +22,15 @@
         .pred-item { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; }
         .pred-code { font-size: 0.85rem; font-weight: bold; color: #d32f2f; }
         .pred-exp { font-size: 0.55rem; color: #01579b; white-space: nowrap; }
-        
-        /* アツマーク用デザイン */
         .mark-geki { color: white; background: #d32f2f; font-size: 0.6rem; padding: 1px 4px; border-radius: 3px; font-weight: bold; margin-bottom: 2px; }
         .mark-atsu { color: white; background: #f57c00; font-size: 0.6rem; padding: 1px 4px; border-radius: 3px; font-weight: bold; margin-bottom: 2px; }
     </style>
 </head>
 <body>
 <div class="header">
-    <span class="ver">Ver 2.0.8</span>
+    <span class="ver">Ver 2.0.9</span>
     <h1 style="margin:0; font-size:1.3rem;">当五郎</h1>
-    <p style="margin:2px 0 0; font-size: 0.7rem; opacity: 0.9;">全場横断・激アツ判定モデル</p>
+    <p style="margin:2px 0 0; font-size: 0.7rem; opacity: 0.9;">総合判定（モーター・枠番補正）モデル</p>
 </div>
 
 <div class="container">
@@ -56,7 +54,7 @@
     async function go() {
         const status = document.getElementById('s');
         const output = document.getElementById('o');
-        status.innerText = "🚀 解析中...";
+        status.innerText = "🚀 新ロジックで解析中...";
         output.innerHTML = "";
 
         const targetUrl = "https://boatraceopenapi.github.io/programs/v2/today.json";
@@ -81,16 +79,11 @@
 
             status.innerText = ""; 
             
-            // 全レースの期待度を計算してランキングを作成
             let allRacesRank = [];
             programs.forEach(race => {
                 if (race.boats && race.boats.length > 0) {
-                    let p = race.boats.map(x => ({
-                        s: (parseFloat(x.racer_national_top_2_percent || 0) * 0.8) + (parseFloat(x.racer_local_top_2_percent || 0) * 0.2)
-                    })).sort((a,b) => b.s - a.s);
-                    
+                    let p = calcScores(race.boats);
                     if (p.length >= 4 && p[0].s > 0) {
-                        // そのレースの1番堅い買い目の期待度を代表値とする
                         let topProb = p[0].s * 0.5 + p[1].s * 0.3 + p[2].s * 0.2;
                         allRacesRank.push({
                             key: race.race_stadium_number + "-" + race.race_number,
@@ -100,10 +93,8 @@
                 }
             });
 
-            // 期待度が高い順に並び替え
             allRacesRank.sort((a,b) => b.prob - a.prob);
 
-            // トップ3に激アツ、次点5レースにアツマークを付与
             let marks = {};
             allRacesRank.forEach((r, i) => {
                 if (i < 3) marks[r.key] = '<span class="mark-geki">激アツ🔥</span>';
@@ -131,7 +122,7 @@
                                     ${markHtml}
                                     <span>${r.race_number}R ${timeStr}</span>
                                 </div>
-                                ${calc(r.boats)}
+                                ${generateHtml(r.boats)}
                              </div>`;
                 });
                 const div = document.createElement('div');
@@ -144,14 +135,41 @@
         }
     }
 
-    function calc(boats) {
-        if (!boats || boats.length === 0) return "---";
-        let p = boats.map(x => ({
-            n: x.racer_boat_number,
-            s: (parseFloat(x.racer_national_top_2_percent || 0) * 0.8) + (parseFloat(x.racer_local_top_2_percent || 0) * 0.2)
-        })).sort((a,b) => b.s - a.s);
+    // 各艇の総合スコアを計算する関数
+    function calcScores(boats) {
+        return boats.map(x => {
+            let n = x.racer_boat_number; // 枠番
+            
+            // 1. 選手スコア（全国8割＋当地2割）
+            let nRate = parseFloat(x.racer_national_top_2_percent || 0);
+            let lRate = parseFloat(x.racer_local_top_2_percent || 0);
+            let racerScore = (nRate * 0.8) + (lRate * 0.2);
+            
+            // 2. モータースコア
+            let motorScore = parseFloat(x.racer_assigned_motor_top_2_percent || 0);
+            
+            // 3. 選手60% ＋ モーター40% のベーススコア
+            let baseScore = (racerScore * 0.6) + (motorScore * 0.4);
+            
+            // 4. 枠番補正（内枠に下駄を履かせる）
+            let wakuBonus = 0;
+            if (n === 1) wakuBonus = 15;
+            else if (n === 2) wakuBonus = 8;
+            else if (n === 3) wakuBonus = 4;
+            else if (n === 4) wakuBonus = 0;
+            else if (n === 5) wakuBonus = -4;
+            else if (n === 6) wakuBonus = -8;
+            
+            return { n: n, s: baseScore + wakuBonus };
+        }).sort((a,b) => b.s - a.s);
+    }
 
-        if (p.length < 4 || p[0].s === 0) return "---";
+    // 表示用のHTMLを生成する関数
+    function generateHtml(boats) {
+        if (!boats || boats.length === 0) return "---";
+        let p = calcScores(boats);
+
+        if (p.length < 4 || p[0].s <= 0) return "---";
 
         const bets = [
             { code: `${p[0].n}-${p[1].n}-${p[2].n}`, prob: (p[0].s * 0.5 + p[1].s * 0.3 + p[2].s * 0.2) },
