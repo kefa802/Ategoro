@@ -50,12 +50,13 @@
         .miss-text { color: #d32f2f; font-size: 0.7rem; font-weight: bold; display: block; }
         .wait-box { background: #f5f5f5; border: 1px dashed #ccc; padding: 3px; margin-top: auto; border-radius: 4px; text-align: center; color: #888; font-size: 0.7rem; }
         
-        .debug-box { word-break: break-all; font-size: 0.75rem; color: #555; background: #fff; padding: 15px; border-radius: 8px; border: 2px dashed #d32f2f; margin: 15px 5px; }
+        /* デバッグボックスのスタイル */
+        .debug-box { word-break: break-all; font-size: 0.75rem; color: #555; background: #fff; padding: 15px; border-radius: 8px; border: 2px dashed #d32f2f; margin: 10px 5px; }
     </style>
 </head>
 <body>
 <div class="header">
-    <span class="ver">Ver 3.0.2</span>
+    <span class="ver">Ver 3.0.3</span>
     <h1 style="margin:0; font-size:1.3rem;">当五郎</h1>
     <p style="margin:2px 0 0; font-size: 0.7rem; opacity: 0.9;">全レース勝率・バックテストモデル</p>
 </div>
@@ -77,6 +78,8 @@
             これらを総合し、上位4点を表示。
         </div>
     </div>
+
+    <div id="debugArea"></div>
 
     <div id="summary" class="summary-box">
         <div class="sum-title">全レース 検証結果（4点買い）</div>
@@ -135,10 +138,12 @@
         const status = document.getElementById('s');
         const output = document.getElementById('o');
         const summary = document.getElementById('summary');
+        const debugArea = document.getElementById('debugArea');
         
         status.innerText = "🚀 番組データを取得中...";
         output.innerHTML = "";
         summary.style.display = "none";
+        debugArea.innerHTML = "";
 
         let dateVal = document.getElementById('simDate').value;
         if(!dateVal) return;
@@ -199,13 +204,12 @@
             else if (i < 8) marks[r.key] = '<span class="mark-atsu">アツ🔥</span>';
         });
 
-        // 結果データの解析ロジック（強化版）
+        // 結果データの解析ロジック
         let resultParsedMap = {};
         let debugRaw = "";
 
         if (isVerify && resultsData) {
             let resArray = [];
-            // データ構造の推測
             if (Array.isArray(resultsData)) resArray = resultsData;
             else if (resultsData.results) resArray = resultsData.results;
             else if (resultsData.races) resArray = resultsData.races;
@@ -220,7 +224,7 @@
                 debugRaw = "【配列が見つかりません】\n" + JSON.stringify(resultsData).substring(0, 500);
             } else {
                 resArray.forEach(r => {
-                    let sId = r.race_stadium_number || r.stadium || r.place;
+                    let sId = r.race_stadium_number || r.stadium || r.place || r.stadium_code;
                     let rNo = r.race_number || r.raceNo || r.no;
                     let rKey = sId + "-" + rNo;
                     try {
@@ -245,6 +249,10 @@
                     debugRaw = "【3連単の項目が見つかりません】\n" + JSON.stringify(resArray[0]).substring(0, 500);
                 }
             }
+        }
+
+        if (isVerify && debugRaw !== "") {
+            debugArea.innerHTML = `<div class="debug-box"><strong>⚠️結果データの構造が異なります。この赤い枠の中をスクショしてください：</strong><br>${debugRaw}</div>`;
         }
 
         let totalVerifyRaces = 0;
@@ -315,11 +323,6 @@
             rateElem.innerText = rate + "%";
             rateElem.className = rate >= 15 ? "sum-val val-high" : "sum-val";
             summary.style.display = "block";
-
-            // 解析エラー時のデバッグ表示
-            if (debugRaw !== "") {
-                output.innerHTML += `<div class="debug-box"><strong>⚠️結果データの構造が異なります。この枠をスクショしてください：</strong><br>${debugRaw}</div>`;
-            }
         }
     }
 
