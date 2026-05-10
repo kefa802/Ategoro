@@ -10,61 +10,78 @@
         .header { background: var(--blue); color: white; padding: 10px 15px; text-align: center; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         .ver { position: absolute; top: 5px; right: 10px; font-size: 0.6rem; opacity: 0.7; }
         .container { padding: 5px; max-width: 600px; margin: auto; }
-        .logic-wrap { margin: 10px 5px; }
-        .logic-btn-wide { width: 100%; background: white; color: var(--blue); border: 2px solid var(--blue); padding: 10px; border-radius: 8px; font-weight: bold; font-size: 0.9rem; cursor: pointer; }
-        .logic-desc { display: none; text-align: left; background: #fff; padding: 12px; border-radius: 8px; margin-top: 5px; font-size: 0.85rem; color: #444; border: 1px dashed var(--blue); line-height: 1.5; }
+        
         .tabs { display: flex; margin: 10px 5px; border-radius: 8px; overflow: hidden; border: 2px solid var(--blue); }
         .tab { flex: 1; text-align: center; padding: 12px; background: white; color: var(--blue); font-weight: bold; cursor: pointer; font-size: 0.95rem; }
         .tab.active { background: var(--blue); color: white; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
+        
         .section-box { background: white; padding: 15px; border-radius: 10px; margin: 10px 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .setting-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px; }
         .setting-select { padding: 8px; border-radius: 5px; border: 2px solid var(--gold); font-weight: bold; }
         .date-row { display: flex; align-items: center; justify-content: center; gap: 5px; margin-bottom: 10px; }
         .date-input { padding: 8px; border-radius: 5px; border: 1px solid #ccc; font-size: 0.9rem; width: 45%; text-align: center; }
+        
         .btn { width: 100%; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; padding: 12px 0; }
         .btn-pred { background: var(--gold); color: #333; box-shadow: 0 4px 0 #d4a017; }
         .btn-verify { background: #eceff1; color: var(--blue); box-shadow: 0 4px 0 #cfd8dc; border: 1px solid #cfd8dc; }
-        .stats-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.7rem; background: white; }
+        
+        .stats-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.75rem; background: white; }
         .stats-table th, .stats-table td { border: 1px solid #e0e0e0; padding: 8px 2px; text-align: center; }
         .stats-table th { background: #f5f5f5; }
-        .row-geki { color: var(--red); font-weight: bold; }
-        .row-atsu { color: var(--orange); font-weight: bold; }
         .row-total { background: #e3f2fd; font-weight: bold; }
+
         .card { background: white; border-radius: 10px; padding: 10px; margin-bottom: 12px; border-left: 5px solid var(--blue); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .race-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
         .race-box { background: #f8f9fa; border: 1px solid #eee; padding: 6px 4px; border-radius: 6px; display: flex; flex-direction: column; font-size: 0.8rem; }
         .pred-item { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; }
         .pred-code { font-weight: bold; color: var(--red); font-size: 0.85rem; }
         .pred-exp { font-size: 0.55rem; color: var(--blue); }
+        
+        .hit-box { background: #e8f5e9; border: 1px dashed #4caf50; padding: 3px; margin-top: 4px; border-radius: 4px; text-align: center; color: var(--green); font-weight: bold; font-size: 0.7rem; }
+        .miss-box { background: #ffebee; border: 1px dashed #ef9a9a; padding: 3px; margin-top: 4px; border-radius: 4px; text-align: center; color: var(--red); font-size: 0.7rem; }
+        .result-code { font-weight: bold; display: block; font-size: 0.8rem; }
     </style>
 </head>
 <body>
 <div class="header">
-    <span class="ver">V1.00.5</span>
+    <span class="ver">V1.00.6</span>
     <h1 style="margin:0; font-size:1.4rem;">当五郎</h1>
     <p style="margin:2px 0 0; font-size: 0.75rem; opacity: 0.9;">投資点数シミュレーター</p>
 </div>
+
 <div class="container">
-    <div class="logic-wrap"><button class="logic-btn-wide" onclick="toggleLogic()">💡 予想ロジックを確認</button>
-        <div id="logicDesc" class="logic-desc"><strong>【当五郎 3連率ベース総合判定】</strong><br>① 選手力：全国3連対率(80%)＋当地(20%)<br>② モーター力：モーター3連対率<br>③ ベース値：選手力(60%)＋モーター力(40%)<br>④ 枠番補正：内枠ボーナス</div>
-    </div>
     <div class="tabs">
         <div class="tab active" onclick="switchTab('predict')">🚤 本日の予想</div>
         <div class="tab" onclick="switchTab('backtest')">📊 バックテスト</div>
     </div>
+
     <div id="predict-section" class="tab-content active">
         <div class="section-box">
-            <div class="setting-row"><label>表示点数：</label><select id="predBetCount" class="setting-select"><option value="1">1点</option><option value="2">2点</option><option value="4" selected>4点</option><option value="8">8点</option><option value="12">12点</option></select></div>
+            <div class="setting-row">
+                <label>表示点数：</label>
+                <select id="predBetCount" class="setting-select">
+                    <option value="1">1点</option><option value="2">2点</option><option value="4" selected>4点</option><option value="8">8点</option><option value="12">12点</option>
+                </select>
+            </div>
             <button class="btn btn-pred" onclick="runPrediction()">本日の予想を開始する</button>
         </div>
         <div id="s-pred" style="text-align:center; font-weight:bold; margin:15px; color:var(--blue);"></div>
         <div id="area-pred"></div>
     </div>
+
     <div id="backtest-section" class="tab-content">
         <div class="section-box">
-            <div class="date-row"><input type="date" id="startDate" class="date-input"> 〜 <input type="date" id="endDate" class="date-input"></div>
+            <div class="date-row">
+                <input type="date" id="startDate" class="date-input"> 〜 <input type="date" id="endDate" class="date-input">
+            </div>
+            <div class="setting-row">
+                <label>詳細表示用：</label>
+                <select id="backtestViewCount" class="setting-select">
+                    <option value="1">1点</option><option value="2">2点</option><option value="4" selected>4点</option><option value="8">8点</option><option value="12">12点</option>
+                </select>
+            </div>
             <button class="btn btn-verify" onclick="runBacktest()">全パターン一斉検証</button>
         </div>
         <div id="s-backtest" style="text-align:center; font-weight:bold; margin:15px; color:var(--blue);"></div>
@@ -75,10 +92,10 @@
         <div id="area-backtest"></div>
     </div>
 </div>
+
 <script>
     const STADIUMS = {1:"桐生",2:"戸田",3:"江戸川",4:"平和島",5:"多摩川",6:"浜名湖",7:"蒲郡",8:"常滑",9:"津",10:"三国",11:"びわこ",12:"住之江",13:"尼崎",14:"鳴門",15:"丸亀",16:"児島",17:"宮島",18:"徳山",19:"下関",20:"若松",21:"芦屋",22:"福岡",23:"唐津",24:"大村"};
     window.onload = () => { let d = new Date(); d.setDate(d.getDate() - 1); let yStr = d.toISOString().split('T')[0]; document.getElementById('startDate').value = yStr; document.getElementById('endDate').value = yStr; };
-    function toggleLogic() { let d = document.getElementById('logicDesc'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; }
     function switchTab(id) { document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active')); document.querySelector(`.tab[onclick="switchTab('${id}')"]`).classList.add('active'); document.getElementById(`${id}-section`).classList.add('active'); }
     async function fetchJson(url) { try { let res = await fetch(url + "?t=" + new Date().getTime()); if (!res.ok) { let proxy = "https://api.allorigins.win/get?url=" + encodeURIComponent(url); let pRes = await fetch(proxy); let pData = await pRes.json(); return JSON.parse(pData.contents); } return await res.json(); } catch(e) { return null; } }
     function calcScores(boats) { return boats.map(x => { let n = x.racer_boat_number; let s = ((parseFloat(x.racer_national_top_3_percent||0)*0.8) + (parseFloat(x.racer_local_top_3_percent||0)*0.2)) * 0.6 + (parseFloat(x.racer_assigned_motor_top_3_percent||0)*0.4) + (n===1?15:n===2?8:n===3?4:n===4?0:n===5?-4:-8); return { n: n, s: s }; }).sort((a,b) => b.s - a.s); }
@@ -91,21 +108,23 @@
         let html = ""; let geki = "", atsu = "";
         rank.slice(0,3).forEach(rk => { let r = data.programs.find(x => x.race_stadium_number+"-"+x.race_number === rk.key); geki += renderRaceBox(r, STADIUMS[r.race_stadium_number], "激アツ🔥", betCount); });
         rank.slice(3,8).forEach(rk => { let r = data.programs.find(x => x.race_stadium_number+"-"+x.race_number === rk.key); atsu += renderRaceBox(r, STADIUMS[r.race_stadium_number], "アツ🔥", betCount); });
-        if(geki) html += `<div class="card" style="border-left-color:var(--red);"><div style="color:var(--red);font-weight:bold;">🔥 激アツ</div><div class="race-grid">${geki}</div></div>`;
-        if(atsu) html += `<div class="card" style="border-left-color:var(--orange);"><div style="color:var(--orange);font-weight:bold;">🔥 アツ</div><div class="race-grid">${atsu}</div></div>`;
+        if(geki) html += `<div class="card" style="border-left-color:var(--red);"><div style="color:var(--red);font-weight:bold;margin-bottom:5px;">🔥 激アツ</div><div class="race-grid">${geki}</div></div>`;
+        if(atsu) html += `<div class="card" style="border-left-color:var(--orange);"><div style="color:var(--orange);font-weight:bold;margin-bottom:5px;">🔥 アツ</div><div class="race-grid">${atsu}</div></div>`;
         area.innerHTML = html; status.innerText = "✅ 完了";
     }
 
     async function runBacktest() {
         const area = document.getElementById('area-backtest'); const status = document.getElementById('s-backtest'); const sumArea = document.getElementById('totalSummaryArea'); const matrixTable = document.getElementById('matrixTable');
+        let viewCount = parseInt(document.getElementById('backtestViewCount').value);
         let sDate = new Date(document.getElementById('startDate').value); let eDate = new Date(document.getElementById('endDate').value);
         let diff = Math.ceil((eDate - sDate) / 86400000) + 1;
-        status.innerText = "🚀 開始..."; sumArea.style.display = "none";
+        status.innerText = "🚀 検証中..."; area.innerHTML = ""; sumArea.style.display = "none";
         
         let matrix = { geki: {}, atsu: {}, all: {} };
         const counts = [1, 2, 4, 8, 12];
         counts.forEach(c => { ["geki","atsu","all"].forEach(cat => matrix[cat][c] = { invest:0, ret:0 }); });
 
+        let fullHtml = "";
         let cDate = new Date(sDate);
         for(let i=0; i<diff; i++) {
             let ymd = cDate.toISOString().split('T')[0].replace(/-/g,'');
@@ -120,12 +139,7 @@
                         let sorted = r.boats.filter(b => b.racer_place_number >= 1 && b.racer_place_number <= 3).sort((a,b) => a.racer_place_number - b.racer_place_number);
                         if(sorted.length >= 3) {
                             let code = `${sorted[0].racer_boat_number}-${sorted[1].racer_boat_number}-${sorted[2].racer_boat_number}`;
-                            let amt = 0;
-                            try {
-                                let pay = r.payouts || r.returns || {};
-                                let tri = pay.trifecta || pay.sanrentan || pay.top_3 || [];
-                                amt = parseInt((Array.isArray(tri) ? tri[0] : tri).amount || 0);
-                            } catch(e) {}
+                            let amt = 0; try { let pay = r.payouts || r.returns || {}; let tri = pay.trifecta || pay.sanrentan || pay.top_3 || []; amt = parseInt((Array.isArray(tri) ? tri[0] : tri).amount || 0); } catch(e) {}
                             resMap[`${r.race_stadium_number || r.stadium_number}-${r.race_number || r.number}`] = { code, amt };
                         }
                     }
@@ -133,19 +147,34 @@
 
                 let dayRank = prog.programs.map(r => {
                     let p = calcScores(r.boats||[]);
-                    return { key: `${r.race_stadium_number}-${r.race_number}`, boats: r.boats, prob: p.length ? (p[0].s*0.5+p[1].s*0.3+p[2].s*0.2) : 0 };
+                    return { key: `${r.race_stadium_number}-${r.race_number}`, stadium: STADIUMS[r.race_stadium_number], num: r.race_number, boats: r.boats, prob: p.length ? (p[0].s*0.5+p[1].s*0.3+p[2].s*0.2) : 0 };
                 }).sort((a,b) => b.prob - a.prob);
 
+                let dayGeki = "", dayAtsu = "";
                 dayRank.forEach((r, idx) => {
                     let real = resMap[r.key]; if(!real) return;
                     let p = calcScores(r.boats||[]);
+                    
+                    // 行列計算
                     counts.forEach(c => {
                         let hit = generateBets(p, c).some(b => b.code === real.code);
                         let update = (target) => { matrix[target][c].invest += 100 * c; if(hit) matrix[target][c].ret += real.amt; };
                         update("all");
                         if(idx < 3) update("geki"); else if(idx < 8) update("atsu");
                     });
+
+                    // 詳細表示用（指定された点数で表示）
+                    let bets = generateBets(p, viewCount);
+                    let isHit = bets.some(b => b.code === real.code);
+                    let resBox = isHit ? `<div class="hit-box">的中！<br>¥${real.amt.toLocaleString()}</div>` : `<div class="miss-box"><span class="result-code">${real.code}</span>不的中</div>`;
+                    let box = renderRaceBox(r, r.stadium, idx < 3 ? "激アツ🔥" : "アツ🔥", viewCount, resBox);
+                    if(idx < 3) dayGeki += box; else if(idx < 8) dayAtsu += box;
                 });
+                if(dayGeki || dayAtsu) {
+                    fullHtml += `<div style="padding:10px 5px; font-weight:bold; background:#eee; margin-top:10px; border-radius:5px;">🗓 ${ymd}</div>`;
+                    if(dayGeki) fullHtml += `<div class="card" style="border-left-color:var(--red);"><div style="color:var(--red);font-weight:bold;margin-bottom:5px;">🔥 激アツ</div><div class="race-grid">${dayGeki}</div></div>`;
+                    if(dayAtsu) fullHtml += `<div class="card" style="border-left-color:var(--orange);"><div style="color:var(--orange);font-weight:bold;margin-bottom:5px;">🔥 アツ</div><div class="race-grid">${dayAtsu}</div></div>`;
+                }
             }
             cDate.setDate(cDate.getDate() + 1);
         }
@@ -153,15 +182,15 @@
         let tableHtml = `<tr><th>点数</th><th>激アツ回収</th><th>アツ回収</th><th>全体回収</th></tr>`;
         counts.forEach(c => {
             const getR = (cat) => matrix[cat][c].invest ? (matrix[cat][c].ret/matrix[cat][c].invest*100).toFixed(1) : "0.0";
-            tableHtml += `<tr><td>${c}点</td><td class="row-geki">${getR("geki")}%</td><td class="row-atsu">${getR("atsu")}%</td><td class="row-total">${getR("all")}%</td></tr>`;
+            tableHtml += `<tr><td>${c}点</td><td style="color:var(--red); font-weight:bold;">${getR("geki")}%</td><td style="color:var(--orange); font-weight:bold;">${getR("atsu")}%</td><td class="row-total">${getR("all")}%</td></tr>`;
         });
-        matrixTable.innerHTML = tableHtml; sumArea.style.display = "block"; status.innerText = "✅ 検証完了";
+        matrixTable.innerHTML = tableHtml; sumArea.style.display = "block"; area.innerHTML = fullHtml; status.innerText = "✅ 検証完了";
     }
 
-    function renderRaceBox(race, stName, mark, betCount) {
+    function renderRaceBox(race, stName, mark, betCount, resultBox = "") {
         let p = calcScores(race.boats||[]); let bets = generateBets(p, betCount);
         let bHtml = bets.map(b => `<div class="pred-item"><span class="pred-code">${b.code}</span><span class="pred-exp">${b.prob.toFixed(1)}%</span></div>`).join("");
-        return `<div class="race-box"><div style="text-align:center;font-size:0.6rem;font-weight:bold;">${mark}</div><div style="font-weight:bold;text-align:center;margin-bottom:4px;font-size:0.7rem;">${stName} ${race.race_number}R</div>${bHtml}</div>`;
+        return `<div class="race-box"><div style="text-align:center;font-size:0.6rem;font-weight:bold;">${mark}</div><div style="font-weight:bold;text-align:center;margin-bottom:4px;font-size:0.75rem;">${stName} ${race.race_number || race.num}R</div>${bHtml}${resultBox}</div>`;
     }
 </script>
 </body>
