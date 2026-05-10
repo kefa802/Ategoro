@@ -11,6 +11,12 @@
         .ver { position: absolute; top: 5px; right: 10px; font-size: 0.6rem; opacity: 0.7; }
         .container { padding: 5px; max-width: 600px; margin: auto; }
         
+        /* 共通ロジックボタン */
+        .logic-wrap { margin: 10px 5px; }
+        .logic-btn-wide { width: 100%; background: white; color: var(--blue); border: 2px solid var(--blue); padding: 10px; border-radius: 8px; font-weight: bold; font-size: 0.9rem; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .logic-desc { display: none; text-align: left; background: #fff; padding: 12px; border-radius: 8px; margin-top: 5px; font-size: 0.85rem; color: #444; border: 1px dashed var(--blue); line-height: 1.5; }
+        
+        /* タブUI */
         .tabs { display: flex; margin: 10px 5px; border-radius: 8px; overflow: hidden; border: 2px solid var(--blue); }
         .tab { flex: 1; text-align: center; padding: 12px; background: white; color: var(--blue); font-weight: bold; cursor: pointer; font-size: 0.95rem; }
         .tab.active { background: var(--blue); color: white; }
@@ -19,7 +25,7 @@
         
         .section-box { background: white; padding: 15px; border-radius: 10px; margin: 10px 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .setting-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px; }
-        .setting-select { padding: 8px; border-radius: 5px; border: 2px solid var(--gold); font-weight: bold; }
+        .setting-select { padding: 8px; border-radius: 5px; border: 2px solid var(--gold); font-weight: bold; font-size: 0.85rem; }
         .date-row { display: flex; align-items: center; justify-content: center; gap: 5px; margin-bottom: 10px; }
         .date-input { padding: 8px; border-radius: 5px; border: 1px solid #ccc; font-size: 0.9rem; width: 45%; text-align: center; }
         
@@ -27,13 +33,18 @@
         .btn-pred { background: var(--gold); color: #333; box-shadow: 0 4px 0 #d4a017; }
         .btn-verify { background: #eceff1; color: var(--blue); box-shadow: 0 4px 0 #cfd8dc; border: 1px solid #cfd8dc; }
         
-        .stats-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.75rem; background: white; }
-        .stats-table th, .stats-table td { border: 1px solid #e0e0e0; padding: 8px 2px; text-align: center; }
+        /* 比較表：スマホ向けに微調整 */
+        .stats-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.7rem; background: white; }
+        .stats-table th, .stats-table td { border: 1px solid #e0e0e0; padding: 8px 1px; text-align: center; }
         .stats-table th { background: #f5f5f5; }
+        .row-geki { color: var(--red); font-weight: bold; }
+        .row-atsu { color: var(--orange); font-weight: bold; }
         .row-total { background: #e3f2fd; font-weight: bold; }
+        .val-plus { color: var(--red); }
+        .val-minus { color: var(--blue); }
 
         .card { background: white; border-radius: 10px; padding: 10px; margin-bottom: 12px; border-left: 5px solid var(--blue); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .card-title { font-size: 1rem; font-weight: bold; margin-bottom: 8px; padding-bottom: 5px; border-bottom: 1px solid #eee; }
+        .card-title { font-size: 0.95rem; font-weight: bold; margin-bottom: 8px; padding-bottom: 5px; border-bottom: 1px solid #eee; }
         .race-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
         .race-box { background: #f8f9fa; border: 1px solid #eee; padding: 6px 4px; border-radius: 6px; display: flex; flex-direction: column; }
         .race-header { text-align: center; border-bottom: 1px dashed #ccc; margin-bottom: 5px; padding-bottom: 3px; }
@@ -47,18 +58,28 @@
         .hit-box { background: #e8f5e9; border: 1px dashed #4caf50; padding: 3px; margin-top: 4px; border-radius: 4px; text-align: center; color: var(--green); font-weight: bold; font-size: 0.7rem; }
         .miss-box { background: #ffebee; border: 1px dashed #ef9a9a; padding: 3px; margin-top: 4px; border-radius: 4px; text-align: center; color: var(--red); font-size: 0.7rem; }
         .result-code { font-weight: bold; display: block; font-size: 0.8rem; }
-        .mark-geki { color: var(--red); font-size: 0.6rem; font-weight: bold; display: block; }
-        .mark-atsu { color: var(--orange); font-size: 0.6rem; font-weight: bold; display: block; }
     </style>
 </head>
 <body>
 <div class="header">
-    <span class="ver">V1.00.7</span>
+    <span class="ver">V1.00.8</span>
     <h1 style="margin:0; font-size:1.4rem;">当五郎</h1>
     <p style="margin:2px 0 0; font-size: 0.75rem; opacity: 0.9;">投資点数シミュレーター</p>
 </div>
 
 <div class="container">
+    <div class="logic-wrap">
+        <button class="logic-btn-wide" onclick="toggleLogic()">💡 当五郎の予想ロジックを確認</button>
+        <div id="logicDesc" class="logic-desc">
+            <strong>【当五郎 3連率ベース総合判定】</strong><br>
+            ① 選手力：全国3連対率(80%) ＋ 当地3連対率(20%)<br>
+            ② モーター力：モーター3連対率<br>
+            ③ ベース値：選手力(60%) ＋ モーター力(40%)<br>
+            ④ 枠番補正：内枠にボーナス加算<br>
+            これらを計算し、期待値順に指定点数を抽出します。
+        </div>
+    </div>
+
     <div class="tabs">
         <div class="tab active" onclick="switchTab('predict')">🚤 本日の予想</div>
         <div class="tab" onclick="switchTab('backtest')">📊 バックテスト</div>
@@ -92,8 +113,9 @@
             <button class="btn btn-verify" onclick="runBacktest()">全パターン一斉検証</button>
         </div>
         <div id="s-backtest" style="text-align:center; font-weight:bold; margin:15px; color:var(--blue);"></div>
+        
         <div id="totalSummaryArea" style="display:none; margin: 0 5px;">
-            <div style="font-weight: bold; margin: 10px 0;">📈 点数別 回収率比較 (全期間合計)</div>
+            <div style="font-weight: bold; margin: 10px 0; font-size:0.9rem; border-left:4px solid var(--green); padding-left:5px;">📈 点数別 回収・収支比較</div>
             <table class="stats-table" id="matrixTable"></table>
         </div>
         <div id="area-backtest"></div>
@@ -102,10 +124,31 @@
 
 <script>
     const STADIUMS = {1:"桐生",2:"戸田",3:"江戸川",4:"平和島",5:"多摩川",6:"浜名湖",7:"蒲郡",8:"常滑",9:"津",10:"三国",11:"びわこ",12:"住之江",13:"尼崎",14:"鳴門",15:"丸亀",16:"児島",17:"宮島",18:"徳山",19:"下関",20:"若松",21:"芦屋",22:"福岡",23:"唐津",24:"大村"};
-    window.onload = () => { let d = new Date(); d.setDate(d.getDate() - 1); let yStr = d.toISOString().split('T')[0]; document.getElementById('startDate').value = yStr; document.getElementById('endDate').value = yStr; };
-    function switchTab(id) { document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active')); document.querySelector(`.tab[onclick="switchTab('${id}')"]`).classList.add('active'); document.getElementById(`${id}-section`).classList.add('active'); }
-    async function fetchJson(url) { try { let res = await fetch(url + "?t=" + new Date().getTime()); if (!res.ok) { let proxy = "https://api.allorigins.win/get?url=" + encodeURIComponent(url); let pRes = await fetch(proxy); let pData = await pRes.json(); return JSON.parse(pData.contents); } return await res.json(); } catch(e) { return null; } }
     
+    window.onload = () => { let d = new Date(); d.setDate(d.getDate() - 1); let yStr = d.toISOString().split('T')[0]; document.getElementById('startDate').value = yStr; document.getElementById('endDate').value = yStr; };
+    
+    function toggleLogic() { let d = document.getElementById('logicDesc'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; }
+    
+    function switchTab(id) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelector(`.tab[onclick="switchTab('${id}')"]`).classList.add('active');
+        document.getElementById(`${id}-section`).classList.add('active');
+    }
+
+    async function fetchJson(url) {
+        try {
+            let res = await fetch(url + "?t=" + new Date().getTime());
+            if (!res.ok) {
+                let proxy = "https://api.allorigins.win/get?url=" + encodeURIComponent(url);
+                let pRes = await fetch(proxy);
+                let pData = await pRes.json();
+                return JSON.parse(pData.contents);
+            }
+            return await res.json();
+        } catch(e) { return null; }
+    }
+
     function calcScores(boats) {
         return boats.map(x => {
             let n = x.racer_boat_number;
@@ -113,7 +156,7 @@
             return { n: n, s: s };
         }).sort((a,b) => b.s - a.s);
     }
-    
+
     function generateBets(p, count) {
         let all = [];
         for(let i=0;i<p.length;i++) for(let j=0;j<p.length;j++) for(let k=0;k<p.length;k++) {
@@ -129,12 +172,12 @@
         let bets = generateBets(p, betCount);
         let time = race.race_closed_at ? race.race_closed_at.substring(11,16) : "--:--";
         let bHtml = bets.map(b => `<div class="pred-item"><span class="pred-code">${b.code}</span><span class="pred-exp">期待度${b.prob.toFixed(1)}%</span></div>`).join("");
-        
-        let label = stName ? `${stName} ${race.race_number}R` : `${race.race_number}R`;
+        let raceNum = race.race_number || race.number || "?";
+        let label = stName ? `${stName} ${raceNum}R` : `${raceNum}R`;
         
         return `<div class="race-box">
             <div class="race-header">
-                ${mark ? `<span style="font-weight:bold;">${mark}</span>` : ""}
+                ${mark ? `<span style="font-weight:bold;color:var(--red);font-size:0.6rem;">${mark}</span>` : ""}
                 <span class="race-name">${label}</span>
                 <span class="race-time">${time}締切</span>
             </div>
@@ -151,9 +194,7 @@
         rank.slice(3,8).forEach(rk => { let r = data.programs.find(x => x.race_stadium_number+"-"+x.race_number === rk.key); atsu += renderRaceBox(r, STADIUMS[r.race_stadium_number], "アツ🔥", betCount); });
         if(geki) html += `<div class="card" style="border-left-color:var(--red);"><div class="card-title" style="color:var(--red);">🔥 激アツ レース一覧</div><div class="race-grid">${geki}</div></div>`;
         if(atsu) html += `<div class="card" style="border-left-color:var(--orange);"><div class="card-title" style="color:var(--orange);">🔥 アツ レース一覧</div><div class="race-grid">${atsu}</div></div>`;
-        
-        let venues = {};
-        data.programs.forEach(r => { let sId = r.race_stadium_number; if(!venues[sId]) venues[sId] = { id: sId, name: STADIUMS[sId]||sId, races: [] }; venues[sId].races.push(r); });
+        let venues = {}; data.programs.forEach(r => { let sId = r.race_stadium_number; if(!venues[sId]) venues[sId] = { id: sId, name: STADIUMS[sId]||sId, races: [] }; venues[sId].races.push(r); });
         Object.keys(venues).sort((a,b)=>a-b).forEach(k => {
             let g = ""; venues[k].races.sort((a,b)=>a.race_number-b.race_number).forEach(r => { g += renderRaceBox(r, "", "", betCount); });
             html += `<div class="card"><div class="card-title" style="color:var(--blue);">${venues[k].name}</div><div class="race-grid">${g}</div></div>`;
@@ -207,22 +248,22 @@
                     if(idx < 3) dayGeki += box; else if(idx < 8) dayAtsu += box;
                 });
                 if(dayGeki || dayAtsu) {
-                    fullHtml += `<div style="padding:10px 5px; font-weight:bold; background:#eee; margin-top:10px; border-radius:5px;">🗓 ${ymd}</div>`;
-                    if(dayGeki) fullHtml += `<div class="card" style="border-left-color:var(--red);"><div style="color:var(--red);font-weight:bold;margin-bottom:5px;">🔥 激アツ</div><div class="race-grid">${dayGeki}</div></div>`;
-                    if(dayAtsu) fullHtml += `<div class="card" style="border-left-color:var(--orange);"><div style="color:var(--orange);font-weight:bold;margin-bottom:5px;">🔥 アツ</div><div class="race-grid">${dayAtsu}</div></div>`;
+                    fullHtml += `<div style="padding:10px 5px; font-weight:bold; background:#eee; margin-top:10px; border-radius:5px; font-size:0.8rem;">🗓 ${ymd}</div>`;
+                    if(dayGeki) fullHtml += `<div class="card" style="border-left-color:var(--red);"><div class="card-title" style="color:var(--red);">🔥 激アツ</div><div class="race-grid">${dayGeki}</div></div>`;
+                    if(dayAtsu) fullHtml += `<div class="card" style="border-left-color:var(--orange);"><div class="card-title" style="color:var(--orange);">🔥 アツ</div><div class="race-grid">${dayAtsu}</div></div>`;
                 }
             }
             cDate.setDate(cDate.getDate() + 1);
         }
-        let tableHtml = `<tr><th>点数</th><th>激アツ回収</th><th>アツ回収</th><th>全体回収</th></tr>`;
+        let tableHtml = `<tr><th>点数</th><th>激アツ回収</th><th>アツ回収</th><th>全体回収</th><th>全体収支</th></tr>`;
         counts.forEach(c => {
             const getR = (cat) => matrix[cat][c].invest ? (matrix[cat][c].ret/matrix[cat][c].invest*100).toFixed(1) : "0.0";
-            tableHtml += `<tr><td>${c}点</td><td style="color:var(--red); font-weight:bold;">${getR("geki")}%</td><td style="color:var(--orange); font-weight:bold;">${getR("atsu")}%</td><td class="row-total">${getR("all")}%</td></tr>`;
+            const prof = matrix.all[c].ret - matrix.all[c].invest;
+            const pClass = prof >= 0 ? "val-plus" : "val-minus";
+            tableHtml += `<tr><td>${c}点</td><td class="row-geki">${getR("geki")}%</td><td class="row-atsu">${getR("atsu")}%</td><td class="row-total">${getR("all")}%</td><td class="${pClass}">${prof.toLocaleString()}円</td></tr>`;
         });
         matrixTable.innerHTML = tableHtml; sumArea.style.display = "block"; area.innerHTML = fullHtml; status.innerText = "✅ 検証完了";
     }
-
-    function switchTab(id) { document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active')); document.querySelector(`.tab[onclick="switchTab('${id}')"]`).classList.add('active'); document.getElementById(`${id}-section`).classList.add('active'); }
 </script>
 </body>
 </html>
