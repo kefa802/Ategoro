@@ -35,13 +35,16 @@
         .btn-verify:active { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
         
         /* テーブル・結果表示系 */
-        .stats-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .stats-table th, .stats-table td { border: 1px solid #e0e0e0; padding: 10px 4px; text-align: center; }
+        .stats-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.75rem; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .stats-table th, .stats-table td { border: 1px solid #e0e0e0; padding: 8px 2px; text-align: center; word-break: keep-all; }
         .stats-table th { background: #f5f5f5; color: #555; }
         .row-geki { color: var(--red); font-weight: bold; background: #ffebee; }
         .row-atsu { color: var(--orange); font-weight: bold; background: #fff3e0; }
         .row-other { color: #555; }
         .row-total { background: #e3f2fd; font-weight: bold; color: var(--blue); }
+        
+        .val-plus { color: var(--red); font-weight: bold; }
+        .val-minus { color: var(--blue); font-weight: bold; }
 
         .daily-section { margin: 15px 5px; background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow: hidden; }
         .daily-summary { background: var(--blue); color: white; padding: 12px; font-weight: bold; font-size: 0.95rem; cursor: pointer; list-style: none; }
@@ -69,19 +72,17 @@
         .mark-atsu { color: white; background: var(--orange); font-size: 0.65rem; padding: 2px 5px; border-radius: 4px; font-weight: bold; }
         
         .hit-box { background: #e8f5e9; border: 1px dashed #4caf50; padding: 4px; margin-top: auto; border-radius: 4px; text-align: center; }
-        .hit-text { color: var(--green); font-size: 0.8rem; font-weight: bold; display: block; }
+        .hit-text { color: var(--green); font-size: 0.75rem; font-weight: bold; display: block; line-height: 1.2; }
         .miss-box { background: #ffebee; border: 1px dashed #ef9a9a; padding: 4px; margin-top: auto; border-radius: 4px; text-align: center; }
         .miss-text { color: var(--red); font-size: 0.75rem; font-weight: bold; display: block; }
         .wait-box { background: #f5f5f5; border: 1px dashed #ccc; padding: 4px; margin-top: auto; border-radius: 4px; text-align: center; color: #888; font-size: 0.75rem; }
-        
-        .debug-box { word-break: break-all; font-size: 0.75rem; color: #555; background: #fff; padding: 15px; border-radius: 8px; border: 2px dashed var(--red); margin: 10px 5px; line-height: 1.3; }
     </style>
 </head>
 <body>
 <div class="header">
-    <span class="ver">V1.00.1</span>
+    <span class="ver">V1.00.2</span>
     <h1 style="margin:0; font-size:1.4rem;">当五郎</h1>
-    <p style="margin:2px 0 0; font-size: 0.75rem; opacity: 0.9;">タブUI・優先表示モデル</p>
+    <p style="margin:2px 0 0; font-size: 0.75rem; opacity: 0.9;">収支・回収率 解析モデル</p>
 </div>
 
 <div class="container">
@@ -116,7 +117,7 @@
 
     <div id="backtest-section" class="tab-content">
         <div class="section-box">
-            <p style="font-size:0.85rem; color:#666; margin-top:0; text-align:center;">過去の番組と結果を照合し、勝率を検証します。</p>
+            <p style="font-size:0.85rem; color:#666; margin-top:0; text-align:center;">過去データと照合し、勝率・回収率を検証します。<br><small>※1レース4点(400円)購入で計算</small></p>
             <div class="date-row">
                 <input type="date" id="startDate" class="date-input">
                 <span style="font-weight:bold; color:#777;">〜</span>
@@ -128,7 +129,7 @@
         <div id="s-backtest" style="text-align:center; font-weight:bold; margin:15px 5px; color:var(--blue); font-size:0.95rem;"></div>
         
         <div id="totalSummaryArea" style="display:none; margin: 0 5px;">
-            <div style="font-weight: bold; color: #333; margin: 15px 5px 5px 5px; font-size: 0.95rem; border-left: 4px solid var(--green); padding-left: 6px;">📈 期間総合 勝率（4点買い）</div>
+            <div style="font-weight: bold; color: #333; margin: 15px 5px 5px 5px; font-size: 0.95rem; border-left: 4px solid var(--green); padding-left: 6px;">📈 期間総合 成績（1R=400円計算）</div>
             <table class="stats-table" id="totalTable"></table>
         </div>
         <div id="debugArea"></div>
@@ -207,7 +208,6 @@
             <div class="pred-item"><span class="pred-code">${b.code}</span><span class="pred-exp">期待度${b.prob.toFixed(1)}%</span></div>
         `).join("");
 
-        // 締め切り時刻の抽出と付与
         let timeStr = race.race_closed_at ? race.race_closed_at.substring(11, 16) : "";
         let titleLabel = stName ? `${stName} ${race.race_number}R` : `${race.race_number}R`;
         if (timeStr) titleLabel += ` ${timeStr}`;
@@ -280,10 +280,18 @@
     }
 
     // ==========================================
-    // ② バックテスト処理
+    // ② バックテスト（収支・回収率計算）処理
     // ==========================================
-    const createStat = () => ({ hit: 0, total: 0 });
-    const getRate = (s) => s.total > 0 ? ((s.hit / s.total) * 100).toFixed(1) : "0.0";
+    const createStat = () => ({ hit: 0, total: 0, invest: 0, returnAmt: 0 });
+    const getWinRate = (s) => s.total > 0 ? ((s.hit / s.total) * 100).toFixed(1) : "0.0";
+    const getRetRate = (s) => s.invest > 0 ? ((s.returnAmt / s.invest) * 100).toFixed(1) : "0.0";
+    const getProfit = (s) => s.returnAmt - s.invest;
+    const formatYen = (num) => num.toLocaleString() + "円";
+    const formatProfit = (num) => {
+        if(num > 0) return `<span class="val-plus">+${num.toLocaleString()}円</span>`;
+        if(num < 0) return `<span class="val-minus">${num.toLocaleString()}円</span>`;
+        return "0円";
+    };
 
     async function runBacktest() {
         const status = document.getElementById('s-backtest');
@@ -306,7 +314,6 @@
         let grandTotal = { geki: createStat(), atsu: createStat(), other: createStat(), all: createStat() };
         let cDate = new Date(sDate);
         let dailyResultsHTML = "";
-        let errorRaw = "";
 
         for (let i = 0; i < diffDays; i++) {
             let yyyy = cDate.getFullYear();
@@ -347,17 +354,45 @@
                 else { categories[r.key] = 'other'; }
             });
 
+            // 払戻金込みのデータ解析
             let resultParsedMap = {};
             if (resultsData) {
                 let resArray = Array.isArray(resultsData) ? resultsData : (resultsData.results || []);
-                if(resArray.length===0) errorRaw = "結果データが空または形式エラーです。";
                 resArray.forEach(r => {
                     let sId = r.stadium_number || r.race_stadium_number;
                     let rNo = r.number || r.race_number;
-                    if (r.boats && Array.isArray(r.boats)) {
+                    let rKey = sId + "-" + rNo;
+                    
+                    let resCode = "";
+                    let amount = 0;
+                    let payoutsFound = false;
+
+                    // 1. 払戻金(payouts)から直接取得を試みる
+                    let payoutsObj = r.returns || r.pay || r.payouts || r.refunds || r.payout || null;
+                    if (payoutsObj) {
+                        let trifectaList = payoutsObj.trifecta || payoutsObj.sanrentan || payoutsObj.top_3 || payoutsObj.sanren_tan || [];
+                        if (!Array.isArray(trifectaList)) trifectaList = [trifectaList];
+                        if (trifectaList.length > 0 && trifectaList[0]) {
+                            let t = trifectaList[0];
+                            resCode = t.result || t.combination || t.code || t.bracket_number_combination || t.bracket_number || t.b_num || "";
+                            if (Array.isArray(resCode)) resCode = resCode.join("-");
+                            else if (typeof resCode === "string") resCode = resCode.replace(/[^0-9]/g, "-").replace(/--+/g, "-");
+                            amount = parseInt(t.amount || t.payout || t.money || t.pay || t.return || t.refund || 0);
+                            payoutsFound = true;
+                        }
+                    }
+
+                    // 2. 払戻金が見つからない場合、着順からコードだけ生成
+                    if (!payoutsFound && r.boats && Array.isArray(r.boats)) {
                         let fBoats = r.boats.filter(b => { let p = parseInt(b.racer_place_number); return !isNaN(p) && p >= 1 && p <= 6; });
                         fBoats.sort((a, b) => parseInt(a.racer_place_number) - parseInt(b.racer_place_number));
-                        if (fBoats.length >= 3) resultParsedMap[sId + "-" + rNo] = { code: `${fBoats[0].racer_boat_number}-${fBoats[1].racer_boat_number}-${fBoats[2].racer_boat_number}` };
+                        if (fBoats.length >= 3) {
+                            resCode = `${fBoats[0].racer_boat_number}-${fBoats[1].racer_boat_number}-${fBoats[2].racer_boat_number}`;
+                        }
+                    }
+
+                    if (resCode && resCode.length >= 5) {
+                        resultParsedMap[rKey] = { code: resCode, amount: amount };
                     }
                 });
             }
@@ -380,13 +415,22 @@
                 if (bets.length > 0 && cat) {
                     let rp = resultParsedMap[rKey];
                     if (rp && rp.code) {
+                        // 対象レースとしてカウント（4点買い＝400円投資）
                         dayStat[cat].total++; dayStat.all.total++;
                         grandTotal[cat].total++; grandTotal.all.total++;
+                        dayStat[cat].invest += 400; dayStat.all.invest += 400;
+                        grandTotal[cat].invest += 400; grandTotal.all.invest += 400;
+
                         let betCodes = bets.map(b => b.code);
                         if (betCodes.includes(rp.code)) {
+                            // 的中処理
                             dayStat[cat].hit++; dayStat.all.hit++;
                             grandTotal[cat].hit++; grandTotal.all.hit++;
-                            resultBoxHtml = `<div class="hit-box"><span class="hit-text">🎯 的中</span></div>`;
+                            dayStat[cat].returnAmt += rp.amount; dayStat.all.returnAmt += rp.amount;
+                            grandTotal[cat].returnAmt += rp.amount; grandTotal.all.returnAmt += rp.amount;
+                            
+                            let amtStr = rp.amount > 0 ? `<br>${rp.amount.toLocaleString()}円` : "";
+                            resultBoxHtml = `<div class="hit-box"><span class="hit-text">🎯 的中${amtStr}</span></div>`;
                         } else {
                             resultBoxHtml = `<div class="miss-box"><span class="miss-text">結果: ${rp.code}</span></div>`;
                         }
@@ -415,7 +459,12 @@
                     let bets = p.length >= 4 && p[0].s > 0 ? generateBets(p) : [];
                     let resHtml = "";
                     if (bets.length > 0 && rp && rp.code) {
-                        resHtml = bets.map(b=>b.code).includes(rp.code) ? `<div class="hit-box"><span class="hit-text">🎯 的中</span></div>` : `<div class="miss-box"><span class="miss-text">結果: ${rp.code}</span></div>`;
+                        if(bets.map(b=>b.code).includes(rp.code)){
+                            let amtStr = rp.amount > 0 ? `<br>${rp.amount.toLocaleString()}円` : "";
+                            resHtml = `<div class="hit-box"><span class="hit-text">🎯 的中${amtStr}</span></div>`;
+                        } else {
+                            resHtml = `<div class="miss-box"><span class="miss-text">結果: ${rp.code}</span></div>`;
+                        }
                     } else {
                         resHtml = `<div class="wait-box">未確定</div>`;
                     }
@@ -424,13 +473,13 @@
                 dayCardsHtml += `<div class="card"><div class="card-title">${st.name}</div><div class="race-grid">${grid}</div></div>`;
             });
 
-            let daySummaryText = `${dateLabel} - 🎯 ${dayStat.all.hit}/${dayStat.all.total}R (${getRate(dayStat.all)}%)`;
+            let daySummaryText = `${dateLabel} - 🎯 ${dayStat.all.hit}/${dayStat.all.total}R (${getWinRate(dayStat.all)}%)`;
             let dayTableHtml = `
                 <table class="stats-table" style="margin-bottom:12px;">
-                    <tr><th>カテゴリ</th><th>対象</th><th>的中</th><th>勝率</th></tr>
-                    <tr class="row-geki"><td>激アツ🔥</td><td>${dayStat.geki.total}</td><td>${dayStat.geki.hit}</td><td>${getRate(dayStat.geki)}%</td></tr>
-                    <tr class="row-atsu"><td>アツ🔥</td><td>${dayStat.atsu.total}</td><td>${dayStat.atsu.hit}</td><td>${getRate(dayStat.atsu)}%</td></tr>
-                    <tr class="row-other"><td>それ以外</td><td>${dayStat.other.total}</td><td>${dayStat.other.hit}</td><td>${getRate(dayStat.other)}%</td></tr>
+                    <tr><th>カテゴリ</th><th>勝率<br><span style="font-weight:normal;">(的中/対象)</span></th><th>回収率</th><th>収支</th></tr>
+                    <tr class="row-geki"><td>激アツ🔥</td><td>${getWinRate(dayStat.geki)}%<br>(${dayStat.geki.hit}/${dayStat.geki.total})</td><td>${getRetRate(dayStat.geki)}%</td><td>${formatProfit(getProfit(dayStat.geki))}</td></tr>
+                    <tr class="row-atsu"><td>アツ🔥</td><td>${getWinRate(dayStat.atsu)}%<br>(${dayStat.atsu.hit}/${dayStat.atsu.total})</td><td>${getRetRate(dayStat.atsu)}%</td><td>${formatProfit(getProfit(dayStat.atsu))}</td></tr>
+                    <tr class="row-other"><td>それ以外</td><td>${getWinRate(dayStat.other)}%<br>(${dayStat.other.hit}/${dayStat.other.total})</td><td>${getRetRate(dayStat.other)}%</td><td>${formatProfit(getProfit(dayStat.other))}</td></tr>
                 </table>
             `;
 
@@ -450,14 +499,13 @@
         }
 
         document.getElementById('totalTable').innerHTML = `
-            <tr><th>カテゴリ</th><th>対象レース</th><th>的中数</th><th>期間勝率</th></tr>
-            <tr class="row-geki"><td>激アツ🔥</td><td>${grandTotal.geki.total}</td><td>${grandTotal.geki.hit}</td><td>${getRate(grandTotal.geki)}%</td></tr>
-            <tr class="row-atsu"><td>アツ🔥</td><td>${grandTotal.atsu.total}</td><td>${grandTotal.atsu.hit}</td><td>${getRate(grandTotal.atsu)}%</td></tr>
-            <tr class="row-other"><td>それ以外</td><td>${grandTotal.other.total}</td><td>${grandTotal.other.hit}</td><td>${getRate(grandTotal.other)}%</td></tr>
-            <tr class="row-total"><td>合 計</td><td>${grandTotal.all.total}</td><td>${grandTotal.all.hit}</td><td>${getRate(grandTotal.all)}%</td></tr>
+            <tr><th>カテゴリ</th><th>勝率<br><span style="font-weight:normal;">(的中/対象)</span></th><th>回収率</th><th>収支</th></tr>
+            <tr class="row-geki"><td>激アツ🔥</td><td>${getWinRate(grandTotal.geki)}%<br>(${grandTotal.geki.hit}/${grandTotal.geki.total})</td><td>${getRetRate(grandTotal.geki)}%</td><td>${formatProfit(getProfit(grandTotal.geki))}</td></tr>
+            <tr class="row-atsu"><td>アツ🔥</td><td>${getWinRate(grandTotal.atsu)}%<br>(${grandTotal.atsu.hit}/${grandTotal.atsu.total})</td><td>${getRetRate(grandTotal.atsu)}%</td><td>${formatProfit(getProfit(grandTotal.atsu))}</td></tr>
+            <tr class="row-other"><td>それ以外</td><td>${getWinRate(grandTotal.other)}%<br>(${grandTotal.other.hit}/${grandTotal.other.total})</td><td>${getRetRate(grandTotal.other)}%</td><td>${formatProfit(getProfit(grandTotal.other))}</td></tr>
+            <tr class="row-total"><td>合 計</td><td>${getWinRate(grandTotal.all)}%<br>(${grandTotal.all.hit}/${grandTotal.all.total})</td><td>${getRetRate(grandTotal.all)}%</td><td>${formatProfit(getProfit(grandTotal.all))}</td></tr>
         `;
         summaryArea.style.display = "block";
-        if(errorRaw) debugArea.innerHTML = `<div class="debug-box">⚠️ 一部データ取得エラー: ${errorRaw}</div>`;
         area.innerHTML = dailyResultsHTML;
         status.innerText = "✅ 期間検証が完了しました！";
     }
