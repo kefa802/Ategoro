@@ -12,23 +12,27 @@
         .container { padding: 5px; max-width: 600px; margin: auto; }
         .app-link { display: block; background: #2196F3; color: white; text-align: center; padding: 10px; text-decoration: none; font-weight: bold; border-radius: 8px; margin: 5px; font-size: 0.95rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .setup-box { background: white; padding: 12px; border-radius: 10px; margin: 5px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .btn { background: var(--gold); color: #333; border: none; padding: 10px; border-radius: 20px; font-weight: bold; width: 90%; cursor: pointer; font-size: 1rem; box-shadow: 0 3px 0 #d4a017; }
+        .btn { background: var(--gold); color: #333; border: none; padding: 10px; border-radius: 20px; font-weight: bold; width: 90%; cursor: pointer; font-size: 1rem; box-shadow: 0 3px 0 #d4a017; margin-bottom: 10px; }
         .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #d4a017; }
+        .logic-btn { background: transparent; color: #666; border: 1px solid #ccc; padding: 5px 15px; border-radius: 15px; font-size: 0.75rem; cursor: pointer; }
+        .logic-desc { display: none; text-align: left; background: #f8f9fa; padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.8rem; color: #444; border: 1px solid #eee; line-height: 1.4; }
         .card { background: white; border-radius: 10px; padding: 10px; margin: 5px 5px 15px 5px; border-left: 5px solid var(--blue); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .card-title { font-size: 1.1rem; font-weight: bold; color: var(--blue); border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 8px; }
         .race-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
-        .race-box { background: #f8f9fa; border: 1px solid #eee; padding: 4px; border-radius: 6px; position: relative; }
-        .race-title { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.75rem; color: #555; font-weight: bold; text-align: center; border-bottom: 1px dashed #ccc; padding-bottom: 4px; margin-bottom: 4px; line-height: 1.2; }
+        .race-box { background: #f8f9fa; border: 1px solid #eee; padding: 4px; border-radius: 6px; }
+        .race-title { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.75rem; color: #555; font-weight: bold; text-align: center; border-bottom: 1px dashed #ccc; padding-bottom: 4px; margin-bottom: 4px; }
+        /* マークの有無に関わらず高さを16pxで固定してズレを防止 */
+        .mark-area { height: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 2px; }
         .pred-item { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; }
         .pred-code { font-size: 0.85rem; font-weight: bold; color: #d32f2f; }
         .pred-exp { font-size: 0.55rem; color: #01579b; white-space: nowrap; }
-        .mark-geki { color: white; background: #d32f2f; font-size: 0.6rem; padding: 1px 4px; border-radius: 3px; font-weight: bold; margin-bottom: 2px; }
-        .mark-atsu { color: white; background: #f57c00; font-size: 0.6rem; padding: 1px 4px; border-radius: 3px; font-weight: bold; margin-bottom: 2px; }
+        .mark-geki { color: white; background: #d32f2f; font-size: 0.6rem; padding: 1px 4px; border-radius: 3px; font-weight: bold; }
+        .mark-atsu { color: white; background: #f57c00; font-size: 0.6rem; padding: 1px 4px; border-radius: 3px; font-weight: bold; }
     </style>
 </head>
 <body>
 <div class="header">
-    <span class="ver">Ver 2.0.9</span>
+    <span class="ver">Ver 2.1.0</span>
     <h1 style="margin:0; font-size:1.3rem;">当五郎</h1>
     <p style="margin:2px 0 0; font-size: 0.7rem; opacity: 0.9;">総合判定（モーター・枠番補正）モデル</p>
 </div>
@@ -38,6 +42,16 @@
 
     <div class="setup-box">
         <button class="btn" onclick="go()">予想を開始する</button>
+        <button class="logic-btn" onclick="toggleLogic()">当五郎の予想ロジックとは？</button>
+        <div id="logicDesc" class="logic-desc">
+            <strong>【当五郎 総合判定ロジック】</strong><br>
+            ① 選手力：全国2連対率(80%) ＋ 当地2連対率(20%)<br>
+            ② モーター力：モーター2連対率<br>
+            ③ ベース値：選手力(60%) ＋ モーター力(40%)<br>
+            ④ 枠番補正：内枠にボーナス加算<br>
+            （1号艇+15 / 2号艇+8 / 3号艇+4 / 4号艇±0 / 5号艇-4 / 6号艇-8）<br><br>
+            これらを総合計算し、期待度の高い4点を選出しています。
+        </div>
     </div>
     <div id="s" style="text-align:center; font-weight:bold; margin:10px; color:var(--blue); font-size:0.9rem;"></div>
     <div id="o"></div>
@@ -50,6 +64,11 @@
         13:"尼崎", 14:"鳴門", 15:"丸亀", 16:"児島", 17:"宮島", 18:"徳山",
         19:"下関", 20:"若松", 21:"芦屋", 22:"福岡", 23:"唐津", 24:"大村"
     };
+
+    function toggleLogic() {
+        const desc = document.getElementById('logicDesc');
+        desc.style.display = desc.style.display === 'block' ? 'none' : 'block';
+    }
 
     async function go() {
         const status = document.getElementById('s');
@@ -119,7 +138,7 @@
 
                     grid += `<div class="race-box">
                                 <div class="race-title">
-                                    ${markHtml}
+                                    <div class="mark-area">${markHtml}</div>
                                     <span>${r.race_number}R ${timeStr}</span>
                                 </div>
                                 ${generateHtml(r.boats)}
@@ -135,23 +154,18 @@
         }
     }
 
-    // 各艇の総合スコアを計算する関数
     function calcScores(boats) {
         return boats.map(x => {
-            let n = x.racer_boat_number; // 枠番
+            let n = x.racer_boat_number;
             
-            // 1. 選手スコア（全国8割＋当地2割）
             let nRate = parseFloat(x.racer_national_top_2_percent || 0);
             let lRate = parseFloat(x.racer_local_top_2_percent || 0);
             let racerScore = (nRate * 0.8) + (lRate * 0.2);
             
-            // 2. モータースコア
             let motorScore = parseFloat(x.racer_assigned_motor_top_2_percent || 0);
             
-            // 3. 選手60% ＋ モーター40% のベーススコア
             let baseScore = (racerScore * 0.6) + (motorScore * 0.4);
             
-            // 4. 枠番補正（内枠に下駄を履かせる）
             let wakuBonus = 0;
             if (n === 1) wakuBonus = 15;
             else if (n === 2) wakuBonus = 8;
@@ -164,7 +178,6 @@
         }).sort((a,b) => b.s - a.s);
     }
 
-    // 表示用のHTMLを生成する関数
     function generateHtml(boats) {
         if (!boats || boats.length === 0) return "---";
         let p = calcScores(boats);
