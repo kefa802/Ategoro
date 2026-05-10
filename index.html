@@ -7,35 +7,37 @@
     <style>
         :root { --blue: #01579b; --gold: #ffc107; --bg: #f0f2f5; }
         body { font-family: sans-serif; background: var(--bg); margin: 0; color: #333; padding-bottom: 20px; }
-        .header { background: var(--blue); color: white; padding: 20px; text-align: center; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+        .header { background: var(--blue); color: white; padding: 10px 15px; text-align: center; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         .ver { position: absolute; top: 5px; right: 10px; font-size: 0.6rem; opacity: 0.7; }
-        .container { padding: 10px; max-width: 600px; margin: auto; }
-        .setup-box { background: white; padding: 20px; border-radius: 15px; margin: 10px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .btn { background: var(--gold); color: #333; border: none; padding: 15px; border-radius: 30px; font-weight: bold; width: 90%; cursor: pointer; font-size: 1.1rem; box-shadow: 0 4px 0 #d4a017; }
-        .btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #d4a017; }
-        .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 20px; border-left: 6px solid var(--blue); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .race-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
-        .race-box { background: #f8f9fa; border: 1px solid #eee; padding: 10px 5px; border-radius: 8px; text-align: center; }
-        .pred-list { font-size: 0.85rem; color: #d32f2f; font-weight: bold; margin-top: 5px; line-height: 1.2; }
-        .exp-val { font-size: 0.65rem; color: #666; font-weight: normal; margin-bottom: 4px; display: block; }
-        .app-link { display: block; background: #2196F3; color: white; text-align: center; padding: 12px; text-decoration: none; font-weight: bold; border-radius: 10px; margin: 10px; font-size: 0.9rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .container { padding: 5px; max-width: 600px; margin: auto; }
+        .app-link { display: block; background: #2196F3; color: white; text-align: center; padding: 10px; text-decoration: none; font-weight: bold; border-radius: 8px; margin: 5px; font-size: 0.95rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .setup-box { background: white; padding: 12px; border-radius: 10px; margin: 5px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .btn { background: var(--gold); color: #333; border: none; padding: 10px; border-radius: 20px; font-weight: bold; width: 90%; cursor: pointer; font-size: 1rem; box-shadow: 0 3px 0 #d4a017; }
+        .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #d4a017; }
+        .card { background: white; border-radius: 10px; padding: 10px; margin: 5px 5px 15px 5px; border-left: 5px solid var(--blue); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card-title { font-size: 1.1rem; font-weight: bold; color: var(--blue); border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 8px; }
+        .race-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+        .race-box { background: #f8f9fa; border: 1px solid #eee; padding: 4px; border-radius: 6px; }
+        .race-title { font-size: 0.75rem; color: #555; font-weight: bold; text-align: center; border-bottom: 1px dashed #ccc; padding-bottom: 2px; margin-bottom: 4px; }
+        .pred-item { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; }
+        .pred-code { font-size: 0.85rem; font-weight: bold; color: #d32f2f; }
+        .pred-exp { font-size: 0.55rem; color: #01579b; white-space: nowrap; }
     </style>
 </head>
 <body>
 <div class="header">
-    <span class="ver">Ver 2.0.6</span>
-    <h1 style="margin:0;">当五郎</h1>
-    <p style="margin:5px 0 0; font-size: 0.8rem; opacity: 0.9;">4点予想・期待度解析モデル</p>
+    <span class="ver">Ver 2.0.7</span>
+    <h1 style="margin:0; font-size:1.3rem;">当五郎</h1>
+    <p style="margin:2px 0 0; font-size: 0.7rem; opacity: 0.9;">4点予想・コンパクトモデル</p>
 </div>
 
 <div class="container">
-    <a href="jp.boatrace.teleboat://" class="app-link">🚤 公式ボートレースアプリを起動</a>
+    <a href="https://www.boatrace.jp/owpc/pc/login" target="_blank" class="app-link">🚤 公式アプリ・投票サイトを開く</a>
 
     <div class="setup-box">
-        <p style="margin-top:0; font-weight:bold; color:#555;">本日の全レース予想</p>
         <button class="btn" onclick="go()">予想を開始する</button>
     </div>
-    <div id="s" style="text-align:center; font-weight:bold; margin:15px; color:var(--blue);"></div>
+    <div id="s" style="text-align:center; font-weight:bold; margin:10px; color:var(--blue); font-size:0.9rem;"></div>
     <div id="o"></div>
 </div>
 
@@ -50,7 +52,7 @@
     async function go() {
         const status = document.getElementById('s');
         const output = document.getElementById('o');
-        status.innerText = "🚀 出走表を解析中...";
+        status.innerText = "🚀 解析中...";
         output.innerHTML = "";
 
         const targetUrl = "https://boatraceopenapi.github.io/programs/v2/today.json";
@@ -69,11 +71,11 @@
 
             const programs = data.programs;
             if (!programs || programs.length === 0) {
-                status.innerText = "⚠️ データがまだ公開されていません。";
+                status.innerText = "⚠️ データがありません。";
                 return;
             }
 
-            status.innerText = "✅ 取得成功";
+            status.innerText = ""; // 成功時は文字を消してスッキリさせる
             
             let venuesMap = {};
             programs.forEach(race => {
@@ -89,13 +91,13 @@
                 st.races.forEach(r => {
                     let timeStr = r.race_closed_at ? r.race_closed_at.substring(11, 16) : "";
                     grid += `<div class="race-box">
-                                <small style="color:#888;font-weight:bold;">${r.race_number}R ${timeStr}</small>
-                                <div class="pred-list">${calc(r.boats)}</div>
+                                <div class="race-title">${r.race_number}R ${timeStr}</div>
+                                ${calc(r.boats)}
                              </div>`;
                 });
                 const div = document.createElement('div');
                 div.className = 'card';
-                div.innerHTML = `<div style="font-size:1.1rem;font-weight:bold;color:#01579b;border-bottom:1px solid #eee;padding-bottom:10px;margin-bottom:10px;">${st.name}</div><div class="race-grid">${grid}</div>`;
+                div.innerHTML = `<div class="card-title">${st.name}</div><div class="race-grid">${grid}</div>`;
                 output.appendChild(div);
             });
         } catch (err) {
@@ -112,7 +114,7 @@
 
         if (p.length < 4 || p[0].s === 0) return "---";
 
-        // 買い目4点を選出
+        // 買い目4点と独自の期待度算出
         const bets = [
             { code: `${p[0].n}-${p[1].n}-${p[2].n}`, prob: (p[0].s * 0.5 + p[1].s * 0.3 + p[2].s * 0.2) },
             { code: `${p[0].n}-${p[2].n}-${p[1].n}`, prob: (p[0].s * 0.5 + p[2].s * 0.3 + p[1].s * 0.2) },
@@ -120,7 +122,13 @@
             { code: `${p[0].n}-${p[3].n}-${p[1].n}`, prob: (p[0].s * 0.5 + p[3].s * 0.3 + p[1].s * 0.2) }
         ];
 
-        return bets.map(b => `<div>${b.code}<br><span class="exp-val">${b.prob.toFixed(1)}%</span></div>`).join("");
+        // 横並び（flexbox）でギュッと詰めて表示
+        return bets.map(b => `
+            <div class="pred-item">
+                <span class="pred-code">${b.code}</span>
+                <span class="pred-exp">期待度${b.prob.toFixed(1)}%</span>
+            </div>
+        `).join("");
     }
 </script>
 </body>
