@@ -16,11 +16,15 @@
         .logic-btn-wide { width: 100%; background: white; color: var(--blue); border: 2px solid var(--blue); padding: 10px; border-radius: 8px; font-weight: bold; font-size: 0.9rem; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .logic-desc { display: none; text-align: left; background: #fff; padding: 12px; border-radius: 8px; margin-top: 5px; font-size: 0.85rem; color: #444; border: 1px dashed var(--blue); line-height: 1.5; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         
-        /* セクションボックス（予想用・検証用） */
-        .section-box { background: white; padding: 15px; border-radius: 10px; margin: 10px 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .section-title { font-weight: bold; color: var(--dark); margin-bottom: 10px; font-size: 1.05rem; border-left: 4px solid var(--gold); padding-left: 8px; }
-        .section-title.verify { border-left-color: var(--blue); }
+        /* タブUI */
+        .tabs { display: flex; margin: 10px 5px; border-radius: 8px; overflow: hidden; border: 2px solid var(--blue); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .tab { flex: 1; text-align: center; padding: 12px; background: white; color: var(--blue); font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 0.95rem; }
+        .tab.active { background: var(--blue); color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
         
+        /* セクションボックス */
+        .section-box { background: white; padding: 15px; border-radius: 10px; margin: 10px 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .date-row { display: flex; align-items: center; justify-content: center; gap: 5px; margin-bottom: 10px; }
         .date-input { padding: 8px; border-radius: 5px; border: 1px solid #ccc; font-size: 0.9rem; width: 45%; text-align: center; background: #fafafa; }
         
@@ -45,7 +49,13 @@
         .daily-content { padding: 10px; background: #f0f2f5; }
 
         .card { background: white; border-radius: 10px; padding: 10px; margin-bottom: 12px; border-left: 5px solid var(--blue); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .card-geki { border-left-color: var(--red); }
+        .card-atsu { border-left-color: var(--orange); }
+        
         .card-title { font-size: 1.05rem; font-weight: bold; color: var(--blue); border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 8px; }
+        .title-geki { color: var(--red); }
+        .title-atsu { color: var(--orange); }
+        
         .race-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
         .race-box { background: #f8f9fa; border: 1px solid #eee; padding: 6px 4px; border-radius: 6px; display: flex; flex-direction: column; }
         .race-title { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.8rem; color: #555; font-weight: bold; text-align: center; border-bottom: 1px dashed #ccc; padding-bottom: 4px; margin-bottom: 6px; line-height: 1.2; }
@@ -63,13 +73,15 @@
         .miss-box { background: #ffebee; border: 1px dashed #ef9a9a; padding: 4px; margin-top: auto; border-radius: 4px; text-align: center; }
         .miss-text { color: var(--red); font-size: 0.75rem; font-weight: bold; display: block; }
         .wait-box { background: #f5f5f5; border: 1px dashed #ccc; padding: 4px; margin-top: auto; border-radius: 4px; text-align: center; color: #888; font-size: 0.75rem; }
+        
+        .debug-box { word-break: break-all; font-size: 0.75rem; color: #555; background: #fff; padding: 15px; border-radius: 8px; border: 2px dashed var(--red); margin: 10px 5px; line-height: 1.3; }
     </style>
 </head>
 <body>
 <div class="header">
-    <span class="ver">Ver 3.2.0</span>
+    <span class="ver">Ver 3.3.0</span>
     <h1 style="margin:0; font-size:1.4rem;">当五郎</h1>
-    <p style="margin:2px 0 0; font-size: 0.75rem; opacity: 0.9;">UI最適化・機能分離モデル</p>
+    <p style="margin:2px 0 0; font-size: 0.75rem; opacity: 0.9;">タブUI・優先表示モデル</p>
 </div>
 
 <div class="container">
@@ -88,32 +100,41 @@
         </div>
     </div>
 
-    <div class="section-box">
-        <div class="section-title">🚤 本日の予想</div>
-        <p style="font-size:0.8rem; color:#666; margin-top:0;">※本日の全レースデータを取得し、買い目と期待度を算出します。</p>
-        <button class="btn btn-pred" onclick="runPrediction()">本日の予想を開始する</button>
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('predict')">🚤 本日の予想</div>
+        <div class="tab" onclick="switchTab('backtest')">📊 バックテスト</div>
     </div>
 
-    <div class="section-box">
-        <div class="section-title verify">📊 バックテスト（期間検証）</div>
-        <p style="font-size:0.8rem; color:#666; margin-top:0;">※過去の番組と結果を照合し、当五郎の勝率を検証します。</p>
-        <div class="date-row">
-            <input type="date" id="startDate" class="date-input">
-            <span style="font-weight:bold; color:#777;">〜</span>
-            <input type="date" id="endDate" class="date-input">
+    <div id="predict-section" class="tab-content active">
+        <div class="section-box">
+            <p style="font-size:0.85rem; color:#666; margin-top:0; text-align:center;">本日の全レースを取得し、激アツ順に表示します。</p>
+            <button class="btn btn-pred" onclick="runPrediction()">本日の予想を開始する</button>
         </div>
-        <button class="btn btn-verify" onclick="runBacktest()">期間検証を開始する</button>
+        <div id="s-pred" style="text-align:center; font-weight:bold; margin:15px 5px; color:var(--blue); font-size:0.95rem;"></div>
+        <div id="area-pred"></div>
     </div>
 
-    <div id="s" style="text-align:center; font-weight:bold; margin:15px 5px; color:var(--blue); font-size:0.95rem;"></div>
-    
-    <div id="totalSummaryArea" style="display:none; margin: 0 5px;">
-        <div class="section-title" style="border-left-color: var(--green);">📈 期間総合 勝率（4点買い）</div>
-        <table class="stats-table" id="totalTable">
-            </table>
+    <div id="backtest-section" class="tab-content">
+        <div class="section-box">
+            <p style="font-size:0.85rem; color:#666; margin-top:0; text-align:center;">過去の番組と結果を照合し、勝率を検証します。</p>
+            <div class="date-row">
+                <input type="date" id="startDate" class="date-input">
+                <span style="font-weight:bold; color:#777;">〜</span>
+                <input type="date" id="endDate" class="date-input">
+            </div>
+            <button class="btn btn-verify" onclick="runBacktest()">期間検証を開始する</button>
+        </div>
+        
+        <div id="s-backtest" style="text-align:center; font-weight:bold; margin:15px 5px; color:var(--blue); font-size:0.95rem;"></div>
+        
+        <div id="totalSummaryArea" style="display:none; margin: 0 5px;">
+            <div style="font-weight: bold; color: #333; margin: 15px 5px 5px 5px; font-size: 0.95rem; border-left: 4px solid var(--green); padding-left: 6px;">📈 期間総合 勝率（4点買い）</div>
+            <table class="stats-table" id="totalTable"></table>
+        </div>
+        <div id="debugArea"></div>
+        <div id="area-backtest"></div>
     </div>
 
-    <div id="dailyArea"></div>
 </div>
 
 <script>
@@ -137,6 +158,13 @@
         desc.style.display = desc.style.display === 'block' ? 'none' : 'block';
     }
 
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelector(`.tab[onclick="switchTab('${tabId}')"]`).classList.add('active');
+        document.getElementById(`${tabId}-section`).classList.add('active');
+    }
+
     async function fetchJson(url) {
         const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent(url);
         let res = await fetch(url + "?t=" + new Date().getTime());
@@ -149,7 +177,6 @@
         return await res.json();
     }
 
-    // スコア計算・買い目生成（共通）
     function calcScores(boats) {
         return boats.map(x => {
             let n = x.racer_boat_number;
@@ -159,14 +186,7 @@
             let motorScore = parseFloat(x.racer_assigned_motor_top_3_percent || 0);
             let baseScore = (racerScore * 0.6) + (motorScore * 0.4);
             
-            let wakuBonus = 0;
-            if (n === 1) wakuBonus = 15;
-            else if (n === 2) wakuBonus = 8;
-            else if (n === 3) wakuBonus = 4;
-            else if (n === 4) wakuBonus = 0;
-            else if (n === 5) wakuBonus = -4;
-            else if (n === 6) wakuBonus = -8;
-            
+            let wakuBonus = n === 1 ? 15 : n === 2 ? 8 : n === 3 ? 4 : n === 4 ? 0 : n === 5 ? -4 : -8;
             return { n: n, s: baseScore + wakuBonus };
         }).sort((a,b) => b.s - a.s);
     }
@@ -180,23 +200,32 @@
         ];
     }
 
+    function renderRaceBox(race, stName, markHtml, resultBoxHtml) {
+        let p = calcScores(race.boats || []);
+        let bets = p.length >= 4 && p[0].s > 0 ? generateBets(p) : [];
+        let betsHtml = bets.length === 0 ? "---" : bets.map(b => `
+            <div class="pred-item"><span class="pred-code">${b.code}</span><span class="pred-exp">期待度${b.prob.toFixed(1)}%</span></div>
+        `).join("");
+        let titleLabel = stName ? `${stName} ${race.race_number}R` : `${race.race_number}R`;
+
+        return `<div class="race-box">
+                    <div class="race-title"><div class="mark-area">${markHtml}</div><span>${titleLabel}</span></div>
+                    ${betsHtml}
+                    ${resultBoxHtml}
+                </div>`;
+    }
+
     // ==========================================
-    // ① 本日の予想（固定）
+    // ① 本日の予想処理
     // ==========================================
     async function runPrediction() {
-        const status = document.getElementById('s');
-        const dailyArea = document.getElementById('dailyArea');
-        const totalSummaryArea = document.getElementById('totalSummaryArea');
-        
-        status.innerText = "🚀 本日の番組データを解析中...";
-        dailyArea.innerHTML = "";
-        totalSummaryArea.style.display = "none";
+        const status = document.getElementById('s-pred');
+        const area = document.getElementById('area-pred');
+        status.innerText = "🚀 本日のデータを解析中...";
+        area.innerHTML = "";
 
         let data = await fetchJson("https://boatraceopenapi.github.io/programs/v2/today.json");
-        if (!data || !data.programs) {
-            status.innerText = "⚠️ 本日のデータがまだ公開されていません。";
-            return;
-        }
+        if (!data || !data.programs) { status.innerText = "⚠️ 本日のデータが未公開です。"; return; }
 
         let programs = data.programs;
         let allRacesRank = [];
@@ -204,8 +233,7 @@
             if (race.boats && race.boats.length > 0) {
                 let p = calcScores(race.boats);
                 if (p.length >= 4 && p[0].s > 0) {
-                    let topProb = p[0].s * 0.5 + p[1].s * 0.3 + p[2].s * 0.2;
-                    allRacesRank.push({ key: race.race_stadium_number + "-" + race.race_number, prob: topProb });
+                    allRacesRank.push({ key: race.race_stadium_number + "-" + race.race_number, prob: p[0].s * 0.5 + p[1].s * 0.3 + p[2].s * 0.2 });
                 }
             }
         });
@@ -217,69 +245,64 @@
             else if (idx < 8) marks[r.key] = '<span class="mark-atsu">アツ🔥</span>';
         });
 
-        let venuesMap = {};
+        let gekiHtml = ''; let atsuHtml = ''; let venuesMap = {};
         programs.forEach(race => {
             let sId = race.race_stadium_number;
-            if (!venuesMap[sId]) venuesMap[sId] = { sId: sId, name: STADIUMS[sId] || ("会場 " + sId), races: [] };
+            let rKey = sId + "-" + race.race_number;
+            let stName = STADIUMS[sId] || `会場${sId}`;
+            
+            if (!venuesMap[sId]) venuesMap[sId] = { sId: sId, name: stName, races: [] };
             venuesMap[sId].races.push(race);
+
+            let rankIdx = allRacesRank.findIndex(r => r.key === rKey);
+            if (rankIdx >= 0 && rankIdx < 3) gekiHtml += renderRaceBox(race, stName, marks[rKey], "");
+            else if (rankIdx >= 3 && rankIdx < 8) atsuHtml += renderRaceBox(race, stName, marks[rKey], "");
         });
 
         let html = '';
+        if(gekiHtml) html += `<div class="card card-geki"><div class="card-title title-geki">🔥 激アツ レース一覧</div><div class="race-grid">${gekiHtml}</div></div>`;
+        if(atsuHtml) html += `<div class="card card-atsu"><div class="card-title title-atsu">🔥 アツ レース一覧</div><div class="race-grid">${atsuHtml}</div></div>`;
+
         Object.keys(venuesMap).sort((a,b) => a - b).forEach(key => {
             const st = venuesMap[key];
             st.races.sort((a,b) => a.race_number - b.race_number);
             let grid = '';
-            st.races.forEach(r => {
-                let rKey = st.sId + "-" + r.race_number;
-                let markHtml = marks[rKey] || "";
-                let p = calcScores(r.boats || []);
-                let bets = p.length >= 4 && p[0].s > 0 ? generateBets(p) : [];
-                
-                let betsHtml = bets.length === 0 ? "---" : bets.map(b => `
-                    <div class="pred-item"><span class="pred-code">${b.code}</span><span class="pred-exp">期待度${b.prob.toFixed(1)}%</span></div>
-                `).join("");
-
-                grid += `<div class="race-box">
-                            <div class="race-title"><div class="mark-area">${markHtml}</div><span>${r.race_number}R</span></div>
-                            ${betsHtml}
-                         </div>`;
-            });
+            st.races.forEach(r => { grid += renderRaceBox(r, "", marks[st.sId + "-" + r.race_number] || "", ""); });
             html += `<div class="card"><div class="card-title">${st.name}</div><div class="race-grid">${grid}</div></div>`;
         });
 
-        dailyArea.innerHTML = html;
-        status.innerText = "✅ 本日の予想が完了しました！";
+        area.innerHTML = html;
+        status.innerText = "✅ 予想が完了しました！";
     }
 
     // ==========================================
-    // ② バックテスト（期間検証）
+    // ② バックテスト処理
     // ==========================================
     const createStat = () => ({ hit: 0, total: 0 });
     const getRate = (s) => s.total > 0 ? ((s.hit / s.total) * 100).toFixed(1) : "0.0";
 
     async function runBacktest() {
-        const status = document.getElementById('s');
-        const dailyArea = document.getElementById('dailyArea');
-        const totalSummaryArea = document.getElementById('totalSummaryArea');
+        const status = document.getElementById('s-backtest');
+        const area = document.getElementById('area-backtest');
+        const summaryArea = document.getElementById('totalSummaryArea');
+        const debugArea = document.getElementById('debugArea');
         
-        status.innerText = "🚀 バックテスト準備中...";
-        dailyArea.innerHTML = "";
-        totalSummaryArea.style.display = "none";
+        status.innerText = "🚀 バックテスト実行中...";
+        area.innerHTML = ""; summaryArea.style.display = "none"; debugArea.innerHTML = "";
 
         let startStr = document.getElementById('startDate').value;
         let endStr = document.getElementById('endDate').value;
         if(!startStr || !endStr) return;
 
-        let sDate = new Date(startStr);
-        let eDate = new Date(endStr);
+        let sDate = new Date(startStr); let eDate = new Date(endStr);
         if (sDate > eDate) { status.innerText = "⚠️ 開始日が終了日より後です。"; return; }
-
         let diffDays = Math.ceil((eDate - sDate) / (1000 * 60 * 60 * 24)) + 1;
-        if (diffDays > 31) { status.innerText = "⚠️ 負荷軽減のため、期間は最大31日以内にしてください。"; return; }
+        if (diffDays > 31) { status.innerText = "⚠️ 期間は最大31日以内にしてください。"; return; }
 
         let grandTotal = { geki: createStat(), atsu: createStat(), other: createStat(), all: createStat() };
         let cDate = new Date(sDate);
         let dailyResultsHTML = "";
+        let errorRaw = "";
 
         for (let i = 0; i < diffDays; i++) {
             let yyyy = cDate.getFullYear();
@@ -288,39 +311,32 @@
             let ymd = `${yyyy}${mm}${dd}`;
             let dateLabel = `${yyyy}/${mm}/${dd}`;
 
-            status.innerText = `🔄 ${dateLabel} のデータを検証中... (${i+1}/${diffDays})`;
+            status.innerText = `🔄 ${dateLabel} を検証中... (${i+1}/${diffDays})`;
 
             let progUrl = `https://boatraceopenapi.github.io/programs/v2/${yyyy}/${ymd}.json`;
             let progUrlFallback = `https://boatraceopenapi.github.io/programs/v2/${ymd}.json`;
-            let data = await fetchJson(progUrl);
-            if (!data) data = await fetchJson(progUrlFallback);
+            let data = await fetchJson(progUrl) || await fetchJson(progUrlFallback);
 
             if (!data || !data.programs) {
-                dailyResultsHTML += `<div class="daily-section"><summary class="daily-summary">${dateLabel} : データなし</summary></div>`;
-                cDate.setDate(cDate.getDate() + 1);
-                continue;
+                dailyResultsHTML += `<div class="daily-section"><summary class="daily-summary">${dateLabel} : 番組データなし</summary></div>`;
+                cDate.setDate(cDate.getDate() + 1); continue;
             }
 
             let resUrl = `https://boatraceopenapi.github.io/results/v3/${yyyy}/${ymd}.json`;
             let resUrlFallback = `https://boatraceopenapi.github.io/results/v3/${ymd}.json`;
-            let resultsData = await fetchJson(resUrl);
-            if (!resultsData) resultsData = await fetchJson(resUrlFallback);
+            let resultsData = await fetchJson(resUrl) || await fetchJson(resUrlFallback);
 
             let programs = data.programs;
             let allRacesRank = [];
             programs.forEach(race => {
                 if (race.boats && race.boats.length > 0) {
                     let p = calcScores(race.boats);
-                    if (p.length >= 4 && p[0].s > 0) {
-                        let topProb = p[0].s * 0.5 + p[1].s * 0.3 + p[2].s * 0.2;
-                        allRacesRank.push({ key: race.race_stadium_number + "-" + race.race_number, prob: topProb });
-                    }
+                    if (p.length >= 4 && p[0].s > 0) allRacesRank.push({ key: race.race_stadium_number + "-" + race.race_number, prob: p[0].s * 0.5 + p[1].s * 0.3 + p[2].s * 0.2 });
                 }
             });
             allRacesRank.sort((a,b) => b.prob - a.prob);
 
-            let categories = {};
-            let marks = {};
+            let categories = {}; let marks = {};
             allRacesRank.forEach((r, idx) => {
                 if (idx < 3) { marks[r.key] = '<span class="mark-geki">激アツ🔥</span>'; categories[r.key] = 'geki'; }
                 else if (idx < 8) { marks[r.key] = '<span class="mark-atsu">アツ🔥</span>'; categories[r.key] = 'atsu'; }
@@ -330,74 +346,76 @@
             let resultParsedMap = {};
             if (resultsData) {
                 let resArray = Array.isArray(resultsData) ? resultsData : (resultsData.results || []);
+                if(resArray.length===0) errorRaw = "結果データが空または形式エラーです。";
                 resArray.forEach(r => {
                     let sId = r.stadium_number || r.race_stadium_number;
                     let rNo = r.number || r.race_number;
-                    let rKey = sId + "-" + rNo;
                     if (r.boats && Array.isArray(r.boats)) {
-                        let finishedBoats = r.boats.filter(b => {
-                            let p = parseInt(b.racer_place_number);
-                            return !isNaN(p) && p >= 1 && p <= 6;
-                        });
-                        finishedBoats.sort((a, b) => parseInt(a.racer_place_number) - parseInt(b.racer_place_number));
-                        if (finishedBoats.length >= 3) {
-                            let resCode = `${finishedBoats[0].racer_boat_number}-${finishedBoats[1].racer_boat_number}-${finishedBoats[2].racer_boat_number}`;
-                            resultParsedMap[rKey] = { code: resCode };
-                        }
+                        let fBoats = r.boats.filter(b => { let p = parseInt(b.racer_place_number); return !isNaN(p) && p >= 1 && p <= 6; });
+                        fBoats.sort((a, b) => parseInt(a.racer_place_number) - parseInt(b.racer_place_number));
+                        if (fBoats.length >= 3) resultParsedMap[sId + "-" + rNo] = { code: `${fBoats[0].racer_boat_number}-${fBoats[1].racer_boat_number}-${fBoats[2].racer_boat_number}` };
                     }
                 });
             }
 
             let dayStat = { geki: createStat(), atsu: createStat(), other: createStat(), all: createStat() };
-            let venuesMap = {};
+            let gekiHtml = ''; let atsuHtml = ''; let venuesMap = {};
             
             programs.forEach(race => {
                 let sId = race.race_stadium_number;
-                if (!venuesMap[sId]) venuesMap[sId] = { sId: sId, name: STADIUMS[sId] || ("会場 " + sId), races: [] };
+                let rKey = sId + "-" + race.race_number;
+                let stName = STADIUMS[sId] || `会場${sId}`;
+                if (!venuesMap[sId]) venuesMap[sId] = { sId: sId, name: stName, races: [] };
                 venuesMap[sId].races.push(race);
+
+                let cat = categories[rKey];
+                let p = calcScores(race.boats || []);
+                let bets = p.length >= 4 && p[0].s > 0 ? generateBets(p) : [];
+                
+                let resultBoxHtml = "";
+                if (bets.length > 0 && cat) {
+                    let rp = resultParsedMap[rKey];
+                    if (rp && rp.code) {
+                        dayStat[cat].total++; dayStat.all.total++;
+                        grandTotal[cat].total++; grandTotal.all.total++;
+                        let betCodes = bets.map(b => b.code);
+                        if (betCodes.includes(rp.code)) {
+                            dayStat[cat].hit++; dayStat.all.hit++;
+                            grandTotal[cat].hit++; grandTotal.all.hit++;
+                            resultBoxHtml = `<div class="hit-box"><span class="hit-text">🎯 的中</span></div>`;
+                        } else {
+                            resultBoxHtml = `<div class="miss-box"><span class="miss-text">結果: ${rp.code}</span></div>`;
+                        }
+                    } else {
+                        resultBoxHtml = `<div class="wait-box">未確定</div>`;
+                    }
+                }
+
+                let rankIdx = allRacesRank.findIndex(r => r.key === rKey);
+                if (rankIdx >= 0 && rankIdx < 3) gekiHtml += renderRaceBox(race, stName, marks[rKey], resultBoxHtml);
+                else if (rankIdx >= 3 && rankIdx < 8) atsuHtml += renderRaceBox(race, stName, marks[rKey], resultBoxHtml);
             });
 
             let dayCardsHtml = '';
+            if(gekiHtml) dayCardsHtml += `<div class="card card-geki"><div class="card-title title-geki">🔥 激アツ レース一覧</div><div class="race-grid">${gekiHtml}</div></div>`;
+            if(atsuHtml) dayCardsHtml += `<div class="card card-atsu"><div class="card-title title-atsu">🔥 アツ レース一覧</div><div class="race-grid">${atsuHtml}</div></div>`;
+
             Object.keys(venuesMap).sort((a,b) => a - b).forEach(key => {
                 const st = venuesMap[key];
                 st.races.sort((a,b) => a.race_number - b.race_number);
                 let grid = '';
                 st.races.forEach(r => {
                     let rKey = st.sId + "-" + r.race_number;
-                    let markHtml = marks[rKey] || "";
-                    let cat = categories[rKey];
+                    let rp = resultParsedMap[rKey];
                     let p = calcScores(r.boats || []);
                     let bets = p.length >= 4 && p[0].s > 0 ? generateBets(p) : [];
-                    
-                    let resultBoxHtml = "";
-                    if (bets.length > 0 && cat) {
-                        let rp = resultParsedMap[rKey];
-                        if (rp && rp.code) {
-                            dayStat[cat].total++; dayStat.all.total++;
-                            grandTotal[cat].total++; grandTotal.all.total++;
-                            
-                            let betCodes = bets.map(b => b.code);
-                            if (betCodes.includes(rp.code)) {
-                                dayStat[cat].hit++; dayStat.all.hit++;
-                                grandTotal[cat].hit++; grandTotal.all.hit++;
-                                resultBoxHtml = `<div class="hit-box"><span class="hit-text">🎯 的中</span></div>`;
-                            } else {
-                                resultBoxHtml = `<div class="miss-box"><span class="miss-text">結果: ${rp.code}</span></div>`;
-                            }
-                        } else {
-                            resultBoxHtml = `<div class="wait-box">未確定</div>`;
-                        }
+                    let resHtml = "";
+                    if (bets.length > 0 && rp && rp.code) {
+                        resHtml = bets.map(b=>b.code).includes(rp.code) ? `<div class="hit-box"><span class="hit-text">🎯 的中</span></div>` : `<div class="miss-box"><span class="miss-text">結果: ${rp.code}</span></div>`;
+                    } else {
+                        resHtml = `<div class="wait-box">未確定</div>`;
                     }
-
-                    let betsHtml = bets.length === 0 ? "---" : bets.map(b => `
-                        <div class="pred-item"><span class="pred-code">${b.code}</span><span class="pred-exp">期待度${b.prob.toFixed(1)}%</span></div>
-                    `).join("");
-
-                    grid += `<div class="race-box">
-                                <div class="race-title"><div class="mark-area">${markHtml}</div><span>${r.race_number}R</span></div>
-                                ${betsHtml}
-                                ${resultBoxHtml}
-                             </div>`;
+                    grid += renderRaceBox(r, "", marks[rKey] || "", resHtml);
                 });
                 dayCardsHtml += `<div class="card"><div class="card-title">${st.name}</div><div class="race-grid">${grid}</div></div>`;
             });
@@ -434,8 +452,9 @@
             <tr class="row-other"><td>それ以外</td><td>${grandTotal.other.total}</td><td>${grandTotal.other.hit}</td><td>${getRate(grandTotal.other)}%</td></tr>
             <tr class="row-total"><td>合 計</td><td>${grandTotal.all.total}</td><td>${grandTotal.all.hit}</td><td>${getRate(grandTotal.all)}%</td></tr>
         `;
-        totalSummaryArea.style.display = "block";
-        dailyArea.innerHTML = dailyResultsHTML;
+        summaryArea.style.display = "block";
+        if(errorRaw) debugArea.innerHTML = `<div class="debug-box">⚠️ 一部データ取得エラー: ${errorRaw}</div>`;
+        area.innerHTML = dailyResultsHTML;
         status.innerText = "✅ 期間検証が完了しました！";
     }
 </script>
