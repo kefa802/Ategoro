@@ -12,16 +12,20 @@
         .container { padding: 5px; max-width: 600px; margin: auto; }
         .app-link { display: block; background: #2196F3; color: white; text-align: center; padding: 10px; text-decoration: none; font-weight: bold; border-radius: 8px; margin: 5px; font-size: 0.95rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .setup-box { background: white; padding: 12px; border-radius: 10px; margin: 5px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .btn { background: var(--gold); color: #333; border: none; padding: 10px; border-radius: 20px; font-weight: bold; width: 90%; cursor: pointer; font-size: 1rem; box-shadow: 0 3px 0 #d4a017; margin-bottom: 10px; }
-        .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #d4a017; }
-        .logic-btn { background: transparent; color: #666; border: 1px solid #ccc; padding: 5px 15px; border-radius: 15px; font-size: 0.75rem; cursor: pointer; }
+        
+        /* ボタンを横並びにするレイアウト */
+        .action-row { display: flex; gap: 10px; justify-content: center; align-items: stretch; margin-bottom: 5px; }
+        .btn { background: var(--gold); color: #333; border: none; border-radius: 8px; font-weight: bold; flex-grow: 1; cursor: pointer; font-size: 1.1rem; box-shadow: 0 3px 0 #d4a017; margin: 0; padding: 12px 0; }
+        .logic-btn { background: #fff; color: #01579b; border: 1px solid #01579b; border-radius: 8px; font-weight: bold; font-size: 0.75rem; padding: 0 10px; cursor: pointer; box-shadow: 0 2px 0 #01579b; margin: 0; white-space: nowrap; line-height: 1.2; }
+        .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 transparent; }
+        .logic-btn:active { transform: translateY(2px); box-shadow: 0 0 0 transparent; }
+        
         .logic-desc { display: none; text-align: left; background: #f8f9fa; padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.8rem; color: #444; border: 1px solid #eee; line-height: 1.4; }
         .card { background: white; border-radius: 10px; padding: 10px; margin: 5px 5px 15px 5px; border-left: 5px solid var(--blue); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .card-title { font-size: 1.1rem; font-weight: bold; color: var(--blue); border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 8px; }
         .race-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
         .race-box { background: #f8f9fa; border: 1px solid #eee; padding: 4px; border-radius: 6px; }
         .race-title { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.75rem; color: #555; font-weight: bold; text-align: center; border-bottom: 1px dashed #ccc; padding-bottom: 4px; margin-bottom: 4px; }
-        /* マークの有無に関わらず高さを16pxで固定してズレを防止 */
         .mark-area { height: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 2px; }
         .pred-item { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; }
         .pred-code { font-size: 0.85rem; font-weight: bold; color: #d32f2f; }
@@ -32,21 +36,23 @@
 </head>
 <body>
 <div class="header">
-    <span class="ver">Ver 2.1.0</span>
+    <span class="ver">Ver 2.1.1</span>
     <h1 style="margin:0; font-size:1.3rem;">当五郎</h1>
-    <p style="margin:2px 0 0; font-size: 0.7rem; opacity: 0.9;">総合判定（モーター・枠番補正）モデル</p>
+    <p style="margin:2px 0 0; font-size: 0.7rem; opacity: 0.9;">総合判定（3連対率・枠番補正）モデル</p>
 </div>
 
 <div class="container">
     <a href="https://www.boatrace.jp/owpc/pc/login" target="_blank" class="app-link">🚤 公式Web投票を開く</a>
 
     <div class="setup-box">
-        <button class="btn" onclick="go()">予想を開始する</button>
-        <button class="logic-btn" onclick="toggleLogic()">当五郎の予想ロジックとは？</button>
+        <div class="action-row">
+            <button class="btn" onclick="go()">予想を開始する</button>
+            <button class="logic-btn" onclick="toggleLogic()">ロジック<br>説明</button>
+        </div>
         <div id="logicDesc" class="logic-desc">
-            <strong>【当五郎 総合判定ロジック】</strong><br>
-            ① 選手力：全国2連対率(80%) ＋ 当地2連対率(20%)<br>
-            ② モーター力：モーター2連対率<br>
+            <strong>【当五郎 3連率ベース総合判定】</strong><br>
+            ① 選手力：全国3連対率(80%) ＋ 当地3連対率(20%)<br>
+            ② モーター力：モーター3連対率<br>
             ③ ベース値：選手力(60%) ＋ モーター力(40%)<br>
             ④ 枠番補正：内枠にボーナス加算<br>
             （1号艇+15 / 2号艇+8 / 3号艇+4 / 4号艇±0 / 5号艇-4 / 6号艇-8）<br><br>
@@ -158,11 +164,12 @@
         return boats.map(x => {
             let n = x.racer_boat_number;
             
-            let nRate = parseFloat(x.racer_national_top_2_percent || 0);
-            let lRate = parseFloat(x.racer_local_top_2_percent || 0);
+            // 2連対率（top_2_percent）から3連対率（top_3_percent）へ変更
+            let nRate = parseFloat(x.racer_national_top_3_percent || 0);
+            let lRate = parseFloat(x.racer_local_top_3_percent || 0);
             let racerScore = (nRate * 0.8) + (lRate * 0.2);
             
-            let motorScore = parseFloat(x.racer_assigned_motor_top_2_percent || 0);
+            let motorScore = parseFloat(x.racer_assigned_motor_top_3_percent || 0);
             
             let baseScore = (racerScore * 0.6) + (motorScore * 0.4);
             
