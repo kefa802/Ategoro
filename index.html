@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Goal Rider Biz - V1.10.1</title>
+    <title>Goal Rider Biz - V1.12</title>
 
     <link rel="icon" href="https://img.icons8.com/clouds/256/delivery-man.png" type="image/png">
     <link rel="apple-touch-icon" href="https://img.icons8.com/clouds/256/delivery-man.png">
@@ -89,201 +89,215 @@
         .weather-btn.active[data-w="小雨"] { background: #00cec9 !important; }
         .weather-btn.active[data-w="曇り"] { background: #636e72 !important; }
         .weather-btn.active[data-w="晴れ"] { background: #f39c12 !important; }
+
+        /* V1.12 写真追加ボタンとプレビュー領域 */
+        .photo-add-btn { background: #95a5a6; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 0.8em; cursor: pointer; display: flex; align-items: center; gap: 5px; width: 100%; box-sizing: border-box; justify-content: center; }
+        .spot-photo-preview { width: 100%; border-radius: 8px; margin-top: 8px; border: 1px solid #ccc; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .remove-photo-btn { position: absolute; top: 12px; right: 5px; background: #e74c3c; color: white; border: none; width: 30px; height: 30px; border-radius: 15px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+
+        /* V1.12 フルスクリーンズームビューワー */
+        #imageViewer { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: #000; z-index: 9999; overflow: auto; align-items: center; justify-content: center; }
+        .viewer-close { position: fixed; top: 20px; right: 20px; background: rgba(255,255,255,0.3); color: white; width: 40px; height: 40px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; cursor: pointer; z-index: 10000; }
     </style>
 </head>
 <body>
 
-    <div class="main-tabs">
-        <button id="tabSales" class="tab-btn active" onclick="showPage('sales')">売上記録</button>
-        <button id="tabMap" class="tab-btn" onclick="showPage('map')">マップ</button>
+    <div id="imageViewer">
+        <div class="viewer-close" onclick="closeImageViewer()">✕</div>
+        <img id="viewerImg" src="" style="max-width: 100%; height: auto; margin: auto; display: block;">
     </div>
-    
-    <div class="version-bar">GoalRider V1.10.1</div>
 
-    <div id="pageSales" class="content-area active">
-        <div class="rider-selector">
-            <button id="rider0" class="rider-btn" onclick="switchRider(0)">工藤正臣</button>
-            <button id="rider1" class="rider-btn" onclick="switchRider(1)">高瀬戒兜</button>
+    <div id="appUI">
+        <div class="main-tabs">
+            <button id="tabSales" class="tab-btn active" onclick="showPage('sales')">売上記録</button>
+            <button id="tabMap" class="tab-btn" onclick="showPage('map')">マップ</button>
         </div>
-        <div class="btn-row">
-            <button id="btnWeek" class="view-btn" onclick="switchView('week')">週間分析</button>
-            <button id="btnMonth" class="view-btn active-view" onclick="switchView('month')">月間分析</button>
-        </div>
-        <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                <div class="header-name" id="riderDisplayName">---</div>
-                <div style="font-size: 0.75em; font-weight: bold;">
-                    目標: <span id="displayGoal">0</span>円 
-                    <span style="color:#7f8c8d; font-size:0.9em;">(休 <span id="displayHolidays">0</span>日)</span>
-                </div>
-                <button style="padding:2px 6px; font-size:0.65em; background:#eee; border:1px solid #ccc; border-radius:4px;" onclick="openSettingsModal()">設定</button>
-            </div>
-            <div class="stats-grid">
-                <div><div class="stats-label">売上合計</div><div class="stats-val" id="totalSales">0円</div></div>
-                <div><div class="stats-label" style="color:#e74c3c;">目標まで</div><div class="stats-val" id="displayRemaining" style="color:#e74c3c;">0円</div></div>
-                <div><div class="stats-label" id="dailyRequiredLabel">1日必要額 (今日込)</div><div class="stats-val" style="color:#9b59b6;" id="dailyRequired">0円</div></div>
-                <div><div class="stats-label">経費合計</div><div class="stats-val" style="color:#e67e22;" id="totalExpense">0円</div></div>
-                <div><div class="stats-label">売上時給</div><div class="stats-val" id="avgHourly">0円</div></div>
-                <div><div class="stats-label">実質時給</div><div class="stats-val" style="color:#2ecc71;" id="netHourly">0円</div></div>
-            </div>
-        </div>
-        <div class="btn-row">
-            <button onclick="navigatePeriod(-1)" style="flex:0.2;">◀</button>
-            <span id="periodLabel" style="flex:1; text-align:center; align-self:center; font-weight:bold; font-size:0.8em;"></span>
-            <button onclick="navigatePeriod(1)" style="flex:0.2;">▶</button>
-        </div>
-        <div class="card"><div class="stats-label">売上推移</div><div class="chart-container"><canvas id="salesChart"></canvas></div></div>
-        <div class="card"><div class="stats-label">経費推移</div><div class="chart-container"><canvas id="expenseChart"></canvas></div></div>
-        <div class="card"><div class="stats-label">時給推移</div><div class="chart-container"><canvas id="hourlyChart"></canvas></div></div>
         
-        <div class="action-button-row">
-            <button class="btn-main-entry" onclick="openInputModal()">実績入力</button>
-            <button class="btn-analyze-trigger" onclick="openAnalysisModal()">分析</button>
-        </div>
-    </div>
+        <div class="version-bar">GoalRider V1.12</div>
 
-    <div id="pageMap" class="content-area" style="position: relative; padding:0;">
-        <div class="comment-ctrl-bar">
-            <button class="ctrl-btn active" id="ctrl-all" onclick="toggleTooltips('all')">全表示</button>
-            <button class="ctrl-btn" id="ctrl-off" onclick="toggleTooltips('none')">非表示</button>
-            <button class="ctrl-btn" id="ctrl-danger" onclick="toggleTooltips('danger')">要注意のみ</button>
-            <button class="ctrl-btn" id="ctrl-top" onclick="toggleTooltips('best')">最高のみ</button>
-            <button class="ctrl-btn" id="ctrl-rest" onclick="toggleTooltips('rest')">休憩所のみ</button>
-        </div>
-        <div id="map" style="width:100%; height:100%;"></div>
-        <div class="map-ui">
-            <button class="ui-btn" style="background:#fff; color:#2c3e50;" onclick="toggleMapType()" id="layerBtn">🛰️</button>
-            <button class="ui-btn" style="background:white; color:#3498db;" onclick="goToCurrentLocation()">🎯</button>
-            <button class="ui-btn" style="background:#f1c40f; color:black; font-weight:bold; font-size:0.7em;" onclick="analyzeMap()">分析</button>
-            <button class="ui-btn" style="background:#34495e; color:white; font-size:0.7em; font-weight:bold;" onclick="openSpotList()">リスト</button>
-        </div>
-    </div>
-
-    <div id="spotModal" class="modal">
-        <div class="modal-content">
-            <h3>地点メモ</h3>
-            <div id="spotInfo" style="font-size: 0.65em; color: #666; margin-bottom: 8px;"></div>
-            <div class="compact-grid">
-                <div class="input-group"><label>施設名 / 店舗名</label><input type="text" id="spotName" placeholder="漢字/ひらがな"></div>
-                <div class="input-group"><label>施設名 (カナ) <span style="font-weight:normal; font-size:0.85em; color:#888;">※任意</span></label><input type="text" id="spotKana" placeholder="ササキビル"></div>
+        <div id="pageSales" class="content-area active">
+            <div class="rider-selector">
+                <button id="rider0" class="rider-btn" onclick="switchRider(0)">工藤正臣</button>
+                <button id="rider1" class="rider-btn" onclick="switchRider(1)">高瀬戒兜</button>
             </div>
-            <div class="compact-grid">
-                <div class="input-group"><label>カテゴリ</label><select id="mainCat" onchange="updateSubCat()"><option value="">選択...</option><option value="待機">待機</option><option value="ピック">ピック</option><option value="ドロップ">ドロップ</option><option value="休憩">休憩場所</option></select></div>
-                <div class="input-group" id="subCatGroup" style="display:none;"><label id="subCatLabel">評価</label><select id="subCat"></select></div>
+            <div class="btn-row">
+                <button id="btnWeek" class="view-btn" onclick="switchView('week')">週間分析</button>
+                <button id="btnMonth" class="view-btn active-view" onclick="switchView('month')">月間分析</button>
             </div>
-            <div class="compact-grid">
-                <div class="input-group"><label>パーキング</label><select id="parkingStatus"><option value="不明">不明</option><option value="有り (無料)">有り (無料)</option><option value="無し (有料は有り)">無し (有料は有り)</option><option value="無し (近隣に無し)">無し (近隣に無し)</option></select></div>
-                <div class="input-group"><label>P詳細</label><input type="text" id="parkingNote"></div>
-            </div>
-            <div class="input-group"><label>コメント</label><textarea id="spotComment" rows="3"></textarea></div>
-            <button class="btn-modal-primary" onclick="saveSpot()">保存</button>
-            <button id="deleteBtn" style="background:#e74c3c; color:white; border:none; width:100%; padding:10px; border-radius:10px; margin-top:8px; display:none;" onclick="deleteSpot()">削除</button>
-            <button onclick="closeSpotModal()" style="width:100%; border:none; background:none; margin-top:8px; color:#666;">キャンセル</button>
-        </div>
-    </div>
-    
-    <div id="inputModal" class="modal">
-        <div class="modal-content">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <h3 style="margin:0;">実績入力</h3>
-                <button class="rule-btn" onclick="alert('【判定ルール】\n1時間以上雨が降っていたら雨を選択。\n1時間以内なら「曇り」または「晴れ」を選択してください。')">💡判定ルール</button>
-            </div>
-            
-            <div class="input-group">
-                <label>日付</label>
-                <input type="date" id="inputDate" onchange="loadExistingData()">
-            </div>
-
-            <div class="weather-selector" id="weatherSelector">
-                <button class="weather-btn" data-w="大雨" onclick="setWeather('大雨')">⛈️</button>
-                <button class="weather-btn" data-w="雨" onclick="setWeather('雨')">🌧️</button>
-                <button class="weather-btn" data-w="小雨" onclick="setWeather('小雨')">🌦️</button>
-                <button class="weather-btn" data-w="曇り" onclick="setWeather('曇り')">☁️</button>
-                <button class="weather-btn" data-w="晴れ" onclick="setWeather('晴れ')">☀️</button>
-            </div>
-            <div class="compact-grid">
-                <div class="input-group">
-                    <label style="display:flex; justify-content:space-between; align-items:center;">
-                        <span>稼働(h)</span>
-                        <button type="button" onclick="fetchOutHour()" style="background:#3498db; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:0.8em; font-weight:bold; cursor:pointer;">取得</button>
-                    </label>
-                    <input type="number" id="inputHours" step="0.5">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <div class="header-name" id="riderDisplayName">---</div>
+                    <div style="font-size: 0.75em; font-weight: bold;">
+                        目標: <span id="displayGoal">0</span>円 
+                        <span style="color:#7f8c8d; font-size:0.9em;">(休 <span id="displayHolidays">0</span>日)</span>
+                    </div>
+                    <button style="padding:2px 6px; font-size:0.65em; background:#eee; border:1px solid #ccc; border-radius:4px;" onclick="openSettingsModal()">設定</button>
                 </div>
-                <div class="input-group"><label>ガソリン</label><input type="number" id="inputGas"></div>
+                <div class="stats-grid">
+                    <div><div class="stats-label">売上合計</div><div class="stats-val" id="totalSales">0円</div></div>
+                    <div><div class="stats-label" style="color:#e74c3c;">目標まで</div><div class="stats-val" id="displayRemaining" style="color:#e74c3c;">0円</div></div>
+                    <div><div class="stats-label" id="dailyRequiredLabel">1日必要額 (今日込)</div><div class="stats-val" style="color:#9b59b6;" id="dailyRequired">0円</div></div>
+                    <div><div class="stats-label">経費合計</div><div class="stats-val" style="color:#e67e22;" id="totalExpense">0円</div></div>
+                    <div><div class="stats-label">売上時給</div><div class="stats-val" id="avgHourly">0円</div></div>
+                    <div><div class="stats-label">実質時給</div><div class="stats-val" style="color:#2ecc71;" id="netHourly">0円</div></div>
+                </div>
             </div>
-            <div class="input-group"><label>その他経費</label><input type="number" id="inputOtherExp"></div>
-            <hr style="border:0; border-top:1px solid #eee;">
-            <div class="compact-grid">
-                <div class="input-group"><label>Uber</label><input type="number" id="inputUber"></div>
-                <div class="input-group"><label>出前館</label><input type="number" id="inputDemae"></div>
-                <div class="input-group"><label>Menu</label><input type="number" id="inputMenu"></div>
-                <div class="input-group"><label>ロケット</label><input type="number" id="inputRocket"></div>
+            <div class="btn-row">
+                <button onclick="navigatePeriod(-1)" style="flex:0.2;">◀</button>
+                <span id="periodLabel" style="flex:1; text-align:center; align-self:center; font-weight:bold; font-size:0.8em;"></span>
+                <button onclick="navigatePeriod(1)" style="flex:0.2;">▶</button>
             </div>
-
-            <button type="button" onclick="goToScreenshot()" style="width:100%; background:#f39c12; color:white; border:none; padding:12px; font-size:1.0em; border-radius:10px; cursor:pointer; font-weight:bold; margin-bottom:8px; margin-top:8px;">📷 スクショ追加・管理へ</button>
-
-            <button class="btn-modal-primary" onclick="saveSales()">保存して閉じる</button>
-            <button onclick="closeInputModal()" style="width:100%; border:none; background:none; color:#777; padding:10px;">閉じる</button>
+            <div class="card"><div class="stats-label">売上推移</div><div class="chart-container"><canvas id="salesChart"></canvas></div></div>
+            <div class="card"><div class="stats-label">経費推移</div><div class="chart-container"><canvas id="expenseChart"></canvas></div></div>
+            <div class="card"><div class="stats-label">時給推移</div><div class="chart-container"><canvas id="hourlyChart"></canvas></div></div>
+            
+            <div class="action-button-row">
+                <button class="btn-main-entry" onclick="openInputModal()">実績入力</button>
+                <button class="btn-analyze-trigger" onclick="openAnalysisModal()">分析</button>
+            </div>
         </div>
-    </div>
 
-    <div id="settingsModal" class="modal">
-        <div class="modal-content">
-            <h3 style="margin-top:0;">設定</h3>
-            <div class="input-group">
-                <label>今月の目標金額 (円)</label>
-                <input type="number" id="settingGoal" placeholder="例: 300000">
+        <div id="pageMap" class="content-area" style="position: relative; padding:0;">
+            <div class="comment-ctrl-bar">
+                <button class="ctrl-btn active" id="ctrl-all" onclick="toggleTooltips('all')">全表示</button>
+                <button class="ctrl-btn" id="ctrl-off" onclick="toggleTooltips('none')">非表示</button>
+                <button class="ctrl-btn" id="ctrl-danger" onclick="toggleTooltips('danger')">要注意のみ</button>
+                <button class="ctrl-btn" id="ctrl-top" onclick="toggleTooltips('best')">最高のみ</button>
+                <button class="ctrl-btn" id="ctrl-rest" onclick="toggleTooltips('rest')">休憩所のみ</button>
             </div>
-            <div class="input-group">
-                <label>今月の休日日数 (日)</label>
-                <input type="number" id="settingHolidays" placeholder="例: 6">
-                <p style="font-size: 0.7em; color: #7f8c8d; margin-top: 4px;">※設定した休日日数を加味して、1日の必要額を自動計算します。</p>
+            <div id="map" style="width:100%; height:100%;"></div>
+            <div class="map-ui">
+                <button class="ui-btn" style="background:#fff; color:#2c3e50;" onclick="toggleMapType()" id="layerBtn">🛰️</button>
+                <button class="ui-btn" style="background:white; color:#3498db;" onclick="goToCurrentLocation()">🎯</button>
+                <button class="ui-btn" style="background:#f1c40f; color:black; font-weight:bold; font-size:0.7em;" onclick="analyzeMap()">分析</button>
+                <button class="ui-btn" style="background:#34495e; color:white; font-size:0.7em; font-weight:bold;" onclick="openSpotList()">リスト</button>
             </div>
-            <button class="btn-modal-primary" onclick="saveSettings()" style="margin-top: 10px;">保存して閉じる</button>
-            <button onclick="closeSettingsModal()" style="width:100%; border:none; background:none; margin-top:8px; color:#666;">キャンセル</button>
         </div>
-    </div>
 
-    <div id="listModal" class="modal">
-        <div class="modal-content">
-            <h3 style="margin-top:0;">スポット一覧</h3>
-            <div class="filter-tabs">
-                <button class="filter-btn active" id="fAll" onclick="filterList('すべて')">すべて</button>
-                <button class="filter-btn alert" id="fDanger" onclick="filterList('要注意')">⚠️要注意</button>
-                <button class="filter-btn" id="fWait" onclick="filterList('待機')">待機</button>
-                <button class="filter-btn" id="fPick" onclick="filterList('ピック')">ピック</button>
-                <button class="filter-btn" id="fDrop" onclick="filterList('ドロップ')">ドロップ</button>
-                <button class="filter-btn" id="fRest" onclick="filterList('休憩')">休憩</button>
+        <div id="spotModal" class="modal">
+            <div class="modal-content">
+                <h3>地点メモ</h3>
+                <div id="spotInfo" style="font-size: 0.65em; color: #666; margin-bottom: 8px;"></div>
+                
+                <div class="input-group" style="background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #eee;">
+                    <input type="file" id="spotPhotoInput" accept="image/*" style="display: none;" onchange="handleSpotPhoto(event)">
+                    <button type="button" class="photo-add-btn" onclick="document.getElementById('spotPhotoInput').click()">📷 現地の写真を追加</button>
+                    <div id="spotPhotoPreviewContainer" style="display: none; position: relative;">
+                        <img id="spotPhotoPreview" class="spot-photo-preview" src="" onclick="openImageViewer(this.src)">
+                        <button type="button" class="remove-photo-btn" onclick="removeSpotPhoto()">✕</button>
+                        <p style="font-size: 0.65em; text-align: center; color: #888; margin-top: 4px;">タップで全画面表示（ズーム可能）</p>
+                    </div>
+                </div>
+
+                <div class="compact-grid">
+                    <div class="input-group"><label>施設名 / 店舗名</label><input type="text" id="spotName" placeholder="漢字/ひらがな"></div>
+                    <div class="input-group"><label>施設名 (カナ) <span style="font-weight:normal; font-size:0.85em; color:#888;">※任意</span></label><input type="text" id="spotKana" placeholder="ササキビル"></div>
+                </div>
+                <div class="compact-grid">
+                    <div class="input-group"><label>カテゴリ</label><select id="mainCat" onchange="updateSubCat()"><option value="">選択...</option><option value="待機">待機</option><option value="ピック">ピック</option><option value="ドロップ">ドロップ</option><option value="休憩">休憩場所</option></select></div>
+                    <div class="input-group" id="subCatGroup" style="display:none;"><label id="subCatLabel">評価</label><select id="subCat"></select></div>
+                </div>
+                <div class="compact-grid">
+                    <div class="input-group"><label>パーキング</label><select id="parkingStatus"><option value="不明">不明</option><option value="有り (無料)">有り (無料)</option><option value="無し (有料は有り)">無し (有料は有り)</option><option value="無し (近隣に無し)">無し (近隣に無し)</option></select></div>
+                    <div class="input-group"><label>P詳細</label><input type="text" id="parkingNote"></div>
+                </div>
+                <div class="input-group"><label>コメント</label><textarea id="spotComment" rows="3"></textarea></div>
+                <button class="btn-modal-primary" onclick="saveSpot()">保存</button>
+                <button id="deleteBtn" style="background:#e74c3c; color:white; border:none; width:100%; padding:10px; border-radius:10px; margin-top:8px; display:none;" onclick="deleteSpot()">削除</button>
+                <button onclick="closeSpotModal()" style="width:100%; border:none; background:none; margin-top:8px; color:#666;">キャンセル</button>
             </div>
-            <div class="kana-tabs">
-                <button class="kana-btn active" onclick="filterKana('全')">全</button>
-                <button class="kana-btn" onclick="filterKana('あ')">あ</button>
-                <button class="kana-btn" onclick="filterKana('か')">か</button>
-                <button class="kana-btn" onclick="filterKana('さ')">さ</button>
-                <button class="kana-btn" onclick="filterKana('た')">た</button>
-                <button class="kana-btn" onclick="filterKana('な')">な</button>
-                <button class="kana-btn" onclick="filterKana('は')">は</button>
-                <button class="kana-btn" onclick="filterKana('ま')">ま</button>
-                <button class="kana-btn" onclick="filterKana('や')">や</button>
-                <button class="kana-btn" onclick="filterKana('ら')">ら</button>
-                <button class="kana-btn" onclick="filterKana('わ')">わ</button>
-                <button class="kana-btn" onclick="filterKana('他')">他</button>
+        </div>
+        
+        <div id="inputModal" class="modal">
+            <div class="modal-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <h3 style="margin:0;">実績入力</h3>
+                    <button class="rule-btn" onclick="alert('【判定ルール】\n1時間以上雨が降っていたら雨を選択。\n1時間以内なら「曇り」または「晴れ」を選択してください。')">💡判定ルール</button>
+                </div>
+                <div class="input-group">
+                    <label>日付</label>
+                    <input type="date" id="inputDate" onchange="loadExistingData()">
+                </div>
+                <div class="weather-selector" id="weatherSelector">
+                    <button class="weather-btn" data-w="大雨" onclick="setWeather('大雨')">⛈️</button>
+                    <button class="weather-btn" data-w="雨" onclick="setWeather('雨')">🌧️</button>
+                    <button class="weather-btn" data-w="小雨" onclick="setWeather('小雨')">🌦️</button>
+                    <button class="weather-btn" data-w="曇り" onclick="setWeather('曇り')">☁️</button>
+                    <button class="weather-btn" data-w="晴れ" onclick="setWeather('晴れ')">☀️</button>
+                </div>
+                <div class="compact-grid">
+                    <div class="input-group">
+                        <label style="display:flex; justify-content:space-between; align-items:center;">
+                            <span>稼働(h)</span>
+                            <button type="button" onclick="fetchOutHour()" style="background:#3498db; color:white; border:none; padding:2px 6px; border-radius:4px; font-size:0.8em; font-weight:bold; cursor:pointer;">取得</button>
+                        </label>
+                        <input type="number" id="inputHours" step="0.5">
+                    </div>
+                    <div class="input-group"><label>ガソリン</label><input type="number" id="inputGas"></div>
+                </div>
+                <div class="input-group"><label>その他経費</label><input type="number" id="inputOtherExp"></div>
+                <hr style="border:0; border-top:1px solid #eee;">
+                <div class="compact-grid">
+                    <div class="input-group"><label>Uber</label><input type="number" id="inputUber"></div>
+                    <div class="input-group"><label>出前館</label><input type="number" id="inputDemae"></div>
+                    <div class="input-group"><label>Menu</label><input type="number" id="inputMenu"></div>
+                    <div class="input-group"><label>ロケット</label><input type="number" id="inputRocket"></div>
+                </div>
+                <button type="button" onclick="goToScreenshot()" style="width:100%; background:#f39c12; color:white; border:none; padding:12px; font-size:1.0em; border-radius:10px; cursor:pointer; font-weight:bold; margin-bottom:8px; margin-top:8px;">📷 スクショ追加・管理へ</button>
+                <button class="btn-modal-primary" onclick="saveSales()">保存して閉じる</button>
+                <button onclick="closeInputModal()" style="width:100%; border:none; background:none; color:#777; padding:10px;">閉じる</button>
             </div>
-            <div id="spotList" style="max-height:300px; overflow-y:auto;"></div>
-            <button class="btn-modal-primary" onclick="document.getElementById('listModal').style.display='none'" style="margin-top:15px;">閉じる</button>
         </div>
-    </div>
 
-    <div id="analysisModal" class="modal">
-        <div class="modal-content">
-            <h3 style="margin: 0 0 15px 0;">時給分析</h3>
-            <div style="height:180px; margin-bottom:20px;"><canvas id="dayAnalysisChart"></canvas></div>
-            <div style="height:180px;"><canvas id="weatherAnalysisChart"></canvas></div>
-            <button class="btn-modal-primary" onclick="closeAnalysisModal()" style="margin-top:20px;">閉じる</button>
+        <div id="settingsModal" class="modal">
+            <div class="modal-content">
+                <h3 style="margin-top:0;">設定</h3>
+                <div class="input-group"><label>今月の目標金額 (円)</label><input type="number" id="settingGoal" placeholder="例: 300000"></div>
+                <div class="input-group"><label>今月の休日日数 (日)</label><input type="number" id="settingHolidays" placeholder="例: 6"><p style="font-size: 0.7em; color: #7f8c8d; margin-top: 4px;">※設定した休日日数を加味して、1日の必要額を自動計算します。</p></div>
+                <button class="btn-modal-primary" onclick="saveSettings()" style="margin-top: 10px;">保存して閉じる</button>
+                <button onclick="closeSettingsModal()" style="width:100%; border:none; background:none; margin-top:8px; color:#666;">キャンセル</button>
+            </div>
         </div>
-    </div>
 
-    <script>
+        <div id="listModal" class="modal">
+            <div class="modal-content">
+                <h3 style="margin-top:0;">スポット一覧</h3>
+                <div class="filter-tabs">
+                    <button class="filter-btn active" id="fAll" onclick="filterList('すべて')">すべて</button>
+                    <button class="filter-btn alert" id="fDanger" onclick="filterList('要注意')">⚠️要注意</button>
+                    <button class="filter-btn" id="fWait" onclick="filterList('待機')">待機</button>
+                    <button class="filter-btn" id="fPick" onclick="filterList('ピック')">ピック</button>
+                    <button class="filter-btn" id="fDrop" onclick="filterList('ドロップ')">ドロップ</button>
+                    <button class="filter-btn" id="fRest" onclick="filterList('休憩')">休憩</button>
+                </div>
+                <div class="kana-tabs">
+                    <button class="kana-btn active" onclick="filterKana('全')">全</button>
+                    <button class="kana-btn" onclick="filterKana('あ')">あ</button>
+                    <button class="kana-btn" onclick="filterKana('か')">か</button>
+                    <button class="kana-btn" onclick="filterKana('さ')">さ</button>
+                    <button class="kana-btn" onclick="filterKana('た')">た</button>
+                    <button class="kana-btn" onclick="filterKana('な')">な</button>
+                    <button class="kana-btn" onclick="filterKana('は')">は</button>
+                    <button class="kana-btn" onclick="filterKana('ま')">ま</button>
+                    <button class="kana-btn" onclick="filterKana('や')">や</button>
+                    <button class="kana-btn" onclick="filterKana('ら')">ら</button>
+                    <button class="kana-btn" onclick="filterKana('わ')">わ</button>
+                    <button class="kana-btn" onclick="filterKana('他')">他</button>
+                </div>
+                <div id="spotList" style="max-height:300px; overflow-y:auto;"></div>
+                <button class="btn-modal-primary" onclick="document.getElementById('listModal').style.display='none'" style="margin-top:15px;">閉じる</button>
+            </div>
+        </div>
+
+        <div id="analysisModal" class="modal">
+            <div class="modal-content">
+                <h3 style="margin: 0 0 15px 0;">時給分析</h3>
+                <div style="height:180px; margin-bottom:20px;"><canvas id="dayAnalysisChart"></canvas></div>
+                <div style="height:180px;"><canvas id="weatherAnalysisChart"></canvas></div>
+                <button class="btn-modal-primary" onclick="closeAnalysisModal()" style="margin-top:20px;">閉じる</button>
+            </div>
+        </div>
+    </div> <script>
         const DB_SALES = "https://goalrider-81f01-default-rtdb.firebaseio.com/data.json";
         const DB_MAP = "https://goalrider-81f01-default-rtdb.firebaseio.com/spots.json";
         const RIDERS = ["工藤正臣", "高瀬戒兜"];
@@ -294,11 +308,64 @@
         let currentView = 'month', referenceDate = new Date(), myChart, myExpChart, myHourlyChart, dayAnalysisChart, weatherAnalysisChart;
         let currentFilter = 'すべて', currentKana = '全', selectedWeather = "";
 
+        // V1.12 写真データ一時保存用
+        window.tempSpotPhoto = null;
+
         window.onload = () => {
             document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
             switchRider(currentRiderIdx);
             fetchCloudSales();
         };
+
+        // V1.12 画像ビューワーロジック (ピンチズーム有効化)
+        function openImageViewer(src) {
+            document.getElementById('appUI').style.display = 'none'; // メインUIを隠す
+            document.getElementById('viewerImg').src = src;
+            document.getElementById('imageViewer').style.display = 'flex';
+            // メタタグを書き換えてブラウザ純正ズームを許可
+            document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes');
+        }
+
+        function closeImageViewer() {
+            // ズームを無効化して元に戻す
+            document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+            document.getElementById('imageViewer').style.display = 'none';
+            document.getElementById('appUI').style.display = 'block'; // メインUIを再表示
+            // iOSなどのズームリセット用ハック
+            window.scrollTo(0, 0); 
+        }
+
+        // V1.12 地点写真の処理
+        function handleSpotPhoto(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let w = img.width, h = img.height;
+                    const max_size = 800; // 圧縮サイズ
+                    if (w > h && w > max_size) { h *= max_size / w; w = max_size; } 
+                    else if (h > max_size) { w *= max_size / h; h = max_size; }
+                    canvas.width = w; canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    window.tempSpotPhoto = canvas.toDataURL('image/jpeg', 0.6);
+                    document.getElementById('spotPhotoPreview').src = window.tempSpotPhoto;
+                    document.getElementById('spotPhotoPreviewContainer').style.display = 'block';
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeSpotPhoto() {
+            window.tempSpotPhoto = null;
+            document.getElementById('spotPhotoPreview').src = "";
+            document.getElementById('spotPhotoPreviewContainer').style.display = 'none';
+            document.getElementById('spotPhotoInput').value = "";
+        }
 
         function goToScreenshot() {
             const date = document.getElementById('inputDate').value;
@@ -379,41 +446,23 @@
 
         async function fetchCloudSales() { try { const res = await fetch(DB_SALES); allData = await res.json() || {}; renderApp(); } catch (e) {} }
 
-        // V1.10.1: 新しい目標＆休日設定モーダルの制御
         function openSettingsModal() {
             const n = RIDERS[currentRiderIdx];
-            const y = referenceDate.getFullYear(), m = referenceDate.getMonth();
-            const mk = `${y}-${String(m+1).padStart(2,'0')}`;
-            
+            const y = referenceDate.getFullYear(), m = referenceDate.getMonth(), mk = `${y}-${String(m+1).padStart(2,'0')}`;
             const goal = (allData[n] && allData[n].goals) ? (allData[n].goals[mk] || DEFAULT_GOAL) : DEFAULT_GOAL;
             const holidays = (allData[n] && allData[n].holidays) ? (allData[n].holidays[mk] || 0) : 0;
-            
             document.getElementById('settingGoal').value = goal;
             document.getElementById('settingHolidays').value = holidays;
             document.getElementById('settingsModal').style.display = 'block';
         }
-
-        function closeSettingsModal() {
-            document.getElementById('settingsModal').style.display = 'none';
-        }
-
+        function closeSettingsModal() { document.getElementById('settingsModal').style.display = 'none'; }
         async function saveSettings() {
             const n = RIDERS[currentRiderIdx];
-            const y = referenceDate.getFullYear(), m = referenceDate.getMonth();
-            const mk = `${y}-${String(m+1).padStart(2,'0')}`;
-            
-            const goalVal = document.getElementById('settingGoal').value;
-            const holidaysVal = document.getElementById('settingHolidays').value;
-            
-            if(!allData[n]) allData[n] = {};
-            if(!allData[n].goals) allData[n].goals = {};
-            if(!allData[n].holidays) allData[n].holidays = {};
-            
-            allData[n].goals[mk] = Number(goalVal);
-            allData[n].holidays[mk] = Number(holidaysVal);
-            
-            renderApp();
-            closeSettingsModal();
+            const y = referenceDate.getFullYear(), m = referenceDate.getMonth(), mk = `${y}-${String(m+1).padStart(2,'0')}`;
+            if(!allData[n]) allData[n] = {}; if(!allData[n].goals) allData[n].goals = {}; if(!allData[n].holidays) allData[n].holidays = {};
+            allData[n].goals[mk] = Number(document.getElementById('settingGoal').value);
+            allData[n].holidays[mk] = Number(document.getElementById('settingHolidays').value);
+            renderApp(); closeSettingsModal();
             await fetch(DB_SALES, { method: 'PUT', body: JSON.stringify(allData) });
         }
 
@@ -421,11 +470,9 @@
             const name = RIDERS[currentRiderIdx]; if (!allData[name]) allData[name] = { sales: {}, goals: {}, holidays: {} };
             const data = allData[name]; let labels = [], chartSales = [], chartExp = [], chartHourly = [], chartHours = [], tSales = 0, tExp = 0, tHours = 0;
             const y = referenceDate.getFullYear(), m = referenceDate.getMonth(), mk = `${y}-${String(m+1).padStart(2,'0')}`;
-            
             const goal = data.goals ? (data.goals[mk] || DEFAULT_GOAL) : DEFAULT_GOAL;
             const holidaysCount = data.holidays ? (data.holidays[mk] || 0) : 0;
             
-            // 目標と休日の表示を更新
             document.getElementById('displayGoal').innerText = goal.toLocaleString();
             document.getElementById('displayHolidays').innerText = holidaysCount;
 
@@ -441,28 +488,14 @@
                 }
                 const today = new Date(); let drStr = "---";
                 if (today.getFullYear() === y && today.getMonth() === m) {
-                    const todayKey = today.toISOString().split('T')[0];
-                    const todayData = data.sales[todayKey] || {};
+                    const todayKey = today.toISOString().split('T')[0], todayData = data.sales[todayKey] || {};
                     const todayDone = (todayData.hours || todayData.uber || todayData.demae || todayData.menu || todayData.rocket);
-                    
-                    // V1.10.1 休日を加味した1日必要額の高度な計算
-                    let elapsedDays = today.getDate() - (todayDone ? 0 : 1);
-                    let workedPastDays = 0;
+                    let elapsedDays = today.getDate() - (todayDone ? 0 : 1), workedPastDays = 0;
                     for (let i = 1; i <= elapsedDays; i++) {
-                        let k = `${y}-${String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-                        let s = data.sales[k] || {};
-                        if (s.hours || s.uber || s.demae || s.menu || s.rocket) {
-                            workedPastDays++;
-                        }
+                        let k = `${y}-${String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`, s = data.sales[k] || {};
+                        if (s.hours || s.uber || s.demae || s.menu || s.rocket) workedPastDays++;
                     }
-                    
-                    let holidaysTaken = Math.max(0, elapsedDays - workedPastDays);
-                    let remainingHolidays = Math.max(0, holidaysCount - holidaysTaken);
-                    let remainingDaysInMonth = last - elapsedDays;
-                    
-                    // 休む予定の日を引いた「真の残稼働日数」
-                    let remainingWorkingDays = Math.max(1, remainingDaysInMonth - remainingHolidays);
-                    
+                    let remainingWorkingDays = Math.max(1, (last - elapsedDays) - Math.max(0, holidaysCount - Math.max(0, elapsedDays - workedPastDays)));
                     drStr = remainingWorkingDays > 0 ? Math.ceil(Math.max(0, goal - tSales) / remainingWorkingDays).toLocaleString() + "円" : "達成！";
                     document.getElementById('dailyRequiredLabel').innerText = todayDone ? "1日必要額(明日から)" : "1日必要額(今日込)";
                 }
@@ -486,33 +519,11 @@
             document.getElementById('netHourly').innerText = tHours > 0 ? Math.round((tSales-tExp)/tHours).toLocaleString() + "円" : "0円";
             
             const optC = { responsive: true, maintainAspectRatio: false, plugins: { legend: false }, scales: { y: { beginAtZero: true, ticks: { font: { size: 8 } } }, x: { ticks: { font: { size: 7 } } } } };
-            
-            const optHourly = { 
-                responsive: true, 
-                maintainAspectRatio: false, 
-                plugins: { legend: false }, 
-                scales: { 
-                    y: { type: 'linear', display: true, position: 'left', beginAtZero: true, ticks: { font: { size: 8 } } }, 
-                    y1: { type: 'linear', display: true, position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, ticks: { font: { size: 8 } } }, 
-                    x: { ticks: { font: { size: 7 } } } 
-                } 
-            };
+            const optHourly = { responsive: true, maintainAspectRatio: false, plugins: { legend: false }, scales: { y: { type: 'linear', display: true, position: 'left', beginAtZero: true, ticks: { font: { size: 8 } } }, y1: { type: 'linear', display: true, position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, ticks: { font: { size: 8 } } }, x: { ticks: { font: { size: 7 } } } } };
 
             if (myChart) myChart.destroy(); myChart = new Chart(document.getElementById('salesChart'), { type: 'bar', data: { labels, datasets: [{ label: '売上', data: chartSales, backgroundColor: '#3498db' }] }, options: optC });
             if (myExpChart) myExpChart.destroy(); myExpChart = new Chart(document.getElementById('expenseChart'), { type: 'bar', data: { labels, datasets: [{ label: '経費', data: chartExp, backgroundColor: '#e06287' }] }, options: optC });
-            
-            if (myHourlyChart) myHourlyChart.destroy(); 
-            myHourlyChart = new Chart(document.getElementById('hourlyChart'), { 
-                type: 'bar', 
-                data: { 
-                    labels, 
-                    datasets: [
-                        { type: 'line', label: '時給', data: chartHourly, borderColor: '#f39c12', backgroundColor: '#f39c12', tension: 0.3, yAxisID: 'y', order: 1 },
-                        { type: 'bar', label: '稼働時間', data: chartHours, backgroundColor: 'rgba(189, 195, 199, 0.7)', yAxisID: 'y1', order: 2 }
-                    ]
-                }, 
-                options: optHourly 
-            });
+            if (myHourlyChart) myHourlyChart.destroy(); myHourlyChart = new Chart(document.getElementById('hourlyChart'), { type: 'bar', data: { labels, datasets: [{ type: 'line', label: '時給', data: chartHourly, borderColor: '#f39c12', backgroundColor: '#f39c12', tension: 0.3, yAxisID: 'y', order: 1 }, { type: 'bar', label: '稼働時間', data: chartHours, backgroundColor: 'rgba(189, 195, 199, 0.7)', yAxisID: 'y1', order: 2 }] }, options: optHourly });
         }
 
         function getKanaHead(str) {
@@ -531,6 +542,7 @@
         }
         function filterKana(k) { currentKana = k; document.querySelectorAll('.kana-btn').forEach(b => { b.classList.remove('active'); if(b.innerText === k) b.classList.add('active'); }); renderSpotList(); }
         function filterList(cat) { currentFilter = cat; document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active')); const btnMap = {'すべて':'fAll','要注意':'fDanger','待機':'fWait','ピック':'fPick','ドロップ':'fDrop','休憩':'fRest'}; document.getElementById(btnMap[cat]).classList.add('active'); renderSpotList(); }
+        
         function renderSpotList() {
             const listDiv = document.getElementById('spotList'); listDiv.innerHTML = "";
             Object.keys(allSpots).reverse().forEach(id => {
@@ -544,26 +556,60 @@
                 const item = document.createElement('div'); item.className = "list-item";
                 item.onclick = () => { document.getElementById('listModal').style.display='none'; map.flyTo([s.lat, s.lng], 18); setTimeout(() => openSpotModal(s.lat, s.lng, id), 500); };
                 const pTag = (s.parkingStatus && s.parkingStatus !== '不明') ? `<div class="list-parking">🅿️ ${s.parkingStatus}${s.parkingNote ? ` (${s.parkingNote})` : ''}</div>` : '';
-                item.innerHTML = `<div class="list-info">${s.spotName ? `<div class="list-spot-name">${s.spotName}</div>` : ''}<div class="list-title"><span class="cat-tag tag-${s.mainCat}">${s.mainCat}</span><span>${s.subCat}</span></div>${pTag}<div class="list-meta">${s.rider} / ${s.time}</div>${s.comment ? `<div class="list-comment">${s.comment}</div>` : ''}</div><div style="color:#3498db;align-self:center;padding-left:10px;">🔍</div>`;
+                // V1.12: リストに写真アイコンを表示
+                const photoIcon = s.spotImage ? " 📷" : "";
+                item.innerHTML = `<div class="list-info">${s.spotName ? `<div class="list-spot-name">${s.spotName}${photoIcon}</div>` : `<div class="list-spot-name">地点${photoIcon}</div>`}<div class="list-title"><span class="cat-tag tag-${s.mainCat}">${s.mainCat}</span><span>${s.subCat}</span></div>${pTag}<div class="list-meta">${s.rider} / ${s.time}</div>${s.comment ? `<div class="list-comment">${s.comment}</div>` : ''}</div><div style="color:#3498db;align-self:center;padding-left:10px;">🔍</div>`;
                 listDiv.appendChild(item);
             });
             if (listDiv.innerHTML === "") listDiv.innerHTML = "<p style='text-align:center; color:#999; font-size:0.8em; margin:20px 0;'>該当なし</p>";
         }
+
         function openSpotList() { renderSpotList(); document.getElementById('listModal').style.display = 'block'; }
         function analyzeMap() { const nowDay = new Date().getDay(), nowHour = new Date().getHours(); let count = 0; Object.keys(allSpots).forEach(id => { const s = allSpots[id], isRel = (s.day === nowDay && Math.abs(s.hour - nowHour) <= 2); if (mapMarkers[id]) { if (isRel) { mapMarkers[id].setRadius(18); mapMarkers[id].setStyle({ weight: 5, color: '#000' }); count++; } else { mapMarkers[id].setRadius(10); mapMarkers[id].setStyle({ weight: 2, color: '#fff' }); } } }); alert(`分析結果: ${count}件強調`); }
         function updateSubCat() { const m = document.getElementById('mainCat').value, s = document.getElementById('subCat'), g = document.getElementById('subCatGroup'), l = document.getElementById('subCatLabel'); s.innerHTML = ""; if (m === "待機") { l.innerText = "鳴りやすさ"; s.innerHTML = '<option value="鳴る">鳴るエリア</option><option value="鳴らない">鳴らない</option>'; g.style.display = "block"; } else if (m === "ピック" || m === "ドロップ" || m === "休憩") { l.innerText = "評価"; s.innerHTML = '<option value="最高">最高</option><option value="普通">普通</option><option value="要注意">要注意</option>'; g.style.display = "block"; } else g.style.display = "none"; }
-        function openSpotModal(lat, lng, id = null) { editTargetId = id; document.getElementById('spotModal').style.display = 'block'; document.getElementById('deleteBtn').style.display = id ? 'block' : 'none'; if (id) { const s = allSpots[id]; document.getElementById('spotName').value = s.spotName || ""; document.getElementById('spotKana').value = s.spotKana || ""; document.getElementById('mainCat').value = s.mainCat; updateSubCat(); document.getElementById('subCat').value = s.subCat; document.getElementById('parkingStatus').value = s.parkingStatus || "不明"; document.getElementById('parkingNote').value = s.parkingNote || ""; document.getElementById('spotComment').value = s.comment || ""; window.tempLat = s.lat; window.tempLng = s.lng; } 
-            else { document.getElementById('spotName').value = ""; document.getElementById('spotKana').value = ""; document.getElementById('mainCat').value = ""; document.getElementById('subCatGroup').style.display = "none"; document.getElementById('parkingStatus').value = "不明"; document.getElementById('parkingNote').value = ""; document.getElementById('spotComment').value = ""; window.tempLat = lat; window.tempLng = lng; } }
+        
+        function openSpotModal(lat, lng, id = null) {
+            editTargetId = id; document.getElementById('spotModal').style.display = 'block'; document.getElementById('deleteBtn').style.display = id ? 'block' : 'none';
+            if (id) { 
+                const s = allSpots[id]; document.getElementById('spotName').value = s.spotName || ""; document.getElementById('spotKana').value = s.spotKana || ""; document.getElementById('mainCat').value = s.mainCat; updateSubCat(); document.getElementById('subCat').value = s.subCat; document.getElementById('parkingStatus').value = s.parkingStatus || "不明"; document.getElementById('parkingNote').value = s.parkingNote || ""; document.getElementById('spotComment').value = s.comment || ""; window.tempLat = s.lat; window.tempLng = s.lng; 
+                // V1.12: 写真の読み込み
+                window.tempSpotPhoto = s.spotImage || null;
+                if(window.tempSpotPhoto) {
+                    document.getElementById('spotPhotoPreview').src = window.tempSpotPhoto;
+                    document.getElementById('spotPhotoPreviewContainer').style.display = 'block';
+                } else {
+                    document.getElementById('spotPhotoPreviewContainer').style.display = 'none';
+                }
+            } else { 
+                document.getElementById('spotName').value = ""; document.getElementById('spotKana').value = ""; document.getElementById('mainCat').value = ""; document.getElementById('subCatGroup').style.display = "none"; document.getElementById('parkingStatus').value = "不明"; document.getElementById('parkingNote').value = ""; document.getElementById('spotComment').value = ""; window.tempLat = lat; window.tempLng = lng; 
+                // V1.12: 写真リセット
+                window.tempSpotPhoto = null;
+                document.getElementById('spotPhotoPreviewContainer').style.display = 'none';
+                document.getElementById('spotPhotoInput').value = "";
+            } 
+        }
+
         function closeSpotModal() { document.getElementById('spotModal').style.display = 'none'; }
-        async function saveSpot() { const spot = { lat: window.tempLat, lng: window.tempLng, spotName: document.getElementById('spotName').value, spotKana: document.getElementById('spotKana').value, mainCat: document.getElementById('mainCat').value, subCat: document.getElementById('subCat').value, parkingStatus: document.getElementById('parkingStatus').value, parkingNote: document.getElementById('parkingNote').value, comment: document.getElementById('spotComment').value, rider: RIDERS[currentRiderIdx], time: new Date().toLocaleString(), day: new Date().getDay(), hour: new Date().getHours() }; await fetch(editTargetId ? `${DB_MAP.replace('.json', `/${editTargetId}.json`)}` : DB_MAP, { method: editTargetId?'PUT':'POST', body: JSON.stringify(spot) }); closeSpotModal(); loadAllSpots(); }
+        
+        async function saveSpot() { 
+            const spot = { lat: window.tempLat, lng: window.tempLng, spotName: document.getElementById('spotName').value, spotKana: document.getElementById('spotKana').value, mainCat: document.getElementById('mainCat').value, subCat: document.getElementById('subCat').value, parkingStatus: document.getElementById('parkingStatus').value, parkingNote: document.getElementById('parkingNote').value, comment: document.getElementById('spotComment').value, rider: RIDERS[currentRiderIdx], time: new Date().toLocaleString(), day: new Date().getDay(), hour: new Date().getHours(), spotImage: window.tempSpotPhoto || null }; 
+            await fetch(editTargetId ? `${DB_MAP.replace('.json', `/${editTargetId}.json`)}` : DB_MAP, { method: editTargetId?'PUT':'POST', body: JSON.stringify(spot) }); 
+            closeSpotModal(); loadAllSpots(); 
+        }
+
         async function deleteSpot() { if(!confirm("削除？")) return; await fetch(`${DB_MAP.replace('.json', `/${editTargetId}.json`)}`, { method: 'DELETE' }); closeSpotModal(); loadAllSpots(); }
+        
         async function loadAllSpots() {
             const res = await fetch(DB_MAP); allSpots = await res.json() || {}; Object.values(mapMarkers).forEach(m => map.removeLayer(m));
             Object.keys(allSpots).forEach(id => {
                 const s = allSpots[id]; let color = (s.subCat === "最高" || s.subCat === "鳴る") ? "#2ecc71" : (s.subCat === "要注意" || s.subCat === "鳴らない") ? "#e74c3c" : "#f1c40f";
                 const m = L.circleMarker([s.lat, s.lng], { radius: 10, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.8 }).addTo(map);
-                const tip = (s.spotName ? s.spotName : "") + (s.comment ? (s.spotName ? "<br>" : "") + s.comment : "");
-                if (tip) m.bindTooltip(tip, { permanent: true, direction: 'right', className: 'leaflet-tooltip-own' });
+                
+                // V1.12: マップツールチップに写真アイコン追加
+                const photoIcon = s.spotImage ? " 📷" : "";
+                const tipText = (s.spotName ? s.spotName + photoIcon : photoIcon) + (s.comment ? ((s.spotName || s.spotImage) ? "<br>" : "") + s.comment : "");
+                
+                if (tipText) m.bindTooltip(tipText, { permanent: true, direction: 'right', className: 'leaflet-tooltip-own' });
                 m.on('click', () => openSpotModal(s.lat, s.lng, id)); mapMarkers[id] = m;
             });
             toggleTooltips('all');
