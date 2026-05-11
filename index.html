@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Goal Rider Biz - V1.12.1</title>
+    <title>Goal Rider Biz - V1.13</title>
 
     <link rel="icon" href="https://img.icons8.com/clouds/256/delivery-man.png" type="image/png">
     <link rel="apple-touch-icon" href="https://img.icons8.com/clouds/256/delivery-man.png">
@@ -14,7 +14,6 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        /* V1.12.1: レイアウト崩れ修正のため、flex設定を#appUIに移動 */
         body { font-family: sans-serif; background: #f4f4f4; margin: 0; padding: 0; color: #333; height: 100vh; overflow: hidden; }
         #appUI { display: flex; flex-direction: column; height: 100vh; width: 100%; }
 
@@ -93,9 +92,12 @@
         .weather-btn.active[data-w="曇り"] { background: #636e72 !important; }
         .weather-btn.active[data-w="晴れ"] { background: #f39c12 !important; }
 
-        .photo-add-btn { background: #95a5a6; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 0.8em; cursor: pointer; display: flex; align-items: center; gap: 5px; width: 100%; box-sizing: border-box; justify-content: center; }
-        .spot-photo-preview { width: 100%; border-radius: 8px; margin-top: 8px; border: 1px solid #ccc; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .remove-photo-btn { position: absolute; top: 12px; right: 5px; background: #e74c3c; color: white; border: none; width: 30px; height: 30px; border-radius: 15px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        /* V1.13 複数写真とコメント用スタイル */
+        .photo-add-btn { background: #3498db; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; font-size: 0.9em; cursor: pointer; width: 100%; box-sizing: border-box; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .spot-photo-item { display: flex; flex-direction: column; gap: 8px; background: white; padding: 10px; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 10px; position: relative; }
+        .spot-photo-item img { width: 100%; border-radius: 6px; cursor: zoom-in; }
+        .spot-photo-comment { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #aaa; box-sizing: border-box; font-size: 0.9em; }
+        .remove-photo-btn { position: absolute; top: 15px; right: 15px; background: #e74c3c; color: white; border: none; width: 30px; height: 30px; border-radius: 15px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
 
         #imageViewer { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: #000; z-index: 9999; overflow: auto; align-items: center; justify-content: center; }
         .viewer-close { position: fixed; top: 20px; right: 20px; background: rgba(255,255,255,0.3); color: white; width: 40px; height: 40px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; cursor: pointer; z-index: 10000; }
@@ -114,7 +116,7 @@
             <button id="tabMap" class="tab-btn" onclick="showPage('map')">マップ</button>
         </div>
         
-        <div class="version-bar">GoalRider V1.12.1</div>
+        <div class="version-bar">GoalRider V1.13</div>
 
         <div id="pageSales" class="content-area active">
             <div class="rider-selector">
@@ -181,13 +183,10 @@
                 <div id="spotInfo" style="font-size: 0.65em; color: #666; margin-bottom: 8px;"></div>
                 
                 <div class="input-group" style="background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #eee;">
-                    <input type="file" id="spotPhotoInput" accept="image/*" style="display: none;" onchange="handleSpotPhoto(event)">
-                    <button type="button" class="photo-add-btn" onclick="document.getElementById('spotPhotoInput').click()">📷 現地の写真を追加</button>
-                    <div id="spotPhotoPreviewContainer" style="display: none; position: relative;">
-                        <img id="spotPhotoPreview" class="spot-photo-preview" src="" onclick="openImageViewer(this.src)">
-                        <button type="button" class="remove-photo-btn" onclick="removeSpotPhoto()">✕</button>
-                        <p style="font-size: 0.65em; text-align: center; color: #888; margin-top: 4px;">タップで全画面表示（ズーム可能）</p>
-                    </div>
+                    <label style="margin-bottom:8px; display:block;">現地の写真（複数可・個別メモ可能）</label>
+                    <div id="spotPhotoGallery"></div>
+                    <input type="file" id="spotPhotoInput" accept="image/*" multiple style="display: none;" onchange="handleSpotPhoto(event)">
+                    <button type="button" class="photo-add-btn" onclick="document.getElementById('spotPhotoInput').click()">📷 写真を追加する</button>
                 </div>
 
                 <div class="compact-grid">
@@ -202,7 +201,7 @@
                     <div class="input-group"><label>パーキング</label><select id="parkingStatus"><option value="不明">不明</option><option value="有り (無料)">有り (無料)</option><option value="無し (有料は有り)">無し (有料は有り)</option><option value="無し (近隣に無し)">無し (近隣に無し)</option></select></div>
                     <div class="input-group"><label>P詳細</label><input type="text" id="parkingNote"></div>
                 </div>
-                <div class="input-group"><label>コメント</label><textarea id="spotComment" rows="3"></textarea></div>
+                <div class="input-group"><label>全体コメント</label><textarea id="spotComment" rows="3"></textarea></div>
                 <button class="btn-modal-primary" onclick="saveSpot()">保存</button>
                 <button id="deleteBtn" style="background:#e74c3c; color:white; border:none; width:100%; padding:10px; border-radius:10px; margin-top:8px; display:none;" onclick="deleteSpot()">削除</button>
                 <button onclick="closeSpotModal()" style="width:100%; border:none; background:none; margin-top:8px; color:#666;">キャンセル</button>
@@ -309,8 +308,8 @@
         let currentView = 'month', referenceDate = new Date(), myChart, myExpChart, myHourlyChart, dayAnalysisChart, weatherAnalysisChart;
         let currentFilter = 'すべて', currentKana = '全', selectedWeather = "";
 
-        // V1.12 写真データ一時保存用
-        window.tempSpotPhoto = null;
+        // V1.13 複数写真保存用配列
+        window.tempSpotPhotos = [];
 
         window.onload = () => {
             document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
@@ -318,9 +317,8 @@
             fetchCloudSales();
         };
 
-        // V1.12 画像ビューワーロジック (ピンチズーム有効化)
         function openImageViewer(src) {
-            document.getElementById('appUI').style.display = 'none'; // メインUIを隠す
+            document.getElementById('appUI').style.display = 'none';
             document.getElementById('viewerImg').src = src;
             document.getElementById('imageViewer').style.display = 'flex';
             document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes');
@@ -329,40 +327,74 @@
         function closeImageViewer() {
             document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
             document.getElementById('imageViewer').style.display = 'none';
-            document.getElementById('appUI').style.display = 'flex'; // Flexに戻す
+            document.getElementById('appUI').style.display = 'flex';
             window.scrollTo(0, 0); 
         }
 
-        // V1.12 地点写真の処理
-        function handleSpotPhoto(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    let w = img.width, h = img.height;
-                    const max_size = 800; // 圧縮サイズ
-                    if (w > h && w > max_size) { h *= max_size / w; w = max_size; } 
-                    else if (h > max_size) { w *= max_size / h; h = max_size; }
-                    canvas.width = w; canvas.height = h;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, w, h);
-                    window.tempSpotPhoto = canvas.toDataURL('image/jpeg', 0.6);
-                    document.getElementById('spotPhotoPreview').src = window.tempSpotPhoto;
-                    document.getElementById('spotPhotoPreviewContainer').style.display = 'block';
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
+        // V1.13: 複数写真のハンドリング
+        async function handleSpotPhoto(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+            
+            for (let i = 0; i < files.length; i++) {
+                await processSpotPhoto(files[i]);
+            }
+            document.getElementById('spotPhotoInput').value = "";
+            renderSpotPhotos();
         }
 
-        function removeSpotPhoto() {
-            window.tempSpotPhoto = null;
-            document.getElementById('spotPhotoPreview').src = "";
-            document.getElementById('spotPhotoPreviewContainer').style.display = 'none';
-            document.getElementById('spotPhotoInput').value = "";
+        function processSpotPhoto(file) {
+            return new Promise(resolve => {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let w = img.width, h = img.height;
+                        const max_size = 800;
+                        if (w > h && w > max_size) { h *= max_size / w; w = max_size; } 
+                        else if (h > max_size) { w *= max_size / h; h = max_size; }
+                        canvas.width = w; canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, w, h);
+                        
+                        // 画像とコメントのセットを配列に追加
+                        window.tempSpotPhotos.push({
+                            image: canvas.toDataURL('image/jpeg', 0.6),
+                            comment: ""
+                        });
+                        resolve();
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function renderSpotPhotos() {
+            const container = document.getElementById('spotPhotoGallery');
+            container.innerHTML = "";
+            window.tempSpotPhotos.forEach((photoObj, idx) => {
+                const div = document.createElement('div');
+                div.className = 'spot-photo-item';
+                div.innerHTML = `
+                    <img src="${photoObj.image}" onclick="openImageViewer(this.src)">
+                    <input type="text" class="spot-photo-comment" placeholder="この写真のメモを入力..." value="${photoObj.comment}" oninput="updatePhotoComment(${idx}, this.value)">
+                    <button type="button" class="remove-photo-btn" onclick="removeSpotPhoto(${idx})">✕</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function updatePhotoComment(idx, val) {
+            if(window.tempSpotPhotos[idx]) {
+                window.tempSpotPhotos[idx].comment = val;
+            }
+        }
+
+        function removeSpotPhoto(idx) {
+            window.tempSpotPhotos.splice(idx, 1);
+            renderSpotPhotos();
         }
 
         function goToScreenshot() {
@@ -555,7 +587,11 @@
                 const item = document.createElement('div'); item.className = "list-item";
                 item.onclick = () => { document.getElementById('listModal').style.display='none'; map.flyTo([s.lat, s.lng], 18); setTimeout(() => openSpotModal(s.lat, s.lng, id), 500); };
                 const pTag = (s.parkingStatus && s.parkingStatus !== '不明') ? `<div class="list-parking">🅿️ ${s.parkingStatus}${s.parkingNote ? ` (${s.parkingNote})` : ''}</div>` : '';
-                const photoIcon = s.spotImage ? " 📷" : "";
+                
+                // V1.13: 複数写真データがあるかを判定
+                const hasPhoto = (s.photos && s.photos.length > 0) || s.spotImage;
+                const photoIcon = hasPhoto ? " 📷" : "";
+                
                 item.innerHTML = `<div class="list-info">${s.spotName ? `<div class="list-spot-name">${s.spotName}${photoIcon}</div>` : `<div class="list-spot-name">地点${photoIcon}</div>`}<div class="list-title"><span class="cat-tag tag-${s.mainCat}">${s.mainCat}</span><span>${s.subCat}</span></div>${pTag}<div class="list-meta">${s.rider} / ${s.time}</div>${s.comment ? `<div class="list-comment">${s.comment}</div>` : ''}</div><div style="color:#3498db;align-self:center;padding-left:10px;">🔍</div>`;
                 listDiv.appendChild(item);
             });
@@ -570,25 +606,28 @@
             editTargetId = id; document.getElementById('spotModal').style.display = 'block'; document.getElementById('deleteBtn').style.display = id ? 'block' : 'none';
             if (id) { 
                 const s = allSpots[id]; document.getElementById('spotName').value = s.spotName || ""; document.getElementById('spotKana').value = s.spotKana || ""; document.getElementById('mainCat').value = s.mainCat; updateSubCat(); document.getElementById('subCat').value = s.subCat; document.getElementById('parkingStatus').value = s.parkingStatus || "不明"; document.getElementById('parkingNote').value = s.parkingNote || ""; document.getElementById('spotComment').value = s.comment || ""; window.tempLat = s.lat; window.tempLng = s.lng; 
-                window.tempSpotPhoto = s.spotImage || null;
-                if(window.tempSpotPhoto) {
-                    document.getElementById('spotPhotoPreview').src = window.tempSpotPhoto;
-                    document.getElementById('spotPhotoPreviewContainer').style.display = 'block';
-                } else {
-                    document.getElementById('spotPhotoPreviewContainer').style.display = 'none';
+                
+                // V1.13: 既存の写真データを読み込み（旧フォーマット互換対応含む）
+                window.tempSpotPhotos = s.photos ? JSON.parse(JSON.stringify(s.photos)) : [];
+                if (s.spotImage && window.tempSpotPhotos.length === 0) {
+                    window.tempSpotPhotos.push({ image: s.spotImage, comment: "" });
                 }
+                renderSpotPhotos();
+
             } else { 
                 document.getElementById('spotName').value = ""; document.getElementById('spotKana').value = ""; document.getElementById('mainCat').value = ""; document.getElementById('subCatGroup').style.display = "none"; document.getElementById('parkingStatus').value = "不明"; document.getElementById('parkingNote').value = ""; document.getElementById('spotComment').value = ""; window.tempLat = lat; window.tempLng = lng; 
-                window.tempSpotPhoto = null;
-                document.getElementById('spotPhotoPreviewContainer').style.display = 'none';
-                document.getElementById('spotPhotoInput').value = "";
+                
+                // V1.13: 新規地点の場合は写真リストを初期化
+                window.tempSpotPhotos = [];
+                renderSpotPhotos();
             } 
         }
 
         function closeSpotModal() { document.getElementById('spotModal').style.display = 'none'; }
         
         async function saveSpot() { 
-            const spot = { lat: window.tempLat, lng: window.tempLng, spotName: document.getElementById('spotName').value, spotKana: document.getElementById('spotKana').value, mainCat: document.getElementById('mainCat').value, subCat: document.getElementById('subCat').value, parkingStatus: document.getElementById('parkingStatus').value, parkingNote: document.getElementById('parkingNote').value, comment: document.getElementById('spotComment').value, rider: RIDERS[currentRiderIdx], time: new Date().toLocaleString(), day: new Date().getDay(), hour: new Date().getHours(), spotImage: window.tempSpotPhoto || null }; 
+            // V1.13: photosの配列ごと保存する
+            const spot = { lat: window.tempLat, lng: window.tempLng, spotName: document.getElementById('spotName').value, spotKana: document.getElementById('spotKana').value, mainCat: document.getElementById('mainCat').value, subCat: document.getElementById('subCat').value, parkingStatus: document.getElementById('parkingStatus').value, parkingNote: document.getElementById('parkingNote').value, comment: document.getElementById('spotComment').value, rider: RIDERS[currentRiderIdx], time: new Date().toLocaleString(), day: new Date().getDay(), hour: new Date().getHours(), photos: window.tempSpotPhotos }; 
             await fetch(editTargetId ? `${DB_MAP.replace('.json', `/${editTargetId}.json`)}` : DB_MAP, { method: editTargetId?'PUT':'POST', body: JSON.stringify(spot) }); 
             closeSpotModal(); loadAllSpots(); 
         }
@@ -600,8 +639,10 @@
             Object.keys(allSpots).forEach(id => {
                 const s = allSpots[id]; let color = (s.subCat === "最高" || s.subCat === "鳴る") ? "#2ecc71" : (s.subCat === "要注意" || s.subCat === "鳴らない") ? "#e74c3c" : "#f1c40f";
                 const m = L.circleMarker([s.lat, s.lng], { radius: 10, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.8 }).addTo(map);
-                const photoIcon = s.spotImage ? " 📷" : "";
-                const tipText = (s.spotName ? s.spotName + photoIcon : photoIcon) + (s.comment ? ((s.spotName || s.spotImage) ? "<br>" : "") + s.comment : "");
+                
+                const hasPhoto = (s.photos && s.photos.length > 0) || s.spotImage;
+                const photoIcon = hasPhoto ? " 📷" : "";
+                const tipText = (s.spotName ? s.spotName + photoIcon : photoIcon) + (s.comment ? ((s.spotName || hasPhoto) ? "<br>" : "") + s.comment : "");
                 
                 if (tipText) m.bindTooltip(tipText, { permanent: true, direction: 'right', className: 'leaflet-tooltip-own' });
                 m.on('click', () => openSpotModal(s.lat, s.lng, id)); mapMarkers[id] = m;
