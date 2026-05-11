@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Goal Rider Biz - V1.12</title>
+    <title>Goal Rider Biz - V1.12.1</title>
 
     <link rel="icon" href="https://img.icons8.com/clouds/256/delivery-man.png" type="image/png">
     <link rel="apple-touch-icon" href="https://img.icons8.com/clouds/256/delivery-man.png">
@@ -14,7 +14,10 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        body { font-family: sans-serif; background: #f4f4f4; margin: 0; padding: 0; color: #333; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        /* V1.12.1: レイアウト崩れ修正のため、flex設定を#appUIに移動 */
+        body { font-family: sans-serif; background: #f4f4f4; margin: 0; padding: 0; color: #333; height: 100vh; overflow: hidden; }
+        #appUI { display: flex; flex-direction: column; height: 100vh; width: 100%; }
+
         .main-tabs { display: flex; background: #2c3e50; padding: 2px; gap: 2px; position: relative; z-index: 2000; flex-shrink: 0; }
         .tab-btn { flex: 1; padding: 10px 8px; border: none; background: none; color: #bdc3c7; font-weight: bold; font-size: 0.85em; border-radius: 4px; cursor: pointer; }
         .tab-btn.active { background: #34495e; color: white; }
@@ -90,12 +93,10 @@
         .weather-btn.active[data-w="曇り"] { background: #636e72 !important; }
         .weather-btn.active[data-w="晴れ"] { background: #f39c12 !important; }
 
-        /* V1.12 写真追加ボタンとプレビュー領域 */
         .photo-add-btn { background: #95a5a6; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 0.8em; cursor: pointer; display: flex; align-items: center; gap: 5px; width: 100%; box-sizing: border-box; justify-content: center; }
         .spot-photo-preview { width: 100%; border-radius: 8px; margin-top: 8px; border: 1px solid #ccc; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .remove-photo-btn { position: absolute; top: 12px; right: 5px; background: #e74c3c; color: white; border: none; width: 30px; height: 30px; border-radius: 15px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
 
-        /* V1.12 フルスクリーンズームビューワー */
         #imageViewer { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: #000; z-index: 9999; overflow: auto; align-items: center; justify-content: center; }
         .viewer-close { position: fixed; top: 20px; right: 20px; background: rgba(255,255,255,0.3); color: white; width: 40px; height: 40px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; cursor: pointer; z-index: 10000; }
     </style>
@@ -113,7 +114,7 @@
             <button id="tabMap" class="tab-btn" onclick="showPage('map')">マップ</button>
         </div>
         
-        <div class="version-bar">GoalRider V1.12</div>
+        <div class="version-bar">GoalRider V1.12.1</div>
 
         <div id="pageSales" class="content-area active">
             <div class="rider-selector">
@@ -322,16 +323,13 @@
             document.getElementById('appUI').style.display = 'none'; // メインUIを隠す
             document.getElementById('viewerImg').src = src;
             document.getElementById('imageViewer').style.display = 'flex';
-            // メタタグを書き換えてブラウザ純正ズームを許可
             document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes');
         }
 
         function closeImageViewer() {
-            // ズームを無効化して元に戻す
             document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
             document.getElementById('imageViewer').style.display = 'none';
-            document.getElementById('appUI').style.display = 'block'; // メインUIを再表示
-            // iOSなどのズームリセット用ハック
+            document.getElementById('appUI').style.display = 'flex'; // Flexに戻す
             window.scrollTo(0, 0); 
         }
 
@@ -470,6 +468,7 @@
             const name = RIDERS[currentRiderIdx]; if (!allData[name]) allData[name] = { sales: {}, goals: {}, holidays: {} };
             const data = allData[name]; let labels = [], chartSales = [], chartExp = [], chartHourly = [], chartHours = [], tSales = 0, tExp = 0, tHours = 0;
             const y = referenceDate.getFullYear(), m = referenceDate.getMonth(), mk = `${y}-${String(m+1).padStart(2,'0')}`;
+            
             const goal = data.goals ? (data.goals[mk] || DEFAULT_GOAL) : DEFAULT_GOAL;
             const holidaysCount = data.holidays ? (data.holidays[mk] || 0) : 0;
             
@@ -556,7 +555,6 @@
                 const item = document.createElement('div'); item.className = "list-item";
                 item.onclick = () => { document.getElementById('listModal').style.display='none'; map.flyTo([s.lat, s.lng], 18); setTimeout(() => openSpotModal(s.lat, s.lng, id), 500); };
                 const pTag = (s.parkingStatus && s.parkingStatus !== '不明') ? `<div class="list-parking">🅿️ ${s.parkingStatus}${s.parkingNote ? ` (${s.parkingNote})` : ''}</div>` : '';
-                // V1.12: リストに写真アイコンを表示
                 const photoIcon = s.spotImage ? " 📷" : "";
                 item.innerHTML = `<div class="list-info">${s.spotName ? `<div class="list-spot-name">${s.spotName}${photoIcon}</div>` : `<div class="list-spot-name">地点${photoIcon}</div>`}<div class="list-title"><span class="cat-tag tag-${s.mainCat}">${s.mainCat}</span><span>${s.subCat}</span></div>${pTag}<div class="list-meta">${s.rider} / ${s.time}</div>${s.comment ? `<div class="list-comment">${s.comment}</div>` : ''}</div><div style="color:#3498db;align-self:center;padding-left:10px;">🔍</div>`;
                 listDiv.appendChild(item);
@@ -572,7 +570,6 @@
             editTargetId = id; document.getElementById('spotModal').style.display = 'block'; document.getElementById('deleteBtn').style.display = id ? 'block' : 'none';
             if (id) { 
                 const s = allSpots[id]; document.getElementById('spotName').value = s.spotName || ""; document.getElementById('spotKana').value = s.spotKana || ""; document.getElementById('mainCat').value = s.mainCat; updateSubCat(); document.getElementById('subCat').value = s.subCat; document.getElementById('parkingStatus').value = s.parkingStatus || "不明"; document.getElementById('parkingNote').value = s.parkingNote || ""; document.getElementById('spotComment').value = s.comment || ""; window.tempLat = s.lat; window.tempLng = s.lng; 
-                // V1.12: 写真の読み込み
                 window.tempSpotPhoto = s.spotImage || null;
                 if(window.tempSpotPhoto) {
                     document.getElementById('spotPhotoPreview').src = window.tempSpotPhoto;
@@ -582,7 +579,6 @@
                 }
             } else { 
                 document.getElementById('spotName').value = ""; document.getElementById('spotKana').value = ""; document.getElementById('mainCat').value = ""; document.getElementById('subCatGroup').style.display = "none"; document.getElementById('parkingStatus').value = "不明"; document.getElementById('parkingNote').value = ""; document.getElementById('spotComment').value = ""; window.tempLat = lat; window.tempLng = lng; 
-                // V1.12: 写真リセット
                 window.tempSpotPhoto = null;
                 document.getElementById('spotPhotoPreviewContainer').style.display = 'none';
                 document.getElementById('spotPhotoInput').value = "";
@@ -604,8 +600,6 @@
             Object.keys(allSpots).forEach(id => {
                 const s = allSpots[id]; let color = (s.subCat === "最高" || s.subCat === "鳴る") ? "#2ecc71" : (s.subCat === "要注意" || s.subCat === "鳴らない") ? "#e74c3c" : "#f1c40f";
                 const m = L.circleMarker([s.lat, s.lng], { radius: 10, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.8 }).addTo(map);
-                
-                // V1.12: マップツールチップに写真アイコン追加
                 const photoIcon = s.spotImage ? " 📷" : "";
                 const tipText = (s.spotName ? s.spotName + photoIcon : photoIcon) + (s.comment ? ((s.spotName || s.spotImage) ? "<br>" : "") + s.comment : "");
                 
