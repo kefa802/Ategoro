@@ -2,253 +2,70 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>当五郎</title>
-    <style>
-        :root { --blue: #01579b; --gold: #ffc107; --bg: #f0f2f5; --red: #d32f2f; --green: #2e7d32; --orange: #f57c00; --dark: #333; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; color: var(--dark); padding-bottom: 30px; }
-        .header { background: var(--blue); color: white; padding: 10px 15px; text-align: center; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-        .ver { position: absolute; top: 5px; right: 10px; font-size: 0.6rem; opacity: 0.7; }
-        .container { padding: 5px; max-width: 600px; margin: auto; }
-        
-        .logic-wrap { margin: 10px 5px; }
-        .logic-btn-wide { width: 100%; background: white; color: var(--blue); border: 2px solid var(--blue); padding: 10px; border-radius: 8px; font-weight: bold; font-size: 0.9rem; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .logic-desc { display: none; text-align: left; background: #fff; padding: 12px; border-radius: 8px; margin-top: 5px; font-size: 0.82rem; color: #444; border: 1px dashed var(--blue); line-height: 1.6; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        
-        .tabs { display: flex; margin: 10px 5px; border-radius: 8px; overflow: hidden; border: 2px solid var(--blue); }
-        .tab { flex: 1; text-align: center; padding: 12px; background: white; color: var(--blue); font-weight: bold; cursor: pointer; font-size: 0.95rem; }
-        .tab.active { background: var(--blue); color: white; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        
-        .section-box { background: white; padding: 15px; border-radius: 10px; margin: 10px 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .setting-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px; }
-        .setting-select { padding: 8px; border-radius: 5px; border: 2px solid var(--gold); font-weight: bold; font-size: 0.85rem; }
-        .date-row { display: flex; align-items: center; justify-content: center; gap: 5px; margin-bottom: 10px; }
-        .date-input { padding: 8px; border-radius: 5px; border: 1px solid #ccc; font-size: 0.9rem; width: 45%; text-align: center; }
-        
-        .btn { width: 100%; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; padding: 12px 0; }
-        .btn-pred { background: var(--gold); color: #333; box-shadow: 0 4px 0 #d4a017; }
-        .btn-verify { background: #eceff1; color: var(--blue); box-shadow: 0 4px 0 #cfd8dc; border: 1px solid #cfd8dc; }
-        
-        .stats-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.65rem; background: white; table-layout: fixed; }
-        .stats-table th, .stats-table td { border: 1px solid #e0e0e0; padding: 6px 1px; text-align: center; overflow: hidden; }
-        .stats-table th { background: #f5f5f5; height: 30px; }
-        .row-total { background: #e3f2fd; font-weight: bold; }
-        .val-plus { color: var(--red); font-weight: bold; }
-        .val-minus { color: var(--blue); }
-
-        .card { background: white; border-radius: 10px; padding: 10px; margin-bottom: 12px; border-left: 5px solid var(--blue); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .card-title { font-size: 1rem; font-weight: bold; margin-bottom: 8px; padding-bottom: 5px; border-bottom: 1px solid #eee; }
-        .race-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-        .race-box { background: #f8f9fa; border: 1px solid #eee; padding: 6px 4px; border-radius: 6px; display: flex; flex-direction: column; }
-        .race-header { text-align: center; border-bottom: 1px dashed #ccc; margin-bottom: 5px; padding-bottom: 3px; }
-        .race-name { font-weight: bold; font-size: 0.75rem; display: block; }
-        .race-time { font-size: 0.65rem; color: #666; }
-        
-        .pred-item { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; }
-        .pred-code { font-weight: bold; color: var(--red); font-size: 0.85rem; }
-        .pred-exp { font-size: 0.55rem; color: var(--blue); white-space: nowrap; }
-        
-        .hit-box { background: #e8f5e9; border: 1px dashed #4caf50; padding: 3px; margin-top: 4px; border-radius: 4px; text-align: center; color: var(--green); font-weight: bold; font-size: 0.7rem; }
-        .miss-box { background: #ffebee; border: 1px dashed #ef9a9a; padding: 3px; margin-top: 4px; border-radius: 4px; text-align: center; color: var(--red); font-size: 0.7rem; }
-        .result-code { font-weight: bold; display: block; font-size: 0.8rem; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>緊急鍵開け・トラブル解決 | 都内・即日対応</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-<div class="header">
-    <span class="ver">V1.00.10</span>
-    <h1 style="margin:0; font-size:1.4rem;">当五郎</h1>
-    <p style="margin:2px 0 0; font-size: 0.75rem; opacity: 0.9;">カテゴリ別 収支解析モデル</p>
-</div>
+<body class="bg-gray-50 text-gray-800">
 
-<div class="container">
-    <div class="logic-wrap">
-        <button class="logic-btn-wide" onclick="toggleLogic()">💡 当五郎の予想ロジックを確認</button>
-        <div id="logicDesc" class="logic-desc">
-            <strong>【当五郎 3連率ベース総合判定】</strong><br>
-            ① 選手力：全国3連対率(80%) ＋ 当地3連対率(20%)<br>
-            ② モーター力：モーター3連対率<br>
-            ③ ベース値：選手力(60%) ＋ モーター力(40%)<br>
-            ④ 枠番補正（内枠ボーナス）：<br>
-            　1号艇：<strong>+15</strong> / 2号艇：<strong>+8</strong> / 3号艇：<strong>+4</strong><br>
-            　4号艇：<strong>±0</strong> / 5号艇：<strong>-4</strong> / 6号艇：<strong>-8</strong><br>
-            これらを総合計算し、期待値順に指定点数を抽出します。
+    <!-- Sticky Call Header -->
+    <header class="fixed top-0 w-full bg-red-600 text-white p-4 shadow-lg z-50">
+        <div class="flex justify-between items-center max-w-2xl mx-auto">
+            <span class="font-bold text-lg">緊急トラブル解決</span>
+            <a href="tel:090-0000-0000" class="bg-white text-red-600 font-bold px-4 py-2 rounded-full shadow hover:bg-gray-100 transition">
+                今すぐ電話する
+            </a>
         </div>
-    </div>
+    </header>
 
-    <div class="tabs">
-        <div class="tab active" onclick="switchTab('predict')">🚤 本日の予想</div>
-        <div class="tab" onclick="switchTab('backtest')">📊 バックテスト</div>
-    </div>
-
-    <div id="predict-section" class="tab-content active">
-        <div class="section-box">
-            <div class="setting-row">
-                <label>表示点数：</label>
-                <select id="predBetCount" class="setting-select">
-                    <option value="1">1点</option><option value="2">2点</option><option value="4" selected>4点</option><option value="8">8点</option><option value="12">12点</option>
-                </select>
-            </div>
-            <button class="btn btn-pred" onclick="runPrediction()">本日の予想を開始する</button>
-        </div>
-        <div id="s-pred" style="text-align:center; font-weight:bold; margin:15px; color:var(--blue);"></div>
-        <div id="area-pred"></div>
-    </div>
-
-    <div id="backtest-section" class="tab-content">
-        <div class="section-box">
-            <div class="date-row">
-                <input type="date" id="startDate" class="date-input"> 〜 <input type="date" id="endDate" class="date-input">
-            </div>
-            <div class="setting-row">
-                <label>詳細表示用：</label>
-                <select id="backtestViewCount" class="setting-select">
-                    <option value="1">1点</option><option value="2">2点</option><option value="4" selected>4点</option><option value="8">8点</option><option value="12">12点</option>
-                </select>
-            </div>
-            <button class="btn btn-verify" onclick="runBacktest()">全パターン一斉検証</button>
-        </div>
-        <div id="s-backtest" style="text-align:center; font-weight:bold; margin:15px; color:var(--blue);"></div>
+    <!-- Main Content -->
+    <main class="pt-20 pb-10 px-4 max-w-2xl mx-auto">
         
-        <div id="totalSummaryArea" style="display:none; margin: 0 5px;">
-            <div style="font-weight: bold; margin: 10px 0; font-size:0.85rem; border-left:4px solid var(--green); padding-left:5px;">📈 点数別 カテゴリ収支比較</div>
-            <table class="stats-table" id="matrixTable"></table>
-        </div>
-        <div id="area-backtest"></div>
-    </div>
-</div>
+        <!-- Hero -->
+        <section class="text-center py-10">
+            <h1 class="text-2xl font-bold mb-4">都内の鍵・トラブル緊急解決。<br>有資格者が即駆けつけます。</h1>
+            <p class="text-lg text-gray-600 mb-6">鍵の紛失、閉じ込め、急なトラブルも安心。<br>明朗会計・本人確認徹底で安全・確実。</p>
+            <a href="tel:090-0000-0000" class="block w-full bg-red-600 text-white font-bold text-xl py-4 rounded-lg shadow-lg mb-4">
+                090-0000-0000（緊急ダイヤル）
+            </a>
+            <p class="text-sm text-gray-500">受付：24時間365日対応</p>
+        </section>
 
-<script>
-    const STADIUMS = {1:"桐生",2:"戸田",3:"江戸川",4:"平和島",5:"多摩川",6:"浜名湖",7:"蒲郡",8:"常滑",9:"津",10:"三国",11:"びわこ",12:"住之江",13:"尼崎",14:"鳴門",15:"丸亀",16:"児島",17:"宮島",18:"徳山",19:"下関",20:"若松",21:"芦屋",22:"福岡",23:"唐津",24:"大村"};
-    window.onload = () => { let d = new Date(); d.setDate(d.getDate() - 1); let yStr = d.toISOString().split('T')[0]; document.getElementById('startDate').value = yStr; document.getElementById('endDate').value = yStr; };
-    function toggleLogic() { let d = document.getElementById('logicDesc'); d.style.display = d.style.display === 'block' ? 'none' : 'block'; }
-    function switchTab(id) { document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active')); document.querySelector(`.tab[onclick="switchTab('${id}')"]`).classList.add('active'); document.getElementById(`${id}-section`).classList.add('active'); }
-    async function fetchJson(url) { try { let res = await fetch(url + "?t=" + new Date().getTime()); if (!res.ok) { let proxy = "https://api.allorigins.win/get?url=" + encodeURIComponent(url); let pRes = await fetch(proxy); let pData = await pRes.json(); return JSON.parse(pData.contents); } return await res.json(); } catch(e) { return null; } }
+        <!-- Trust Signals -->
+        <section class="bg-white p-6 rounded-lg shadow mb-8 border-l-4 border-blue-500">
+            <h2 class="font-bold text-blue-600 mb-2">選ばれる3つの理由</h2>
+            <ul class="list-disc pl-5 space-y-2">
+                <li><strong>鍵開け国家資格保持者</strong>が現場対応</li>
+                <li><strong>本人確認書類必須</strong>で悪用厳禁の安全対応</li>
+                <li>都内密着で、<strong>最短エリアへ即日対応</strong></li>
+            </ul>
+        </section>
 
-    function calcScores(boats) {
-        return boats.map(x => {
-            let n = x.racer_boat_number;
-            let s = ((parseFloat(x.racer_national_top_3_percent||0)*0.8) + (parseFloat(x.racer_local_top_3_percent||0)*0.2)) * 0.6 + (parseFloat(x.racer_assigned_motor_top_3_percent||0)*0.4) + (n===1?15:n===2?8:n===3?4:n===4?0:n===5?-4:-8);
-            return { n: n, s: s };
-        }).sort((a,b) => b.s - a.s);
-    }
+        <!-- Service Flow -->
+        <section class="mb-8">
+            <h2 class="text-xl font-bold mb-4 border-b-2 border-gray-300 pb-2">解決までの流れ</h2>
+            <div class="space-y-4">
+                <div class="flex items-center">
+                    <div class="bg-blue-600 text-white font-bold w-8 h-8 rounded-full flex items-center justify-center mr-4">1</div>
+                    <p>お電話にて状況確認（無料見積もり）</p>
+                </div>
+                <div class="flex items-center">
+                    <div class="bg-blue-600 text-white font-bold w-8 h-8 rounded-full flex items-center justify-center mr-4">2</div>
+                    <p>現場到着（スタッフが迅速に駆けつけ）</p>
+                </div>
+                <div class="flex items-center">
+                    <div class="bg-blue-600 text-white font-bold w-8 h-8 rounded-full flex items-center justify-center mr-4">3</div>
+                    <p>本人確認書類確認後、作業開始</p>
+                </div>
+            </div>
+        </section>
 
-    function generateBets(p, count) {
-        let all = [];
-        for(let i=0;i<p.length;i++) for(let j=0;j<p.length;j++) for(let k=0;k<p.length;k++) {
-            if(i===j||j===k||i===k) continue;
-            all.push({ code: `${p[i].n}-${p[j].n}-${p[k].n}`, prob: (p[i].s*0.5)+(p[j].s*0.3)+(p[k].s*0.2) });
-        }
-        return all.sort((a,b) => b.prob - a.prob).slice(0, count);
-    }
+        <!-- Legal Disclaimer -->
+        <section class="bg-gray-100 p-4 rounded text-sm text-gray-600">
+            <p class="font-bold mb-1">※ご注意</p>
+            <p>法令遵守のため、身分証明書の確認ができない場合は作業をお断りしております。ご理解のほどよろしくお願いいたします。</p>
+        </section>
+    </main>
 
-    function renderRaceBox(race, stName, mark, betCount, resultBox = "") {
-        if(!race) return "";
-        let p = calcScores(race.boats||[]);
-        let bets = generateBets(p, betCount);
-        let time = race.race_closed_at ? race.race_closed_at.substring(11,16) : "--:--";
-        let bHtml = bets.map(b => `<div class="pred-item"><span class="pred-code">${b.code}</span><span class="pred-exp">期待度${b.prob.toFixed(1)}%</span></div>`).join("");
-        let rNum = race.race_number || race.number || race.raceNo || "?";
-        let label = stName ? `${stName} ${rNum}R` : `${rNum}R`;
-        return `<div class="race-box"><div class="race-header">${mark ? `<span style="font-weight:bold;color:var(--red);font-size:0.6rem;">${mark}</span>` : ""}<span class="race-name">${label}</span><span class="race-time">${time}締切</span></div>${bHtml}${resultBox}</div>`;
-    }
-
-    async function runPrediction() {
-        const area = document.getElementById('area-pred'); const status = document.getElementById('s-pred'); let betCount = parseInt(document.getElementById('predBetCount').value);
-        status.innerText = "🚀 読込中..."; area.innerHTML = ""; let data = await fetchJson("https://boatraceopenapi.github.io/programs/v2/today.json"); if(!data) { status.innerText = "⚠️ データ未公開"; return; }
-        let rank = data.programs.map(r => { let p = calcScores(r.boats||[]); return { key: r.race_stadium_number+"-"+r.race_number, prob: p.length? (p[0].s*0.5+p[1].s*0.3+p[2].s*0.2) : 0 }; }).sort((a,b) => b.prob - a.prob);
-        let html = ""; let geki = "", atsu = "";
-        rank.slice(0,3).forEach(rk => { let r = data.programs.find(x => x.race_stadium_number+"-"+x.race_number === rk.key); geki += renderRaceBox(r, STADIUMS[r.race_stadium_number], "激アツ🔥", betCount); });
-        rank.slice(3,8).forEach(rk => { let r = data.programs.find(x => x.race_stadium_number+"-"+x.race_number === rk.key); atsu += renderRaceBox(r, STADIUMS[r.race_stadium_number], "アツ🔥", betCount); });
-        if(geki) html += `<div class="card" style="border-left-color:var(--red);"><div class="card-title" style="color:var(--red);">🔥 激アツ レース一覧</div><div class="race-grid">${geki}</div></div>`;
-        if(atsu) html += `<div class="card" style="border-left-color:var(--orange);"><div class="card-title" style="color:var(--orange);">🔥 アツ レース一覧</div><div class="race-grid">${atsu}</div></div>`;
-        let venues = {}; data.programs.forEach(r => { let sId = r.race_stadium_number; if(!venues[sId]) venues[sId] = { id: sId, name: STADIUMS[sId]||sId, races: [] }; venues[sId].races.push(r); });
-        Object.keys(venues).sort((a,b)=>a-b).forEach(k => {
-            let g = ""; venues[k].races.sort((a,b)=>a.race_number-b.race_number).forEach(r => { g += renderRaceBox(r, "", "", betCount); });
-            html += `<div class="card"><div class="card-title" style="color:var(--blue);">${venues[k].name}</div><div class="race-grid">${g}</div></div>`;
-        });
-        area.innerHTML = html; status.innerText = "✅ 完了";
-    }
-
-    async function runBacktest() {
-        const area = document.getElementById('area-backtest'); const status = document.getElementById('s-backtest'); const sumArea = document.getElementById('totalSummaryArea'); const matrixTable = document.getElementById('matrixTable');
-        let viewCount = parseInt(document.getElementById('backtestViewCount').value);
-        let sDate = new Date(document.getElementById('startDate').value); let eDate = new Date(document.getElementById('endDate').value);
-        let diff = Math.ceil((eDate - sDate) / 86400000) + 1;
-        status.innerText = "🚀 検証中..."; area.innerHTML = ""; sumArea.style.display = "none";
-        
-        let matrix = { geki: {}, atsu: {}, other: {}, all: {} };
-        const counts = [1, 2, 4, 8, 12];
-        counts.forEach(c => { ["geki","atsu","other","all"].forEach(cat => matrix[cat][c] = { invest:0, ret:0 }); });
-
-        let fullHtml = ""; let cDate = new Date(sDate);
-        for(let i=0; i<diff; i++) {
-            let ymd = cDate.toISOString().split('T')[0].replace(/-/g,'');
-            let yyyy = cDate.getFullYear(); status.innerText = `🔄 ${ymd} 検証中...`;
-            let [prog, resData] = await Promise.all([ fetchJson(`https://boatraceopenapi.github.io/programs/v2/${yyyy}/${ymd}.json`), fetchJson(`https://boatraceopenapi.github.io/results/v3/${yyyy}/${ymd}.json`) ]);
-            
-            if(prog && resData) {
-                let resMap = {};
-                let resArray = Array.isArray(resData) ? resData : (resData.results || []);
-                resArray.forEach(r => {
-                    if(r.boats) {
-                        let sorted = r.boats.filter(b => b.racer_place_number >= 1 && b.racer_place_number <= 3).sort((a,b) => a.racer_place_number - b.racer_place_number);
-                        if(sorted.length >= 3) {
-                            let code = `${sorted[0].racer_boat_number}-${sorted[1].racer_boat_number}-${sorted[2].racer_boat_number}`;
-                            let amt = 0; try { let pay = r.payouts || r.returns || {}; let tri = pay.trifecta || pay.sanrentan || pay.top_3 || []; amt = parseInt((Array.isArray(tri) ? tri[0] : tri).amount || 0); } catch(e) {}
-                            resMap[`${r.race_stadium_number || r.stadium_number}-${r.race_number || r.number}`] = { code, amt };
-                        }
-                    }
-                });
-
-                let dayRank = prog.programs.map(r => {
-                    let p = calcScores(r.boats||[]);
-                    let rNum = r.race_number || r.number || "?";
-                    return { key: `${r.race_stadium_number}-${r.race_number}`, stadium: STADIUMS[r.race_stadium_number], num: rNum, boats: r.boats, prob: p.length ? (p[0].s*0.5+p[1].s*0.3+p[2].s*0.2) : 0, race_closed_at: r.race_closed_at };
-                }).sort((a,b) => b.prob - a.prob);
-
-                let dayGeki = "", dayAtsu = "";
-                dayRank.forEach((r, idx) => {
-                    let real = resMap[r.key]; if(!real) return;
-                    let p = calcScores(r.boats||[]);
-                    let cat = idx < 3 ? "geki" : (idx < 8 ? "atsu" : "other");
-                    
-                    counts.forEach(c => {
-                        let hit = generateBets(p, c).some(b => b.code === real.code);
-                        let update = (target) => { matrix[target][c].invest += 100 * c; if(hit) matrix[target][c].ret += real.amt; };
-                        update("all");
-                        update(cat);
-                    });
-
-                    let bets = generateBets(p, viewCount);
-                    let isHit = bets.some(b => b.code === real.code);
-                    let resBox = isHit ? `<div class="hit-box">的中！<br>¥${real.amt.toLocaleString()}</div>` : `<div class="miss-box"><span class="result-code">${real.code}</span>不的中</div>`;
-                    let box = renderRaceBox(r, r.stadium, idx < 3 ? "激アツ🔥" : (idx < 8 ? "アツ🔥" : ""), viewCount, resBox);
-                    if(idx < 3) dayGeki += box; else if(idx < 8) dayAtsu += box;
-                });
-                if(dayGeki || dayAtsu) {
-                    fullHtml += `<div style="padding:10px 5px; font-weight:bold; background:#eee; margin-top:10px; border-radius:5px; font-size:0.8rem;">🗓 ${ymd}</div>`;
-                    if(dayGeki) fullHtml += `<div class="card" style="border-left-color:var(--red);"><div style="color:var(--red);font-weight:bold;margin-bottom:5px;">🔥 激アツ</div><div class="race-grid">${dayGeki}</div></div>`;
-                    if(dayAtsu) fullHtml += `<div class="card" style="border-left-color:var(--orange);"><div style="color:var(--orange);font-weight:bold;margin-bottom:5px;">🔥 アツ</div><div class="race-grid">${dayAtsu}</div></div>`;
-                }
-            }
-            cDate.setDate(cDate.getDate() + 1);
-        }
-
-        let tableHtml = `<tr><th style="width:12%">点数</th><th>激アツ<br>回収/収支</th><th>アツ<br>回収/収支</th><th>それ以外<br>回収/収支</th><th>全体<br>回収/収支</th></tr>`;
-        counts.forEach(c => {
-            const getCell = (cat) => {
-                const s = matrix[cat][c];
-                if(!s.invest) return "0.0%<br>0円";
-                const rec = (s.ret/s.invest*100).toFixed(1);
-                const prof = s.ret - s.invest;
-                return `${rec}%<br><span class="${prof>=0?'val-plus':'val-minus'}">${prof.toLocaleString()}円</span>`;
-            };
-            tableHtml += `<tr><td>${c}点</td><td>${getCell("geki")}</td><td>${getCell("atsu")}</td><td>${getCell("other")}</td><td class="row-total">${getCell("all")}</td></tr>`;
-        });
-        matrixTable.innerHTML = tableHtml; sumArea.style.display = "block"; area.innerHTML = fullHtml; status.innerText = "✅ 検証完了";
-    }
-</script>
 </body>
 </html>
