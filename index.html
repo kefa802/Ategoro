@@ -1,197 +1,77 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ユーザー車検代行チラシ</title>
-<style>
-    body {
-        font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
-        background-color: #f4f4f4;
-        margin: 0;
-        padding: 20px;
-        display: flex;
-        justify-content: center;
-    }
-    .flyer-container {
-        background-color: #ffffff;
-        width: 100%;
-        max-width: 800px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        border-top: 15px solid #E60012; /* アクセントカラーの赤 */
-        padding: 40px;
-        box-sizing: border-box;
-    }
-    .header {
-        text-align: center;
-        margin-bottom: 30px;
-    }
-    .catchphrase {
-        color: #E60012;
-        font-size: 28px;
-        font-weight: bold;
-        line-height: 1.4;
-        margin-bottom: 15px;
-    }
-    .sub-catchphrase {
-        font-size: 22px;
-        font-weight: bold;
-        background-color: #FFD700;
-        display: inline-block;
-        padding: 10px 20px;
-        border-radius: 5px;
-    }
-    .lead-text {
-        font-size: 16px;
-        line-height: 1.8;
-        margin-bottom: 30px;
-        text-align: center;
-    }
-    .merits {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 30px;
-        gap: 15px;
-    }
-    .merit-box {
-        flex: 1;
-        background-color: #f8f9fa;
-        border: 2px solid #0056b3;
-        border-radius: 8px;
-        padding: 20px;
-        text-align: center;
-    }
-    .merit-title {
-        color: #0056b3;
-        font-weight: bold;
-        font-size: 18px;
-        margin-bottom: 10px;
-    }
-    .merit-desc {
-        font-size: 14px;
-        text-align: left;
-    }
-    .price-section {
-        background-color: #e9ecef;
-        padding: 30px;
-        text-align: center;
-        border-radius: 8px;
-        margin-bottom: 30px;
-    }
-    .price-title {
-        font-size: 20px;
-        font-weight: bold;
-        margin-bottom: 10px;
-    }
-    .price {
-        font-size: 40px;
-        color: #E60012;
-        font-weight: bold;
-    }
-    .price-note {
-        font-size: 14px;
-        color: #555;
-        margin-top: 10px;
-    }
-    .target-section {
-        border-left: 5px solid #28a745;
-        padding-left: 15px;
-        margin-bottom: 30px;
-    }
-    .target-list {
-        font-size: 16px;
-        line-height: 1.8;
-    }
-    .contact-section {
-        border: 3px solid #333;
-        padding: 30px;
-        text-align: center;
-    }
-    .contact-title {
-        font-size: 20px;
-        font-weight: bold;
-        margin-bottom: 20px;
-    }
-    .company-info {
-        font-size: 18px;
-        margin-bottom: 10px;
-    }
-    .qr-placeholder {
-        width: 120px;
-        height: 120px;
-        background-color: #ddd;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        margin-top: 15px;
-        color: #666;
-        border: 1px dashed #999;
-    }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OANDA API テスト画面</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .card { border: 1px solid #ccc; padding: 15px; border-radius: 8px; max-width: 400px; }
+        button { padding: 10px 15px; cursor: pointer; background-color: #0056b3; color: white; border: none; border-radius: 4px; }
+        button:hover { background-color: #004494; }
+        #result { margin-top: 15px; font-weight: bold; white-space: pre-line; }
+        .error { color: red; }
+    </style>
 </head>
 <body>
 
-<div class="flyer-container">
-    <div class="header">
-        <div class="catchphrase">
-            乗用車・軽自動車の車検費用、<br>高すぎませんか？
-        </div>
-        <div class="sub-catchphrase">
-            都内対応・無駄を省いた「ユーザー車検代行」で賢く節約！
-        </div>
+    <div class="card">
+        <h2>OANDA 口座サマリー</h2>
+        <button id="fetchBtn">残高を取得する</button>
+        <div id="result">待機中...</div>
     </div>
 
-    <div class="lead-text">
-        「ディーラーの見積もりを見て驚いた…」「普段から調子は良いのに車検代が高い…」<br>
-        そんな方は、プロに「代行」を任せてコストダウンしませんか？<br>
-        過剰な部品交換や不要な整備を一切省き、最低限の費用で確実に車検を通します。
-    </div>
+    <script>
+        // ⚠️ セキュリティ警告：
+        // 実際の公開サーバー上にこのHTMLをアップロードすると、APIトークンが世界中に漏洩します。
+        // あくまでローカル（自分のPC内）での検証用としてのみ使用してください。
+        
+        const apiToken = "ここに_取得した_APIアクセストークン_を貼り付けます";
+        const accountId = "ここに_OANDAの_口座ID_を貼り付けます";
+        
+        // 本番環境（NYサーバープロコース）のURL
+        const baseUrl = "https://api-fxtrade.oanda.com/v3";
 
-    <div class="merits">
-        <div class="merit-box">
-            <div class="merit-title">1. 完全明朗会計</div>
-            <div class="merit-desc">お支払いは「法定費用」＋「代行手数料」のみ！不明瞭な整備費用はかかりません。</div>
-        </div>
-        <div class="merit-box">
-            <div class="merit-title">2. 軽自動車は更にオトク</div>
-            <div class="merit-desc">軽自動車は法定費用自体が安いため、代行を使えば驚くほどリーズナブルに。</div>
-        </div>
-        <div class="merit-box">
-            <div class="merit-title">3. 手続き丸投げ</div>
-            <div class="merit-desc">平日しか開いていない車検場への持ち込みや、複雑な書類作成はすべてお任せください。</div>
-        </div>
-    </div>
+        document.getElementById('fetchBtn').addEventListener('click', async () => {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = "";
+            resultDiv.innerText = "通信中...";
 
-    <div class="price-section">
-        <div class="price-title">代行手数料（乗用車・軽自動車共通）</div>
-        <div class="price">一律 15,000円<span style="font-size:20px;">（税込）</span></div>
-        <div class="price-note">
-            ※上記金額に、別途「法定費用（重量税・自賠責保険料・印紙代）」がかかります。<br>
-            ※車種や年式によって法定費用は異なります。無料でお見積もりいたします！
-        </div>
-    </div>
+            const url = `${baseUrl}/accounts/${accountId}/summary`;
 
-    <div class="target-section">
-        <strong>こんなお車に最適です：</strong>
-        <ul class="target-list">
-            <li>初回（3年目）の車検のお車</li>
-            <li>走行距離が少なく、状態の良いお車</li>
-            <li>とにかく費用を最優先で抑えたいお車</li>
-        </ul>
-    </div>
+            try {
+                // fetch APIを使ってOANDAサーバーへリクエストを送信
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${apiToken}`,
+                        'Accept-Datetime-Format': 'RFC3339',
+                        'Content-Type': 'application/json'
+                    }
+                });
 
-    <div class="contact-section">
-        <div class="contact-title">お見積もり・ご相談は無料！まずはお手元に「車検証」をご用意ください。</div>
-        <div class="company-info">
-            <strong>ギガホールド合同会社</strong><br>
-            電話番号：000-0000-0000
-        </div>
-        <div>
-            公式LINEからもお気軽にどうぞ！<br>
-            <div class="qr-placeholder">QRコード<br>配置用</div>
-        </div>
-    </div>
-</div>
+                if (!response.ok) {
+                    throw new Error(`HTTPエラー: ${response.status}`);
+                }
+
+                // JSONデータを解析
+                const data = await response.json();
+                
+                // 必要な数値を抽出
+                const balance = data.account.balance;
+                const unrealizedPL = data.account.unrealizedPL;
+                const marginAvailable = data.account.marginAvailable;
+
+                // 画面に表示
+                resultDiv.innerText = `残高: ${balance} 円\n含み損益: ${unrealizedPL} 円\n取引可能額: ${marginAvailable} 円`;
+
+            } catch (error) {
+                console.error("エラー詳細:", error);
+                resultDiv.className = "error";
+                resultDiv.innerText = `データの取得に失敗しました。\n（※ブラウザのCORS制限によりブロックされている可能性があります。F12キーでコンソールを確認してください。）`;
+            }
+        });
+    </script>
 
 </body>
 </html>
