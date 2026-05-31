@@ -35,7 +35,6 @@
         .bt-setting-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .bt-setting-row input[type="date"], .bt-setting-row input[type="number"], .bt-setting-row input[type="time"] { background: #2d3748; color: white; border: 1px solid #4a5568; padding: 6px; border-radius: 4px; text-align: center; }
         
-        /* 日付・時間用のフレックスボックス */
         .flex-row { display: flex; gap: 5px; align-items: center; }
 
         .bt-grid { display: grid; grid-template-columns: 85px 1fr 1fr; gap: 8px; align-items: center; margin-top: 15px; background: #1e293b; padding: 10px; border-radius: 6px; }
@@ -116,6 +115,14 @@
                         <input type="time" id="btStartTime" value="08:00">
                         <span>~</span>
                         <input type="time" id="btEndTime" value="20:00">
+                    </div>
+                </div>
+
+                <div class="bt-setting-row">
+                    <span>スプレッド</span>
+                    <div class="flex-row">
+                        <input type="number" id="btSpread" min="0" step="1" value="8" style="width: 60px;">
+                        <span>pips</span>
                     </div>
                 </div>
 
@@ -227,7 +234,7 @@
             const days = (endUnix - startUnix) / 86400;
             if (days < 0) return alert("終了日が開始日より前です。");
             if (days > 10) {
-                if(!confirm("期間が10日を超えています。5秒足データの取得に数分かかる場合がありますが続行しますか？")) return;
+                if(!confirm("期間が10日を超えています。データの取得に数分かかる場合がありますが続行しますか？")) return;
             }
 
             btn.disabled = true;
@@ -241,7 +248,6 @@
                 let allCandles = [];
 
                 while (currentFrom < endUnix) {
-                    // JSTでの進捗表示
                     const progressDate = new Date(currentFrom * 1000).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' });
                     btn.innerText = `データ取得中... (${progressDate} 付近)`;
                     
@@ -255,7 +261,7 @@
                         if (lastTime >= endUnix) break;
                         currentFrom = lastTime + 5;
                     } else {
-                        currentFrom += 25000; // データが無い期間はスキップ
+                        currentFrom += 25000;
                     }
                 }
 
@@ -287,7 +293,6 @@
             }
         });
 
-        // 履歴の描画処理
         function renderHistory() {
             const list = document.getElementById('historyList');
             list.innerHTML = '';
@@ -298,7 +303,6 @@
             }
 
             [...txHistoryData].reverse().forEach(tx => {
-                // JSTでの時間表示
                 const timeStr = new Date(tx.time).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo', month: '2-digit', day: '2-digit', hour: '2-digit', minute:'2-digit', second:'2-digit' });
                 let actionStr = '', pipsStr = '';
                 
@@ -309,7 +313,6 @@
                 } else if (tx.type.includes('CLOSE')) {
                     const isWin = tx.pips >= 0;
                     const pipsColor = isWin ? 'text-green' : 'text-red';
-                    // 強制決済か通常の全決済かの判定
                     const actionText = tx.type.includes('FORCE') ? `時間強制決済 (${tx.type.includes('LONG') ? '買' : '売'})` : `全決済 (${tx.type.includes('LONG') ? '買' : '売'})`;
                     const actionColor = tx.type.includes('FORCE') ? 'text-orange' : 'text-gray';
                     
@@ -327,7 +330,6 @@
             });
         }
 
-        // BBの標準偏差(SD)を計算するよう修正
         function calcIndicators() {
             const period = 25;
             for (let i = 0; i < candlesData.length; i++) {
@@ -340,52 +342,52 @@
                     let varianceSum = 0;
                     for (let j = 0; j < period; j++) varianceSum += Math.pow(candlesData[i - j].c - sma, 2);
                     const sd = Math.sqrt(varianceSum / period);
-                    candlesData[i].sd = sd; // upper/lowerではなくsdを保存
+                    candlesData[i].sd = sd;
                 }
             }
         }
 
         function runSimulation() {
-            const maxPos = parseInt(document.getElementById('btMaxPos').value);
+            // JPY系の場合、0.001=1pipとするためMultiplierを1000に変更
+            const pipMultiplier = instrument.includes('JPY') ? 1000 : 10000;
             
+            // スプレッド値の取得と実価格への変換
+            const spreadPips = parseFloat(document.getElementById('btSpread').value) || 0;
+            const spreadValue = spreadPips / pipMultiplier; 
+
+            const maxPos = parseInt(document.getElementById('btMaxPos').value);
             const e1Bid = document.getElementById('e1Bid').checked;
             const e1Ask = document.getElementById('e1Ask').checked;
-            // ユーザー指定のσ値を取得
             const e1BidSigma = parseFloat(document.getElementById('e1BidSigma').value) || 2.0;
             const e1AskSigma = parseFloat(document.getElementById('e1AskSigma').value) || 2.0;
-            
             const nBidPips = parseFloat(document.getElementById('nBidPips').value);
             const nAskPips = parseFloat(document.getElementById('nAskPips').value);
-            
             const useTp = document.getElementById('useTp').checked;
             const tpBid = parseFloat(document.getElementById('tpBid').value);
             const tpAsk = parseFloat(document.getElementById('tpAsk').value);
-            
             const useSl = document.getElementById('useSl').checked;
             const slBid = parseFloat(document.getElementById('slBid').value);
             const slAsk = parseFloat(document.getElementById('slAsk').value);
 
-            // 取引時間の取得 (分単位に変換)
             const [sH, sM] = document.getElementById('btStartTime').value.split(':').map(Number);
             const [eH, eM] = document.getElementById('btEndTime').value.split(':').map(Number);
             const startMins = sH * 60 + sM;
             const endMins = eH * 60 + eM;
 
-            const pipMultiplier = instrument.includes('JPY') ? 100 : 10000;
-
             let posShort = []; 
             let posLong = [];
             let totalPips = 0;
-
-            // ローカル（JST）時間へのフォーマッタ
             const jstFormatter = new Intl.DateTimeFormat('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit', hour12: false });
 
             for (let i = 25; i < candlesData.length; i++) {
                 const c = candlesData[i];
-                const currentPrice = c.c; 
+                const currentMid = c.c;
+                
+                // 実体価格（Ask/Bid）の生成
+                const currentAsk = currentMid + (spreadValue / 2);
+                const currentBid = currentMid - (spreadValue / 2);
 
-                // --- 4. 取引時間・時間外強制決済の判定 ---
-                const jstTimeStr = jstFormatter.format(new Date(c.time)); // "08:30" などの形式
+                const jstTimeStr = jstFormatter.format(new Date(c.time));
                 const [jH, jM] = jstTimeStr.split(':').map(Number);
                 const timeInMinutes = jH * 60 + jM;
 
@@ -396,75 +398,73 @@
                     isTradingTime = timeInMinutes >= startMins || timeInMinutes < endMins;
                 }
 
+                // 営業時間外の強制決済（スプレッド考慮の決済価格を適用）
                 if (!isTradingTime) {
-                    // 時間外に入ったら保有ポジションをすべて成り行き決済
                     if (posShort.length > 0) {
                         const avg = posShort.reduce((sum, p) => sum + p.price, 0) / posShort.length;
-                        const pips = (avg - currentPrice) * pipMultiplier;
+                        const pips = (avg - currentAsk) * pipMultiplier; // 売りの決済はAsk
                         totalPips += pips * posShort.length;
-                        txHistoryData.push({ time: c.time, price: currentPrice, type: 'FORCE_CLOSE_SHORT', pips: pips });
+                        txHistoryData.push({ time: c.time, price: currentAsk, type: 'FORCE_CLOSE_SHORT', pips: pips });
                         posShort = [];
                     }
                     if (posLong.length > 0) {
                         const avg = posLong.reduce((sum, p) => sum + p.price, 0) / posLong.length;
-                        const pips = (currentPrice - avg) * pipMultiplier;
+                        const pips = (currentBid - avg) * pipMultiplier; // 買いの決済はBid
                         totalPips += pips * posLong.length;
-                        txHistoryData.push({ time: c.time, price: currentPrice, type: 'FORCE_CLOSE_LONG', pips: pips });
+                        txHistoryData.push({ time: c.time, price: currentBid, type: 'FORCE_CLOSE_LONG', pips: pips });
                         posLong = [];
                     }
-                    continue; // 時間外は以下のエントリー処理等をスキップ
+                    continue; 
                 }
 
-                // --- 決済判定 (TP/SL) ---
+                // 決済判定 (TP/SL)
                 if (posShort.length > 0) {
                     const avg = posShort.reduce((sum, p) => sum + p.price, 0) / posShort.length;
-                    const currentProfitPips = (avg - currentPrice) * pipMultiplier;
+                    const currentProfitPips = (avg - currentAsk) * pipMultiplier;
                     if ((useTp && currentProfitPips >= tpBid) || (useSl && currentProfitPips <= slBid)) {
                         totalPips += currentProfitPips * posShort.length;
-                        txHistoryData.push({ time: c.time, price: currentPrice, type: 'CLOSE_SHORT', pips: currentProfitPips });
+                        txHistoryData.push({ time: c.time, price: currentAsk, type: 'CLOSE_SHORT', pips: currentProfitPips });
                         posShort = [];
                     }
                 }
                 if (posLong.length > 0) {
                     const avg = posLong.reduce((sum, p) => sum + p.price, 0) / posLong.length;
-                    const currentProfitPips = (currentPrice - avg) * pipMultiplier;
+                    const currentProfitPips = (currentBid - avg) * pipMultiplier;
                     if ((useTp && currentProfitPips >= tpAsk) || (useSl && currentProfitPips <= slAsk)) {
                         totalPips += currentProfitPips * posLong.length;
-                        txHistoryData.push({ time: c.time, price: currentPrice, type: 'CLOSE_LONG', pips: currentProfitPips });
+                        txHistoryData.push({ time: c.time, price: currentBid, type: 'CLOSE_LONG', pips: currentProfitPips });
                         posLong = [];
                     }
                 }
 
-                // --- エントリー判定 ---
+                // エントリー＆ナンピン判定
                 if (posShort.length < maxPos) {
                     if (posShort.length === 0) {
-                        // ユーザー指定のσ値で判定
                         const upperBand = c.sma + (e1BidSigma * c.sd);
-                        if (e1Bid && currentPrice > upperBand) {
-                            posShort.push({ price: currentPrice, time: c.time });
-                            txHistoryData.push({ time: c.time, price: currentPrice, type: 'SHORT' });
+                        if (e1Bid && currentBid > upperBand) { // 売りエントリーはBid基準
+                            posShort.push({ price: currentBid, time: c.time });
+                            txHistoryData.push({ time: c.time, price: currentBid, type: 'SHORT' });
                         }
                     } else {
                         const lastPrice = posShort[posShort.length - 1].price;
-                        if ((currentPrice - lastPrice) * pipMultiplier >= nBidPips) {
-                            posShort.push({ price: currentPrice, time: c.time });
-                            txHistoryData.push({ time: c.time, price: currentPrice, type: 'SHORT' });
+                        if ((currentBid - lastPrice) * pipMultiplier >= nBidPips) {
+                            posShort.push({ price: currentBid, time: c.time });
+                            txHistoryData.push({ time: c.time, price: currentBid, type: 'SHORT' });
                         }
                     }
                 }
                 if (posLong.length < maxPos) {
                     if (posLong.length === 0) {
-                        // ユーザー指定のσ値で判定
                         const lowerBand = c.sma - (e1AskSigma * c.sd);
-                        if (e1Ask && currentPrice < lowerBand) {
-                            posLong.push({ price: currentPrice, time: c.time });
-                            txHistoryData.push({ time: c.time, price: currentPrice, type: 'LONG' });
+                        if (e1Ask && currentAsk < lowerBand) { // 買いエントリーはAsk基準
+                            posLong.push({ price: currentAsk, time: c.time });
+                            txHistoryData.push({ time: c.time, price: currentAsk, type: 'LONG' });
                         }
                     } else {
                         const lastPrice = posLong[posLong.length - 1].price;
-                        if ((lastPrice - currentPrice) * pipMultiplier >= nAskPips) {
-                            posLong.push({ price: currentPrice, time: c.time });
-                            txHistoryData.push({ time: c.time, price: currentPrice, type: 'LONG' });
+                        if ((lastPrice - currentAsk) * pipMultiplier >= nAskPips) {
+                            posLong.push({ price: currentAsk, time: c.time });
+                            txHistoryData.push({ time: c.time, price: currentAsk, type: 'LONG' });
                         }
                     }
                 }
@@ -498,7 +498,6 @@
             const dataToDraw = candlesData.slice(startIndex, endIndex);
             if(dataToDraw.length === 0) return;
 
-            // チャートに描画するBBのσ値もユーザー設定に合わせる
             const drawBidSigma = parseFloat(document.getElementById('e1BidSigma').value) || 2.0;
             const drawAskSigma = parseFloat(document.getElementById('e1AskSigma').value) || 2.0;
 
@@ -521,7 +520,6 @@
             const getY = (price) => chartH - ((price - minP) / finalRange) * chartH;
 
             ctx.lineWidth = 1;
-            // アッパーバンドの描画
             ctx.beginPath(); ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
             dataToDraw.forEach((c, i) => {
                 if(c.sma && c.sd !== undefined) { 
@@ -532,7 +530,6 @@
             });
             ctx.stroke();
 
-            // ロワーバンドの描画
             ctx.beginPath(); ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
             dataToDraw.forEach((c, i) => {
                 if(c.sma && c.sd !== undefined) { 
@@ -543,7 +540,6 @@
             });
             ctx.stroke();
 
-            // SMAの描画
             ctx.beginPath(); ctx.strokeStyle = 'rgba(250, 204, 21, 0.8)';
             dataToDraw.forEach((c, i) => {
                 if(c.sma) { const x = i * candleWidth + candleWidth / 2; i === 0 ? ctx.moveTo(x, getY(c.sma)) : ctx.lineTo(x, getY(c.sma)); }
@@ -576,11 +572,11 @@
                         const y = getY(c.h) - 15;
                         ctx.moveTo(x, y + 8); ctx.lineTo(x - 5, y - 2); ctx.lineTo(x + 5, y - 2);
                     } else if (tx.type.includes('CLOSE')) {
-                        // 強制決済の場合はオレンジ、利確は緑、損切は黄色
                         if (tx.type.includes('FORCE')) ctx.fillStyle = '#f97316';
                         else ctx.fillStyle = tx.pips >= 0 ? '#10b981' : '#f59e0b'; 
                         
-                        const y = getY(c.c);
+                        // 実約定価格の位置に丸を打つ
+                        const y = getY(tx.price);
                         ctx.arc(x, y, 4, 0, 2 * Math.PI);
                     }
                     ctx.fill();
