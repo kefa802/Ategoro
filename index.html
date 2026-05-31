@@ -3,27 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OANDA Pro Trading UI</title>
+    <title>OANDA Pro Trading</title>
     <style>
         body { margin: 0; padding: 0; font-family: -apple-system, sans-serif; background-color: #0b101e; color: #ffffff; overflow: hidden; }
         .container { display: flex; flex-direction: column; height: 100vh; }
         
-        #settingsArea { padding: 15px; background-color: #1a202c; border-bottom: 1px solid #2d3748; }
-        input[type="text"], input[type="number"] { background: #2d3748; border: 1px solid #4a5568; color: white; border-radius: 4px; padding: 8px; }
-        input[type="text"] { width: calc(100% - 20px); margin-bottom: 10px; padding: 10px; }
-        .btn-save { width: 100%; padding: 12px; background-color: #4a5568; color: white; border: none; border-radius: 4px; font-weight: bold; }
-        
+        /* === ログイン画面のスタイル === */
+        #loginArea { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; background-color: #0b101e; padding: 20px; }
+        .login-box { background-color: #161b26; padding: 20px; border-radius: 8px; border: 1px solid #2d3748; width: 100%; max-width: 400px; box-sizing: border-box; }
+        .login-box h2 { text-align: center; margin-top: 0; color: #cbd5e1; font-size: 18px; margin-bottom: 20px; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 5px; font-size: 13px; color: #a0aec0; }
+        .input-group input[type="text"], .input-group input[type="password"] { width: 100%; padding: 12px; background: #2d3748; border: 1px solid #4a5568; color: white; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
+        .checkbox-group { display: flex; align-items: center; margin-top: 8px; font-size: 13px; color: #94a3b8; }
+        .checkbox-group input { margin-right: 6px; width: 16px; height: 16px; }
+        .btn-login { width: 100%; padding: 14px; background: linear-gradient(180deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-login:active { opacity: 0.8; transform: translateY(2px); }
+
+        /* === メインUIのスタイル === */
         .header { display: flex; justify-content: space-between; padding: 6px 10px; background-color: #161b26; border-bottom: 1px solid #2d3748; font-size: 13px; }
         .header span { font-weight: bold; color: #a0aec0; }
         .header .val { color: #ffffff; font-size: 14px; }
 
-        /* チャートエリアと通貨選択 */
         #chartWrapper { height: 28vh; min-height: 160px; width: 100%; border-bottom: 1px solid #2d3748; position: relative; background: #0b101e; }
         #instrumentSelector { position: absolute; top: 5px; left: 5px; z-index: 10; background: #1a202c; color: white; border: 1px solid #4a5568; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; outline: none; }
         canvas { display: block; width: 100%; height: 100%; touch-action: none; }
         #marketClosedLabel { position: absolute; top: 5px; right: 5px; background: rgba(220, 38, 38, 0.8); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: none; }
 
-        /* 分割ポジションダッシュボード */
         .pos-dashboard { display: flex; background-color: #161b26; border-bottom: 1px solid #2d3748; }
         .pos-side { flex: 1; padding: 6px 10px; display: flex; flex-direction: column; }
         .pos-sell { border-right: 1px solid #2d3748; background: linear-gradient(to bottom, rgba(59, 130, 246, 0.05), transparent); }
@@ -43,7 +49,6 @@
         .pos-stats-row .label { color: #a0aec0; }
         .pos-stats-row .val { font-weight: bold; }
 
-        /* 手動注文パネル */
         .order-panel { padding: 6px 10px; background-color: #161b26; border-bottom: 1px solid #2d3748; }
         .lot-selector { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 13px; }
         .lot-selector select { background: #2d3748; color: white; border: 1px solid #4a5568; padding: 4px 8px; border-radius: 4px; }
@@ -56,7 +61,6 @@
         .btn-label { font-size: 11px; margin-bottom: 0px; opacity: 0.9; }
         .btn-price { font-size: 20px; letter-spacing: 1px; }
 
-        /* 自動売買パネル */
         .auto-panel { padding: 6px 10px; background-color: #1e293b; border-bottom: 1px solid #2d3748; }
         .auto-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 13px; }
         .auto-controls { display: flex; gap: 10px; }
@@ -65,7 +69,6 @@
         .btn-auto.stop { background: #ef4444; }
         .btn-auto:disabled { background: #475569; color: #94a3b8; cursor: not-allowed; opacity: 0.5; }
         
-        /* 履歴パネル */
         .history-panel { flex: 1; padding: 5px 10px; background-color: #0b101e; font-size: 11px; overflow-y: auto; }
         .history-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #1a202c; }
         .hist-sell { color: #60a5fa; font-weight: bold; }
@@ -79,19 +82,37 @@
 </head>
 <body>
 
-    <div id="settingsArea">
-        <input type="text" id="apiKeyInput" placeholder="OANDA APIトークンを入力">
-        <button id="saveBtn" class="btn-save">APIキーを保存して開始</button>
+    <div id="loginArea">
+        <div class="login-box">
+            <h2>OANDA ログイン設定</h2>
+            
+            <div class="input-group">
+                <label>口座ID (Account ID)</label>
+                <input type="text" id="accountIdInput" placeholder="例: 001-009-11732183-002">
+                <label class="checkbox-group">
+                    <input type="checkbox" id="saveIdCheck"> 口座IDを保存する
+                </label>
+            </div>
+
+            <div class="input-group">
+                <label>APIトークン</label>
+                <input type="password" id="apiTokenInput" placeholder="APIトークンを入力">
+                <label class="checkbox-group">
+                    <input type="checkbox" id="saveTokenCheck"> APIトークンを保存する
+                </label>
+            </div>
+
+            <button id="loginBtn" class="btn-login">ログインして開始</button>
+        </div>
     </div>
 
     <div id="mainUI" class="container hidden">
         <div class="header">
-            <div><span>総残高:</span> <span id="balanceVal" class="val">--</span><span> 円</span></div>
-            <div><span>総含み損益:</span> <span id="plVal" class="val">--</span><span> 円</span></div>
+            <div><span>総残高:</span> <span id="balanceVal">--</span><span> 円</span></div>
+            <div><span>総含み損益:</span> <span id="plVal">--</span><span> 円</span></div>
         </div>
 
         <div id="chartWrapper">
-            <!-- 通貨ペアセレクター -->
             <select id="instrumentSelector">
                 <option value="USD_JPY" selected>USD/JPY</option>
                 <option value="EUR_JPY">EUR/JPY</option>
@@ -105,7 +126,6 @@
         </div>
 
         <div class="pos-dashboard">
-            <!-- 左側：売（BID） -->
             <div class="pos-side pos-sell">
                 <div class="pos-header-bar">
                     <span class="pos-title" style="color: #60a5fa;">売 (BID)</span>
@@ -119,7 +139,6 @@
                 </div>
             </div>
 
-            <!-- 右側：買（ASK） -->
             <div class="pos-side pos-buy">
                 <div class="pos-header-bar">
                     <span class="pos-title" style="color: #f87171;">買 (ASK)</span>
@@ -176,10 +195,10 @@
     </div>
 
     <script>
-        const accountId = "001-009-11732183-002";
         const baseUrl = "https://api-fxtrade.oanda.com/v3";
-        let instrument = "USD_JPY";
+        let accountId = "";
         let apiToken = "";
+        let instrument = "USD_JPY";
         
         let candlesData = [];
         let txHistoryData = [];
@@ -207,32 +226,64 @@
 
         let priceInterval, accountInterval, posInterval;
 
+        // アプリ起動時の処理（保存データの読み込み）
         window.onload = () => {
-            apiToken = localStorage.getItem('oanda_lion_key');
-            if (apiToken) {
-                document.getElementById('settingsArea').classList.add('hidden');
-                document.getElementById('mainUI').classList.remove('hidden');
-                resizeCanvas();
-                window.addEventListener('resize', resizeCanvas);
-                setupTouchEvents();
-                setupAutoTradeEvents();
-                
-                // 通貨ペア変更イベント
-                document.getElementById('instrumentSelector').addEventListener('change', (e) => {
-                    instrument = e.target.value;
-                    resetDataAndReload();
-                });
-
-                initApp();
+            const savedId = localStorage.getItem('oanda_account_id');
+            const savedToken = localStorage.getItem('oanda_api_token');
+            
+            if (savedId) {
+                document.getElementById('accountIdInput').value = savedId;
+                document.getElementById('saveIdCheck').checked = true;
+            }
+            if (savedToken) {
+                document.getElementById('apiTokenInput').value = savedToken;
+                document.getElementById('saveTokenCheck').checked = true;
             }
         };
 
-        document.getElementById('saveBtn').addEventListener('click', () => {
-            const inputKey = document.getElementById('apiKeyInput').value.trim();
-            if (inputKey) {
-                localStorage.setItem('oanda_lion_key', inputKey);
-                location.reload();
+        // ログインボタンの処理
+        document.getElementById('loginBtn').addEventListener('click', () => {
+            const idInput = document.getElementById('accountIdInput').value.trim();
+            const tokenInput = document.getElementById('apiTokenInput').value.trim();
+            
+            if (!idInput || !tokenInput) {
+                alert("口座IDとAPIトークンを入力してください。");
+                return;
             }
+            
+            // チェックボックスの状態に応じて保存・削除
+            if (document.getElementById('saveIdCheck').checked) {
+                localStorage.setItem('oanda_account_id', idInput);
+            } else {
+                localStorage.removeItem('oanda_account_id');
+            }
+            
+            if (document.getElementById('saveTokenCheck').checked) {
+                localStorage.setItem('oanda_api_token', tokenInput);
+            } else {
+                localStorage.removeItem('oanda_api_token');
+            }
+            
+            accountId = idInput;
+            apiToken = tokenInput;
+            
+            // 画面の切り替え
+            document.getElementById('loginArea').classList.add('hidden');
+            document.getElementById('mainUI').classList.remove('hidden');
+            
+            // UIの初期化
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            setupTouchEvents();
+            setupAutoTradeEvents();
+            
+            // 通貨ペア変更イベント
+            document.getElementById('instrumentSelector').addEventListener('change', (e) => {
+                instrument = e.target.value;
+                resetDataAndReload();
+            });
+
+            initApp();
         });
 
         function resetDataAndReload() {
@@ -367,7 +418,6 @@
                     shortPL = parseFloat(data.position.short.unrealizedPL) || 0;
                 }
 
-                // UI更新 (Pipsは価格取得時にリアルタイム更新するため、ここでは円のみ更新)
                 document.getElementById('longUnits').innerText = currentLongUnits.toLocaleString();
                 document.getElementById('longAvg').innerText = currentLongUnits > 0 ? currentLongAvg.toFixed(3) : "---.---";
                 document.getElementById('longPL').innerText = Math.floor(longPL).toLocaleString();
@@ -398,7 +448,6 @@
                     const units = parseInt(t.units);
                     const typeStr = units > 0 ? '買' : '売';
                     const cssClass = units > 0 ? 'hist-buy' : 'hist-sell';
-                    // 通貨ペアが一致するものだけ表示
                     if(t.instrument === instrument) {
                         list.innerHTML += `<div class="history-item"><span>${time}</span><span class="${cssClass}">${typeStr} ${Math.abs(units)}</span><span>@ ${t.price}</span></div>`;
                     }
@@ -447,7 +496,7 @@
                     document.getElementById('bidPrice').innerText = priceData.bids[0].price;
                     document.getElementById('askPrice').innerText = priceData.asks[0].price;
 
-                    // リアルタイムPip計算
+                    // Pip計算 (JPYペアとそれ以外で桁数を自動判定)
                     const isJPY = instrument.includes('JPY');
                     const pipMultiplier = isJPY ? 100 : 10000;
 
@@ -471,7 +520,6 @@
                         document.getElementById('longPips').className = 'val text-gray';
                     }
 
-                    // チャートデータ更新
                     const currentMid = (bidPrice + askPrice) / 2;
                     const now = Date.now();
                     if (candlesData.length > 0) {
@@ -650,6 +698,7 @@
             } catch (e) { alert("決済エラー"); }
         }
 
+        // イベントリスナーの登録
         document.getElementById('btnSell').addEventListener('click', () => executeOrder('SELL'));
         document.getElementById('btnBuy').addEventListener('click', () => executeOrder('BUY'));
         document.getElementById('btnSideCloseLong').addEventListener('click', () => executeSideClose('LONG'));
