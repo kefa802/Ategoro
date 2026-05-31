@@ -33,13 +33,16 @@
         .mode-tab.active { background: #3b82f6; color: white; }
 
         .bt-setting-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .bt-setting-row input[type="date"], .bt-setting-row input[type="number"] { background: #2d3748; color: white; border: 1px solid #4a5568; padding: 6px; border-radius: 4px; text-align: center; }
+        .bt-setting-row input[type="date"], .bt-setting-row input[type="number"], .bt-setting-row input[type="time"] { background: #2d3748; color: white; border: 1px solid #4a5568; padding: 6px; border-radius: 4px; text-align: center; }
         
-        .bt-grid { display: grid; grid-template-columns: 80px 1fr 1fr; gap: 8px; align-items: center; margin-top: 15px; background: #1e293b; padding: 10px; border-radius: 6px; }
+        /* 日付・時間用のフレックスボックス */
+        .flex-row { display: flex; gap: 5px; align-items: center; }
+
+        .bt-grid { display: grid; grid-template-columns: 85px 1fr 1fr; gap: 8px; align-items: center; margin-top: 15px; background: #1e293b; padding: 10px; border-radius: 6px; }
         .bt-grid-header { font-weight: bold; text-align: center; border-bottom: 1px solid #2d3748; padding-bottom: 4px; }
         .bt-grid .label-col { font-weight: bold; color: #cbd5e1; }
-        .bt-grid .input-col { display: flex; align-items: center; justify-content: center; gap: 4px; }
-        .bt-grid input[type="number"] { width: 50px; background: #0b101e; color: white; border: 1px solid #4a5568; padding: 4px; border-radius: 4px; text-align: center; }
+        .bt-grid .input-col { display: flex; align-items: center; justify-content: flex-start; gap: 4px; }
+        .bt-grid input[type="number"] { width: 45px; background: #0b101e; color: white; border: 1px solid #4a5568; padding: 4px; border-radius: 4px; text-align: center; }
         .bt-grid input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
 
         .btn-run-test { width: 100%; padding: 14px; margin-top: 20px; background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%); color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
@@ -57,6 +60,7 @@
         .text-red { color: #f87171; }
         .text-green { color: #4ade80; }
         .text-yellow { color: #fbbf24; }
+        .text-orange { color: #f97316; }
     </style>
 </head>
 <body>
@@ -98,13 +102,23 @@
                 </div>
 
                 <div class="bt-setting-row">
-                    <span>テスト対象日</span>
-                    <input type="date" id="btDate" value="2026-05-26">
+                    <span>テスト期間</span>
+                    <div class="flex-row">
+                        <input type="date" id="btStartDate" value="2026-05-25" style="width: 110px;">
+                        <span>~</span>
+                        <input type="date" id="btEndDate" value="2026-05-26" style="width: 110px;">
+                    </div>
                 </div>
+                
                 <div class="bt-setting-row">
-                    <span>ロット (Lot)</span>
-                    <input type="number" id="btLot" step="0.01" min="0.01" value="0.01">
+                    <span>取引時間 (JST)</span>
+                    <div class="flex-row">
+                        <input type="time" id="btStartTime" value="08:00">
+                        <span>~</span>
+                        <input type="time" id="btEndTime" value="20:00">
+                    </div>
                 </div>
+
                 <div class="bt-setting-row">
                     <span>最大ポジション数</span>
                     <input type="number" id="btMaxPos" min="1" value="8">
@@ -115,9 +129,15 @@
                     <div class="bt-grid-header text-blue">BID (売)</div>
                     <div class="bt-grid-header text-red">ASK (買)</div>
 
-                    <div class="label-col">第1ポジ<br><span style="font-size:10px; font-weight:normal;">(BB ±2σ超)</span></div>
-                    <div class="input-col"><input type="checkbox" id="e1Bid" checked> 有効</div>
-                    <div class="input-col"><input type="checkbox" id="e1Ask" checked> 有効</div>
+                    <div class="label-col">第1ポジ<br><span style="font-size:10px; font-weight:normal;">(BB乖離)</span></div>
+                    <div class="input-col">
+                        <input type="checkbox" id="e1Bid" checked>
+                        <input type="number" id="e1BidSigma" value="2.0" step="0.1"> σ超
+                    </div>
+                    <div class="input-col">
+                        <input type="checkbox" id="e1Ask" checked>
+                        <input type="number" id="e1AskSigma" value="2.0" step="0.1"> σ下
+                    </div>
 
                     <div class="label-col">第2ポジ<br>以降</div>
                     <div class="input-col"><input type="number" id="nBidPips" value="8"> pips</div>
@@ -201,36 +221,45 @@
             const resDiv = document.getElementById('testResult');
             const histList = document.getElementById('historyList');
             
+            const startUnix = new Date(`${document.getElementById('btStartDate').value}T00:00:00+09:00`).getTime() / 1000;
+            const endUnix = new Date(`${document.getElementById('btEndDate').value}T23:59:59+09:00`).getTime() / 1000;
+            
+            const days = (endUnix - startUnix) / 86400;
+            if (days < 0) return alert("終了日が開始日より前です。");
+            if (days > 10) {
+                if(!confirm("期間が10日を超えています。5秒足データの取得に数分かかる場合がありますが続行しますか？")) return;
+            }
+
             btn.disabled = true;
-            btn.innerText = "データ取得中... (数秒かかります)";
             resDiv.innerText = "";
-            histList.innerHTML = "処理中...";
+            histList.innerHTML = "データ取得中...";
             txHistoryData = [];
             candlesData = [];
 
             try {
-                const dateStr = document.getElementById('btDate').value;
-                const startUnix = new Date(`${dateStr}T00:00:00+09:00`).getTime() / 1000;
-                const endUnix = new Date(`${dateStr}T23:59:59+09:00`).getTime() / 1000;
-                
                 let currentFrom = startUnix;
                 let allCandles = [];
 
                 while (currentFrom < endUnix) {
+                    // JSTでの進捗表示
+                    const progressDate = new Date(currentFrom * 1000).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' });
+                    btn.innerText = `データ取得中... (${progressDate} 付近)`;
+                    
                     const data = await apiRequest(`/instruments/${instrument}/candles?granularity=S5&count=5000&from=${currentFrom}`);
                     if (!data || !data.candles || data.candles.length === 0) break;
                     
                     const validCandles = data.candles.filter(c => c.complete);
-                    allCandles = allCandles.concat(validCandles);
-                    
-                    const lastTime = parseFloat(validCandles[validCandles.length - 1].time);
-                    if (lastTime >= endUnix) break;
-                    currentFrom = lastTime + 5;
+                    if (validCandles.length > 0) {
+                        allCandles = allCandles.concat(validCandles);
+                        const lastTime = parseFloat(validCandles[validCandles.length - 1].time);
+                        if (lastTime >= endUnix) break;
+                        currentFrom = lastTime + 5;
+                    } else {
+                        currentFrom += 25000; // データが無い期間はスキップ
+                    }
                 }
 
-                if (allCandles.length === 0) {
-                    throw new Error("データが取得できませんでした。休場日または未来の日付です。");
-                }
+                if (allCandles.length === 0) throw new Error("指定期間のデータが取得できませんでした。");
 
                 candlesData = allCandles.map(c => ({
                     time: parseFloat(c.time) * 1000,
@@ -243,7 +272,7 @@
                 
                 scrollOffset = 0;
                 drawChart();
-                renderHistory(); // 履歴の描画処理を呼び出し
+                renderHistory();
 
                 const color = resultPips >= 0 ? '#4ade80' : '#f87171';
                 resDiv.style.color = color;
@@ -258,7 +287,7 @@
             }
         });
 
-        // 履歴をHTMLに描画する処理
+        // 履歴の描画処理
         function renderHistory() {
             const list = document.getElementById('historyList');
             list.innerHTML = '';
@@ -268,19 +297,23 @@
                 return;
             }
 
-            // 新しい履歴が上に来るように逆順で表示
             [...txHistoryData].reverse().forEach(tx => {
-                const timeStr = new Date(tx.time).toLocaleTimeString('ja-JP', { hour: '2-digit', minute:'2-digit', second:'2-digit' });
+                // JSTでの時間表示
+                const timeStr = new Date(tx.time).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo', month: '2-digit', day: '2-digit', hour: '2-digit', minute:'2-digit', second:'2-digit' });
                 let actionStr = '', pipsStr = '';
                 
                 if (tx.type === 'LONG') {
                     actionStr = '<span class="text-red font-bold">新規 買(ASK)</span>';
                 } else if (tx.type === 'SHORT') {
                     actionStr = '<span class="text-blue font-bold">新規 売(BID)</span>';
-                } else if (tx.type === 'CLOSE_LONG' || tx.type === 'CLOSE_SHORT') {
+                } else if (tx.type.includes('CLOSE')) {
                     const isWin = tx.pips >= 0;
                     const pipsColor = isWin ? 'text-green' : 'text-red';
-                    actionStr = `<span style="color: #a0aec0;">全決済 (${tx.type.includes('LONG') ? '買' : '売'})</span>`;
+                    // 強制決済か通常の全決済かの判定
+                    const actionText = tx.type.includes('FORCE') ? `時間強制決済 (${tx.type.includes('LONG') ? '買' : '売'})` : `全決済 (${tx.type.includes('LONG') ? '買' : '売'})`;
+                    const actionColor = tx.type.includes('FORCE') ? 'text-orange' : 'text-gray';
+                    
+                    actionStr = `<span class="${actionColor}">${actionText}</span>`;
                     pipsStr = `<span class="${pipsColor} font-bold" style="margin-left: 10px;">${tx.pips >= 0 ? '+' : ''}${tx.pips.toFixed(1)} pips</span>`;
                 }
 
@@ -294,6 +327,7 @@
             });
         }
 
+        // BBの標準偏差(SD)を計算するよう修正
         function calcIndicators() {
             const period = 25;
             for (let i = 0; i < candlesData.length; i++) {
@@ -306,16 +340,20 @@
                     let varianceSum = 0;
                     for (let j = 0; j < period; j++) varianceSum += Math.pow(candlesData[i - j].c - sma, 2);
                     const sd = Math.sqrt(varianceSum / period);
-                    candlesData[i].upper = sma + (2 * sd);
-                    candlesData[i].lower = sma - (2 * sd);
+                    candlesData[i].sd = sd; // upper/lowerではなくsdを保存
                 }
             }
         }
 
         function runSimulation() {
             const maxPos = parseInt(document.getElementById('btMaxPos').value);
+            
             const e1Bid = document.getElementById('e1Bid').checked;
             const e1Ask = document.getElementById('e1Ask').checked;
+            // ユーザー指定のσ値を取得
+            const e1BidSigma = parseFloat(document.getElementById('e1BidSigma').value) || 2.0;
+            const e1AskSigma = parseFloat(document.getElementById('e1AskSigma').value) || 2.0;
+            
             const nBidPips = parseFloat(document.getElementById('nBidPips').value);
             const nAskPips = parseFloat(document.getElementById('nAskPips').value);
             
@@ -327,17 +365,57 @@
             const slBid = parseFloat(document.getElementById('slBid').value);
             const slAsk = parseFloat(document.getElementById('slAsk').value);
 
+            // 取引時間の取得 (分単位に変換)
+            const [sH, sM] = document.getElementById('btStartTime').value.split(':').map(Number);
+            const [eH, eM] = document.getElementById('btEndTime').value.split(':').map(Number);
+            const startMins = sH * 60 + sM;
+            const endMins = eH * 60 + eM;
+
             const pipMultiplier = instrument.includes('JPY') ? 100 : 10000;
 
             let posShort = []; 
             let posLong = [];
             let totalPips = 0;
 
+            // ローカル（JST）時間へのフォーマッタ
+            const jstFormatter = new Intl.DateTimeFormat('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit', hour12: false });
+
             for (let i = 25; i < candlesData.length; i++) {
                 const c = candlesData[i];
                 const currentPrice = c.c; 
 
-                // 決済判定
+                // --- 4. 取引時間・時間外強制決済の判定 ---
+                const jstTimeStr = jstFormatter.format(new Date(c.time)); // "08:30" などの形式
+                const [jH, jM] = jstTimeStr.split(':').map(Number);
+                const timeInMinutes = jH * 60 + jM;
+
+                let isTradingTime = false;
+                if (startMins <= endMins) {
+                    isTradingTime = timeInMinutes >= startMins && timeInMinutes < endMins;
+                } else {
+                    isTradingTime = timeInMinutes >= startMins || timeInMinutes < endMins;
+                }
+
+                if (!isTradingTime) {
+                    // 時間外に入ったら保有ポジションをすべて成り行き決済
+                    if (posShort.length > 0) {
+                        const avg = posShort.reduce((sum, p) => sum + p.price, 0) / posShort.length;
+                        const pips = (avg - currentPrice) * pipMultiplier;
+                        totalPips += pips * posShort.length;
+                        txHistoryData.push({ time: c.time, price: currentPrice, type: 'FORCE_CLOSE_SHORT', pips: pips });
+                        posShort = [];
+                    }
+                    if (posLong.length > 0) {
+                        const avg = posLong.reduce((sum, p) => sum + p.price, 0) / posLong.length;
+                        const pips = (currentPrice - avg) * pipMultiplier;
+                        totalPips += pips * posLong.length;
+                        txHistoryData.push({ time: c.time, price: currentPrice, type: 'FORCE_CLOSE_LONG', pips: pips });
+                        posLong = [];
+                    }
+                    continue; // 時間外は以下のエントリー処理等をスキップ
+                }
+
+                // --- 決済判定 (TP/SL) ---
                 if (posShort.length > 0) {
                     const avg = posShort.reduce((sum, p) => sum + p.price, 0) / posShort.length;
                     const currentProfitPips = (avg - currentPrice) * pipMultiplier;
@@ -357,10 +435,12 @@
                     }
                 }
 
-                // エントリー判定
+                // --- エントリー判定 ---
                 if (posShort.length < maxPos) {
                     if (posShort.length === 0) {
-                        if (e1Bid && currentPrice > c.upper) {
+                        // ユーザー指定のσ値で判定
+                        const upperBand = c.sma + (e1BidSigma * c.sd);
+                        if (e1Bid && currentPrice > upperBand) {
                             posShort.push({ price: currentPrice, time: c.time });
                             txHistoryData.push({ time: c.time, price: currentPrice, type: 'SHORT' });
                         }
@@ -374,7 +454,9 @@
                 }
                 if (posLong.length < maxPos) {
                     if (posLong.length === 0) {
-                        if (e1Ask && currentPrice < c.lower) {
+                        // ユーザー指定のσ値で判定
+                        const lowerBand = c.sma - (e1AskSigma * c.sd);
+                        if (e1Ask && currentPrice < lowerBand) {
                             posLong.push({ price: currentPrice, time: c.time });
                             txHistoryData.push({ time: c.time, price: currentPrice, type: 'LONG' });
                         }
@@ -403,7 +485,6 @@
 
             ctx.clearRect(0, 0, w, h);
 
-            // データが無い場合のメッセージ表示（真っ暗対策）
             if (candlesData.length === 0) {
                 ctx.fillStyle = '#64748b';
                 ctx.font = '14px sans-serif';
@@ -417,10 +498,18 @@
             const dataToDraw = candlesData.slice(startIndex, endIndex);
             if(dataToDraw.length === 0) return;
 
+            // チャートに描画するBBのσ値もユーザー設定に合わせる
+            const drawBidSigma = parseFloat(document.getElementById('e1BidSigma').value) || 2.0;
+            const drawAskSigma = parseFloat(document.getElementById('e1AskSigma').value) || 2.0;
+
             let minP = Infinity, maxP = -Infinity;
             dataToDraw.forEach(c => {
                 if (c.h > maxP) maxP = c.h; if (c.l < minP) minP = c.l;
-                if (c.upper && c.upper > maxP) maxP = c.upper; if (c.lower && c.lower < minP) minP = c.lower;
+                if (c.sma && c.sd !== undefined) {
+                    const upper = c.sma + (drawBidSigma * c.sd);
+                    const lower = c.sma - (drawAskSigma * c.sd);
+                    if (upper > maxP) maxP = upper; if (lower < minP) minP = lower;
+                }
             });
 
             const midP = (maxP + minP) / 2;
@@ -432,14 +521,29 @@
             const getY = (price) => chartH - ((price - minP) / finalRange) * chartH;
 
             ctx.lineWidth = 1;
-            ['upper', 'lower'].forEach(band => {
-                ctx.beginPath(); ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
-                dataToDraw.forEach((c, i) => {
-                    if(c[band]) { const x = i * candleWidth + candleWidth / 2; i === 0 ? ctx.moveTo(x, getY(c[band])) : ctx.lineTo(x, getY(c[band])); }
-                });
-                ctx.stroke();
+            // アッパーバンドの描画
+            ctx.beginPath(); ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+            dataToDraw.forEach((c, i) => {
+                if(c.sma && c.sd !== undefined) { 
+                    const upper = c.sma + (drawBidSigma * c.sd);
+                    const x = i * candleWidth + candleWidth / 2; 
+                    i === 0 ? ctx.moveTo(x, getY(upper)) : ctx.lineTo(x, getY(upper)); 
+                }
             });
+            ctx.stroke();
 
+            // ロワーバンドの描画
+            ctx.beginPath(); ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+            dataToDraw.forEach((c, i) => {
+                if(c.sma && c.sd !== undefined) { 
+                    const lower = c.sma - (drawAskSigma * c.sd);
+                    const x = i * candleWidth + candleWidth / 2; 
+                    i === 0 ? ctx.moveTo(x, getY(lower)) : ctx.lineTo(x, getY(lower)); 
+                }
+            });
+            ctx.stroke();
+
+            // SMAの描画
             ctx.beginPath(); ctx.strokeStyle = 'rgba(250, 204, 21, 0.8)';
             dataToDraw.forEach((c, i) => {
                 if(c.sma) { const x = i * candleWidth + candleWidth / 2; i === 0 ? ctx.moveTo(x, getY(c.sma)) : ctx.lineTo(x, getY(c.sma)); }
@@ -471,8 +575,11 @@
                         ctx.fillStyle = '#3b82f6'; 
                         const y = getY(c.h) - 15;
                         ctx.moveTo(x, y + 8); ctx.lineTo(x - 5, y - 2); ctx.lineTo(x + 5, y - 2);
-                    } else if (tx.type === 'CLOSE_LONG' || tx.type === 'CLOSE_SHORT') {
-                        ctx.fillStyle = tx.pips >= 0 ? '#10b981' : '#f59e0b'; 
+                    } else if (tx.type.includes('CLOSE')) {
+                        // 強制決済の場合はオレンジ、利確は緑、損切は黄色
+                        if (tx.type.includes('FORCE')) ctx.fillStyle = '#f97316';
+                        else ctx.fillStyle = tx.pips >= 0 ? '#10b981' : '#f59e0b'; 
+                        
                         const y = getY(c.c);
                         ctx.arc(x, y, 4, 0, 2 * Math.PI);
                     }
