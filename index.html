@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OANDA LION-FX風 スキャルピング</title>
-    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <title>OANDA LION-FX風 スキャルピング (チャートなし)</title>
     <style>
         /* LION FX風 ダークテーマ設定 */
         body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: #0b101e; color: #ffffff; }
@@ -16,35 +15,30 @@
         .btn-save { width: 100%; padding: 12px; background-color: #4a5568; color: white; border: none; border-radius: 4px; font-weight: bold; }
         
         /* 口座情報ヘッダー */
-        .header { display: flex; justify-content: space-between; padding: 10px 15px; background-color: #161b26; border-bottom: 1px solid #2d3748; font-size: 14px; }
+        .header { display: flex; justify-content: space-between; padding: 15px; background-color: #161b26; border-bottom: 1px solid #2d3748; font-size: 14px; }
         .header span { font-weight: bold; color: #a0aec0; }
-        .header .val { color: #ffffff; font-size: 16px; }
-
-        /* チャートエリア */
-        #chartContainer { flex: 1; min-height: 250px; width: 100%; border-bottom: 1px solid #2d3748; position: relative; }
+        .header .val { color: #ffffff; font-size: 18px; }
 
         /* 注文パネル */
-        .order-panel { padding: 15px; background-color: #161b26; }
-        .lot-selector { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: 14px; }
-        .lot-selector select { background: #2d3748; color: white; border: 1px solid #4a5568; padding: 8px; border-radius: 4px; }
+        .order-panel { padding: 20px 15px; background-color: #161b26; border-bottom: 1px solid #2d3748; }
+        .lot-selector { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-size: 15px; }
+        .lot-selector select { background: #2d3748; color: white; border: 1px solid #4a5568; padding: 10px; border-radius: 4px; font-size: 14px; }
         
         /* 巨大BID/ASKボタン */
-        .trade-buttons { display: flex; justify-content: space-between; gap: 10px; }
-        .btn-trade { flex: 1; padding: 15px 10px; border: none; border-radius: 8px; font-size: 20px; font-weight: bold; color: white; display: flex; flex-direction: column; align-items: center; cursor: pointer; }
-        .btn-sell { background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%); } /* 青系 */
-        .btn-buy { background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%); } /* 赤系 */
+        .trade-buttons { display: flex; justify-content: space-between; gap: 15px; }
+        .btn-trade { flex: 1; padding: 25px 10px; border: none; border-radius: 8px; font-size: 20px; font-weight: bold; color: white; display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+        .btn-sell { background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%); }
+        .btn-buy { background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%); }
         .btn-trade:active { opacity: 0.8; transform: translateY(2px); }
-        .btn-label { font-size: 12px; margin-bottom: 5px; opacity: 0.9; }
-        .btn-price { font-size: 24px; letter-spacing: 1px; }
+        .btn-label { font-size: 14px; margin-bottom: 8px; opacity: 0.9; }
+        .btn-price { font-size: 28px; letter-spacing: 1px; }
 
-        /* 取引履歴エリア */
-        .history-panel { padding: 10px 15px; background-color: #0b101e; font-size: 12px; height: 100px; overflow-y: auto; }
-        .history-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #1a202c; }
-        .hist-sell { color: #60a5fa; }
-        .hist-buy { color: #f87171; }
+        /* 取引履歴エリア（チャートを消した分、広く取る） */
+        .history-panel { flex: 1; padding: 15px; background-color: #0b101e; font-size: 14px; overflow-y: auto; }
+        .history-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #1a202c; }
+        .hist-sell { color: #60a5fa; font-weight: bold; }
+        .hist-buy { color: #f87171; font-weight: bold; }
         
-        /* ロード・エラー */
-        #overlayMessage { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; font-weight: bold; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -61,13 +55,9 @@
             <div><span>含み損益:</span> <span id="plVal" class="val">--</span><span> 円</span></div>
         </div>
 
-        <div id="chartContainer">
-            <div id="overlayMessage">チャート読込中...</div>
-        </div>
-
         <div class="order-panel">
             <div class="lot-selector">
-                <span>通貨ペア: <strong>USD/JPY</strong></span>
+                <span>通貨ペア: <strong style="color:white; font-size:18px;">USD/JPY</strong></span>
                 <div>
                     注文数量: 
                     <select id="lotSize">
@@ -90,7 +80,7 @@
         </div>
 
         <div class="history-panel">
-            <div style="color: #a0aec0; margin-bottom: 5px;">直近の取引履歴 (最新5件)</div>
+            <div style="color: #a0aec0; margin-bottom: 10px; font-weight: bold;">直近の取引履歴 (最新5件)</div>
             <div id="historyList">履歴はありません</div>
         </div>
     </div>
@@ -100,7 +90,6 @@
         const baseUrl = "https://api-fxtrade.oanda.com/v3";
         const instrument = "USD_JPY";
         let apiToken = "";
-        let chart, candleSeries;
 
         window.onload = () => {
             apiToken = localStorage.getItem('oanda_lion_key');
@@ -119,19 +108,15 @@
             }
         });
 
-        // アプリ全体の初期化
         async function initApp() {
-            initChart();
             await fetchAccount();
             await fetchHistory();
-            await fetchCandles();
             
-            // 2秒ごとに価格と口座状況を更新
+            // 2秒ごとに価格更新、5秒ごとに口座更新
             setInterval(fetchPricing, 2000);
             setInterval(fetchAccount, 5000);
         }
 
-        // 共通APIリクエスト関数
         async function apiRequest(endpoint, method = 'GET', body = null) {
             const options = {
                 method: method,
@@ -147,11 +132,9 @@
             return await response.json();
         }
 
-        // ① 口座情報の取得（小数点切り捨て）
         async function fetchAccount() {
             try {
                 const data = await apiRequest(`/accounts/${accountId}/summary`);
-                // Math.floorで切り捨てし、toLocaleStringでカンマ区切りに
                 const balance = Math.floor(parseFloat(data.account.balance)).toLocaleString();
                 const pl = Math.floor(parseFloat(data.account.unrealizedPL)).toLocaleString();
                 
@@ -163,15 +146,16 @@
             } catch (e) { console.error(e); }
         }
 
-        // ② 直近の取引履歴の取得
         async function fetchHistory() {
             try {
-                // 直近の注文履歴を取得
                 const data = await apiRequest(`/accounts/${accountId}/transactions?type=ORDER_FILL&count=5`);
                 const list = document.getElementById('historyList');
                 list.innerHTML = '';
                 
-                if (!data.transactions || data.transactions.length === 0) return;
+                if (!data.transactions || data.transactions.length === 0) {
+                    list.innerHTML = '履歴はありません';
+                    return;
+                }
 
                 data.transactions.forEach(t => {
                     const time = new Date(parseFloat(t.time) * 1000).toLocaleTimeString();
@@ -191,44 +175,6 @@
             } catch (e) { console.error(e); }
         }
 
-        // ③ TradingViewチャートの初期化とデータ取得 (1分足)
-        function initChart() {
-            const container = document.getElementById('chartContainer');
-            chart = LightweightCharts.createChart(container, {
-                layout: { background: { type: 'solid', color: '#0b101e' }, textColor: '#d1d5db' },
-                grid: { vertLines: { color: '#1f2937' }, horzLines: { color: '#1f2937' } },
-                crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-                timeScale: { timeVisible: true, secondsVisible: false },
-            });
-            candleSeries = chart.addCandlestickSeries({
-                upColor: '#ef4444', downColor: '#3b82f6', borderVisible: false, wickUpColor: '#ef4444', wickDownColor: '#3b82f6'
-            });
-            
-            // 画面サイズ変更に追従
-            new ResizeObserver(entries => {
-                if (entries.length === 0 || entries[0].target !== container) return;
-                const newRect = entries[0].contentRect;
-                chart.applyOptions({ height: newRect.height, width: newRect.width });
-            }).observe(container);
-        }
-
-        async function fetchCandles() {
-            try {
-                // M1 = 1分足
-                const data = await apiRequest(`/instruments/${instrument}/candles?granularity=M1&count=100`);
-                const formattedData = data.candles.filter(c => c.complete).map(c => ({
-                    time: parseFloat(c.time),
-                    open: parseFloat(c.mid.o),
-                    high: parseFloat(c.mid.h),
-                    low: parseFloat(c.mid.l),
-                    close: parseFloat(c.mid.c)
-                }));
-                candleSeries.setData(formattedData);
-                document.getElementById('overlayMessage').classList.add('hidden');
-            } catch (e) { console.error(e); }
-        }
-
-        // 価格のポーリング (ボタンの価格表示を更新)
         async function fetchPricing() {
             try {
                 const data = await apiRequest(`/accounts/${accountId}/pricing?instruments=${instrument}`);
@@ -240,10 +186,8 @@
             } catch (e) { console.error(e); }
         }
 
-        // ④ 成行注文の実行 (安全のため確認アラートを挟んでいます)
         async function executeOrder(direction) {
             const units = parseInt(document.getElementById('lotSize').value);
-            // 売りならマイナスにするのがOANDAの仕様
             const orderUnits = direction === 'SELL' ? (units * -1).toString() : units.toString();
             
             if (!confirm(`USD/JPY を ${units}通貨 ${direction === 'BUY' ? '買' : '売'} (成行) しますか？`)) return;
@@ -252,7 +196,7 @@
                 order: {
                     units: orderUnits,
                     instrument: instrument,
-                    timeInForce: "FOK", // フィル・オア・キル（全数量約定しない場合はキャンセル）
+                    timeInForce: "FOK",
                     type: "MARKET",
                     positionFill: "DEFAULT"
                 }
@@ -268,12 +212,11 @@
                     alert("注文が拒否されました。");
                 }
             } catch (e) {
-                alert("注文エラー: ブラウザのCORS制限により、HTMLからの直接注文(POST)がブロックされた可能性があります。");
+                alert("注文エラー: ブラウザのCORS制限によりブロックされました。");
                 console.error(e);
             }
         }
 
-        // ボタンのイベントリスナー
         document.getElementById('btnSell').addEventListener('click', () => executeOrder('SELL'));
         document.getElementById('btnBuy').addEventListener('click', () => executeOrder('BUY'));
 
