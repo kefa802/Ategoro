@@ -3,41 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OANDA LION-FX風 スキャルピング (チャートなし)</title>
+    <title>OANDA 自作チャート スキャルピング</title>
     <style>
-        /* LION FX風 ダークテーマ設定 */
-        body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: #0b101e; color: #ffffff; }
+        body { margin: 0; padding: 0; font-family: -apple-system, sans-serif; background-color: #0b101e; color: #ffffff; }
         .container { display: flex; flex-direction: column; height: 100vh; }
         
-        /* 設定エリア */
         #settingsArea { padding: 15px; background-color: #1a202c; border-bottom: 1px solid #2d3748; }
         input[type="text"] { width: calc(100% - 20px); padding: 10px; margin-bottom: 10px; background: #2d3748; border: 1px solid #4a5568; color: white; border-radius: 4px; }
         .btn-save { width: 100%; padding: 12px; background-color: #4a5568; color: white; border: none; border-radius: 4px; font-weight: bold; }
         
-        /* 口座情報ヘッダー */
-        .header { display: flex; justify-content: space-between; padding: 15px; background-color: #161b26; border-bottom: 1px solid #2d3748; font-size: 14px; }
+        .header { display: flex; justify-content: space-between; padding: 10px 15px; background-color: #161b26; border-bottom: 1px solid #2d3748; font-size: 14px; }
         .header span { font-weight: bold; color: #a0aec0; }
-        .header .val { color: #ffffff; font-size: 18px; }
+        .header .val { color: #ffffff; font-size: 16px; }
 
-        /* 注文パネル */
-        .order-panel { padding: 20px 15px; background-color: #161b26; border-bottom: 1px solid #2d3748; }
-        .lot-selector { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-size: 15px; }
-        .lot-selector select { background: #2d3748; color: white; border: 1px solid #4a5568; padding: 10px; border-radius: 4px; font-size: 14px; }
+        /* 自作チャートエリア */
+        #chartWrapper { flex: 1; width: 100%; border-bottom: 1px solid #2d3748; position: relative; background: #0b101e; min-height: 200px; }
+        canvas { display: block; width: 100%; height: 100%; }
+
+        .order-panel { padding: 15px; background-color: #161b26; }
+        .lot-selector { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: 14px; }
+        .lot-selector select { background: #2d3748; color: white; border: 1px solid #4a5568; padding: 8px; border-radius: 4px; }
         
-        /* 巨大BID/ASKボタン */
-        .trade-buttons { display: flex; justify-content: space-between; gap: 15px; }
-        .btn-trade { flex: 1; padding: 25px 10px; border: none; border-radius: 8px; font-size: 20px; font-weight: bold; color: white; display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+        .trade-buttons { display: flex; justify-content: space-between; gap: 10px; }
+        .btn-trade { flex: 1; padding: 15px 10px; border: none; border-radius: 8px; font-size: 20px; font-weight: bold; color: white; display: flex; flex-direction: column; align-items: center; cursor: pointer; }
         .btn-sell { background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%); }
         .btn-buy { background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%); }
         .btn-trade:active { opacity: 0.8; transform: translateY(2px); }
-        .btn-label { font-size: 14px; margin-bottom: 8px; opacity: 0.9; }
-        .btn-price { font-size: 28px; letter-spacing: 1px; }
+        .btn-label { font-size: 12px; margin-bottom: 5px; opacity: 0.9; }
+        .btn-price { font-size: 24px; letter-spacing: 1px; }
 
-        /* 取引履歴エリア（チャートを消した分、広く取る） */
-        .history-panel { flex: 1; padding: 15px; background-color: #0b101e; font-size: 14px; overflow-y: auto; }
-        .history-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #1a202c; }
-        .hist-sell { color: #60a5fa; font-weight: bold; }
-        .hist-buy { color: #f87171; font-weight: bold; }
+        .history-panel { padding: 10px 15px; background-color: #0b101e; font-size: 12px; height: 100px; overflow-y: auto; }
+        .history-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #1a202c; }
+        .hist-sell { color: #60a5fa; }
+        .hist-buy { color: #f87171; }
         
         .hidden { display: none !important; }
     </style>
@@ -55,13 +53,17 @@
             <div><span>含み損益:</span> <span id="plVal" class="val">--</span><span> 円</span></div>
         </div>
 
+        <div id="chartWrapper">
+            <canvas id="myCanvas"></canvas>
+        </div>
+
         <div class="order-panel">
             <div class="lot-selector">
-                <span>通貨ペア: <strong style="color:white; font-size:18px;">USD/JPY</strong></span>
+                <span>通貨ペア: <strong>USD/JPY</strong></span>
                 <div>
-                    注文数量: 
+                    数量: 
                     <select id="lotSize">
-                        <option value="1">1通貨 (テスト用)</option>
+                        <option value="1">1通貨</option>
                         <option value="1000">1,000通貨</option>
                         <option value="10000">10,000通貨</option>
                     </select>
@@ -80,7 +82,7 @@
         </div>
 
         <div class="history-panel">
-            <div style="color: #a0aec0; margin-bottom: 10px; font-weight: bold;">直近の取引履歴 (最新5件)</div>
+            <div style="color: #a0aec0; margin-bottom: 5px;">直近の取引履歴 (最新5件)</div>
             <div id="historyList">履歴はありません</div>
         </div>
     </div>
@@ -90,12 +92,20 @@
         const baseUrl = "https://api-fxtrade.oanda.com/v3";
         const instrument = "USD_JPY";
         let apiToken = "";
+        
+        // チャート用データ
+        let candlesData = [];
+        const canvas = document.getElementById('myCanvas');
+        const ctx = canvas.getContext('2d');
+        const CANDLE_INTERVAL_SEC = 5; // 5秒足
 
         window.onload = () => {
             apiToken = localStorage.getItem('oanda_lion_key');
             if (apiToken) {
                 document.getElementById('settingsArea').classList.add('hidden');
                 document.getElementById('mainUI').classList.remove('hidden');
+                resizeCanvas();
+                window.addEventListener('resize', resizeCanvas);
                 initApp();
             }
         };
@@ -108,12 +118,21 @@
             }
         });
 
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+            drawChart();
+        }
+
         async function initApp() {
             await fetchAccount();
             await fetchHistory();
+            await fetchHistoricalCandles(); // 過去データの取得
             
-            // 2秒ごとに価格更新、5秒ごとに口座更新
-            setInterval(fetchPricing, 2000);
+            // 1秒ごとに価格を取得し、チャートを更新
+            setInterval(fetchPricingAndUpdateChart, 1000);
+            
+            // 5秒ごとに口座状況を更新
             setInterval(fetchAccount, 5000);
         }
 
@@ -137,13 +156,10 @@
                 const data = await apiRequest(`/accounts/${accountId}/summary`);
                 const balance = Math.floor(parseFloat(data.account.balance)).toLocaleString();
                 const pl = Math.floor(parseFloat(data.account.unrealizedPL)).toLocaleString();
-                
                 document.getElementById('balanceVal').innerText = balance;
                 document.getElementById('plVal').innerText = pl;
-                
-                const plElem = document.getElementById('plVal');
-                plElem.style.color = parseFloat(data.account.unrealizedPL) >= 0 ? '#4ade80' : '#f87171';
-            } catch (e) { console.error(e); }
+                document.getElementById('plVal').style.color = parseFloat(data.account.unrealizedPL) >= 0 ? '#4ade80' : '#f87171';
+            } catch (e) {}
         }
 
         async function fetchHistory() {
@@ -151,46 +167,143 @@
                 const data = await apiRequest(`/accounts/${accountId}/transactions?type=ORDER_FILL&count=5`);
                 const list = document.getElementById('historyList');
                 list.innerHTML = '';
-                
-                if (!data.transactions || data.transactions.length === 0) {
-                    list.innerHTML = '履歴はありません';
-                    return;
-                }
+                if (!data.transactions || data.transactions.length === 0) return;
 
                 data.transactions.forEach(t => {
                     const time = new Date(parseFloat(t.time) * 1000).toLocaleTimeString();
                     const units = parseInt(t.units);
                     const typeStr = units > 0 ? '買' : '売';
                     const cssClass = units > 0 ? 'hist-buy' : 'hist-sell';
-                    const price = t.price;
-                    
                     list.innerHTML += `
                         <div class="history-item">
                             <span>${time}</span>
                             <span class="${cssClass}">${typeStr} ${Math.abs(units)}通貨</span>
-                            <span>@ ${price}</span>
+                            <span>@ ${t.price}</span>
                         </div>
                     `;
                 });
-            } catch (e) { console.error(e); }
+            } catch (e) {}
         }
 
-        async function fetchPricing() {
+        // 過去のローソク足（5秒足）を取得
+        async function fetchHistoricalCandles() {
+            try {
+                const data = await apiRequest(`/instruments/${instrument}/candles?granularity=S5&count=200`);
+                candlesData = data.candles.filter(c => c.complete).map(c => ({
+                    time: parseFloat(c.time) * 1000, // JSのミリ秒に変換
+                    o: parseFloat(c.mid.o),
+                    h: parseFloat(c.mid.h),
+                    l: parseFloat(c.mid.l),
+                    c: parseFloat(c.mid.c)
+                }));
+                drawChart();
+            } catch (e) { console.error("チャート過去データ取得エラー:", e); }
+        }
+
+        // 1秒ごとのリアルタイム更新ロジック
+        async function fetchPricingAndUpdateChart() {
             try {
                 const data = await apiRequest(`/accounts/${accountId}/pricing?instruments=${instrument}`);
                 if (data.prices && data.prices.length > 0) {
-                    const price = data.prices[0];
-                    document.getElementById('bidPrice').innerText = price.bids[0].price;
-                    document.getElementById('askPrice').innerText = price.asks[0].price;
+                    const priceData = data.prices[0];
+                    const currentPrice = parseFloat(priceData.bids[0].price);
+                    
+                    document.getElementById('bidPrice').innerText = priceData.bids[0].price;
+                    document.getElementById('askPrice').innerText = priceData.asks[0].price;
+
+                    // 自作チャートのリアルタイム構築
+                    const now = Date.now();
+                    if (candlesData.length > 0) {
+                        const lastCandle = candlesData[candlesData.length - 1];
+                        
+                        // 現在時刻が新しい5秒の枠に入ったか判定
+                        if (now - lastCandle.time >= CANDLE_INTERVAL_SEC * 1000) {
+                            // 新しいローソク足を追加
+                            candlesData.push({
+                                time: now,
+                                o: currentPrice,
+                                h: currentPrice,
+                                l: currentPrice,
+                                c: currentPrice
+                            });
+                            // データが増えすぎないように古いものを削除（最大300件維持）
+                            if (candlesData.length > 300) candlesData.shift();
+                        } else {
+                            // 既存の最新ローソク足を更新
+                            lastCandle.c = currentPrice;
+                            if (currentPrice > lastCandle.h) lastCandle.h = currentPrice;
+                            if (currentPrice < lastCandle.l) lastCandle.l = currentPrice;
+                        }
+                    }
+                    drawChart();
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) {}
+        }
+
+        // 自作チャートの描画エンジン（Canvas）
+        function drawChart() {
+            if (!ctx || candlesData.length === 0) return;
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // 画面クリア
+            ctx.clearRect(0, 0, w, h);
+
+            // スマホ画面で見やすいように直近100本を表示
+            const displayCount = Math.min(candlesData.length, 100);
+            const dataToDraw = candlesData.slice(-displayCount);
+
+            // 表示するデータ内の最高値と最安値を見つける
+            let minP = Infinity, maxP = -Infinity;
+            dataToDraw.forEach(c => {
+                if (c.h > maxP) maxP = c.h;
+                if (c.l < minP) minP = c.l;
+            });
+
+            // チャートの上下に少し余白（パディング）を持たせる
+            const padding = (maxP - minP) * 0.1;
+            maxP += padding; 
+            minP -= padding;
+            const range = (maxP - minP) || 0.01; // ゼロ割防止
+
+            const candleWidth = w / displayCount;
+
+            // ローソク足の描画
+            dataToDraw.forEach((c, i) => {
+                const x = i * candleWidth;
+                // 価格をY座標に変換（上が0なので反転させる）
+                const yO = h - ((c.o - minP) / range) * h;
+                const yC = h - ((c.c - minP) / range) * h;
+                const yH = h - ((c.h - minP) / range) * h;
+                const yL = h - ((c.l - minP) / range) * h;
+
+                const isUp = c.c >= c.o;
+                const color = isUp ? '#ef4444' : '#3b82f6'; // 赤（陽線）と青（陰線）
+
+                ctx.strokeStyle = color;
+                ctx.fillStyle = color;
+
+                // ヒゲを描画
+                ctx.beginPath();
+                ctx.moveTo(x + candleWidth / 2, yH);
+                ctx.lineTo(x + candleWidth / 2, yL);
+                ctx.stroke();
+
+                // 実体（ボディ）を描画
+                const bodyTop = Math.min(yO, yC);
+                let bodyHeight = Math.abs(yO - yC);
+                if (bodyHeight < 1) bodyHeight = 1; // 始値と終値が同じ場合は1pxの線にする
+                
+                // 実体に少し隙間を空けて描画（0.1 ~ 0.8）
+                ctx.fillRect(x + candleWidth * 0.1, bodyTop, candleWidth * 0.8, bodyHeight);
+            });
         }
 
         async function executeOrder(direction) {
             const units = parseInt(document.getElementById('lotSize').value);
             const orderUnits = direction === 'SELL' ? (units * -1).toString() : units.toString();
             
-            if (!confirm(`USD/JPY を ${units}通貨 ${direction === 'BUY' ? '買' : '売'} (成行) しますか？`)) return;
+            if (!confirm(`USD/JPY を ${units}通貨 ${direction === 'BUY' ? '買' : '売'} しますか？`)) return;
 
             const body = {
                 order: {
@@ -205,15 +318,14 @@
             try {
                 const result = await apiRequest(`/accounts/${accountId}/orders`, 'POST', body);
                 if (result.orderFillTransaction) {
-                    alert(`約定しました: @ ${result.orderFillTransaction.price}`);
+                    alert(`約定: @ ${result.orderFillTransaction.price}`);
                     fetchAccount();
                     fetchHistory();
                 } else {
-                    alert("注文が拒否されました。");
+                    alert("注文拒否。");
                 }
             } catch (e) {
-                alert("注文エラー: ブラウザのCORS制限によりブロックされました。");
-                console.error(e);
+                alert("注文エラー (CORS制限の可能性)");
             }
         }
 
