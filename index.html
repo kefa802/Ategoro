@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OANDA 自作チャート スキャルピング</title>
+    <title>OANDA LION-FX風 自作チャート</title>
     <style>
         body { margin: 0; padding: 0; font-family: -apple-system, sans-serif; background-color: #0b101e; color: #ffffff; overflow: hidden; }
         .container { display: flex; flex-direction: column; height: 100vh; }
@@ -13,48 +13,68 @@
         input[type="text"] { width: calc(100% - 20px); margin-bottom: 10px; padding: 10px; }
         .btn-save { width: 100%; padding: 12px; background-color: #4a5568; color: white; border: none; border-radius: 4px; font-weight: bold; }
         
-        .header { display: flex; justify-content: space-between; padding: 8px 15px; background-color: #161b26; border-bottom: 1px solid #2d3748; font-size: 14px; }
+        /* トップヘッダー（総合口座情報） */
+        .header { display: flex; justify-content: space-between; padding: 6px 10px; background-color: #161b26; border-bottom: 1px solid #2d3748; font-size: 13px; }
         .header span { font-weight: bold; color: #a0aec0; }
-        .header .val { color: #ffffff; font-size: 16px; }
+        .header .val { color: #ffffff; font-size: 14px; }
 
         /* チャートエリア */
-        #chartWrapper { height: 30vh; min-height: 180px; width: 100%; border-bottom: 1px solid #2d3748; position: relative; background: #0b101e; }
+        #chartWrapper { height: 28vh; min-height: 160px; width: 100%; border-bottom: 1px solid #2d3748; position: relative; background: #0b101e; }
         canvas { display: block; width: 100%; height: 100%; touch-action: none; }
         #marketClosedLabel { position: absolute; top: 10px; left: 10px; background: rgba(220, 38, 38, 0.8); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: none; }
 
-        /* 手動注文パネル */
-        .order-panel { padding: 10px 15px; background-color: #161b26; border-bottom: 1px solid #2d3748; }
-        .pos-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px dashed #2d3748; }
-        .btn-close-all { background: #475569; color: white; border: none; padding: 6px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; }
-        .btn-close-all:active { opacity: 0.8; }
+        /* LION FX風 分割ポジションダッシュボード */
+        .pos-dashboard { display: flex; background-color: #161b26; border-bottom: 1px solid #2d3748; }
+        .pos-side { flex: 1; padding: 8px; display: flex; flex-direction: column; justify-content: space-between; }
+        .pos-sell { border-right: 1px solid #2d3748; background: linear-gradient(to bottom, rgba(59, 130, 246, 0.1), transparent); }
+        .pos-buy { background: linear-gradient(to bottom, rgba(239, 68, 68, 0.1), transparent); }
         
-        .lot-selector { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 14px; }
-        .lot-selector select { background: #2d3748; color: white; border: 1px solid #4a5568; padding: 8px; border-radius: 4px; }
+        .pos-header-title { text-align: center; font-size: 14px; font-weight: bold; margin-bottom: 5px; }
+        .pos-sell .pos-header-title { color: #60a5fa; }
+        .pos-buy .pos-header-title { color: #f87171; }
+        
+        .pos-stats { font-size: 12px; margin-bottom: 8px; }
+        .pos-stats-row { display: flex; justify-content: space-between; margin-bottom: 3px; }
+        .pos-stats-row .label { color: #a0aec0; }
+        .pos-stats-row .val { font-weight: bold; }
+        
+        .btn-close-side { width: 100%; padding: 8px 0; border: none; border-radius: 4px; font-weight: bold; color: white; cursor: pointer; }
+        .btn-close-side:active { opacity: 0.8; }
+        .btn-close-sell { background-color: #3b82f6; } /* 青 */
+        .btn-close-buy { background-color: #ef4444; } /* 赤 */
+        .btn-close-side:disabled { background: #475569; color: #94a3b8; cursor: not-allowed; }
+
+        /* 手動注文パネル */
+        .order-panel { padding: 8px 10px; background-color: #161b26; border-bottom: 1px solid #2d3748; }
+        .lot-selector { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; }
+        .lot-selector select { background: #2d3748; color: white; border: 1px solid #4a5568; padding: 6px; border-radius: 4px; }
         
         .trade-buttons { display: flex; justify-content: space-between; gap: 10px; }
-        .btn-trade { flex: 1; padding: 12px 10px; border: none; border-radius: 8px; font-size: 20px; font-weight: bold; color: white; display: flex; flex-direction: column; align-items: center; cursor: pointer; }
-        .btn-sell { background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%); }
-        .btn-buy { background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%); }
+        .btn-trade { flex: 1; padding: 12px 10px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; color: white; display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+        .btn-sell-big { background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%); }
+        .btn-buy-big { background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%); }
         .btn-trade:active { opacity: 0.8; transform: translateY(2px); }
-        .btn-label { font-size: 12px; margin-bottom: 2px; opacity: 0.9; }
+        .btn-label { font-size: 11px; margin-bottom: 2px; opacity: 0.9; }
         .btn-price { font-size: 24px; letter-spacing: 1px; }
 
         /* 自動売買パネル */
-        .auto-panel { padding: 10px 15px; background-color: #1e293b; border-bottom: 1px solid #2d3748; }
-        .auto-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 14px; }
+        .auto-panel { padding: 8px 10px; background-color: #1e293b; border-bottom: 1px solid #2d3748; }
+        .auto-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; }
         .auto-controls { display: flex; gap: 10px; }
-        .btn-auto { flex: 1; padding: 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; }
-        .btn-auto.start { background: #10b981; } /* 緑 */
-        .btn-auto.stop { background: #ef4444; } /* 赤 */
+        .btn-auto { flex: 1; padding: 8px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; font-size: 13px;}
+        .btn-auto.start { background: #10b981; }
+        .btn-auto.stop { background: #ef4444; }
         .btn-auto:disabled { background: #475569; color: #94a3b8; cursor: not-allowed; opacity: 0.5; }
         
         /* 履歴パネル */
-        .history-panel { flex: 1; padding: 10px 15px; background-color: #0b101e; font-size: 12px; overflow-y: auto; }
-        .history-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1a202c; }
+        .history-panel { flex: 1; padding: 5px 10px; background-color: #0b101e; font-size: 11px; overflow-y: auto; }
+        .history-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #1a202c; }
         .hist-sell { color: #60a5fa; font-weight: bold; }
         .hist-buy { color: #f87171; font-weight: bold; }
         
         .hidden { display: none !important; }
+        .text-green { color: #4ade80 !important; }
+        .text-red { color: #f87171 !important; }
     </style>
 </head>
 <body>
@@ -66,8 +86,8 @@
 
     <div id="mainUI" class="container hidden">
         <div class="header">
-            <div><span>残高:</span> <span id="balanceVal" class="val">--</span><span> 円</span></div>
-            <div><span>含み損益:</span> <span id="plVal" class="val">--</span><span> 円</span></div>
+            <div><span>総残高:</span> <span id="balanceVal" class="val">--</span><span> 円</span></div>
+            <div><span>総含み損益:</span> <span id="plVal" class="val">--</span><span> 円</span></div>
         </div>
 
         <div id="chartWrapper">
@@ -75,13 +95,29 @@
             <canvas id="myCanvas"></canvas>
         </div>
 
-        <div class="order-panel">
-            <!-- ① ポジション表示と ② 全決済ボタン -->
-            <div class="pos-row">
-                <span>保有ポジション: <strong id="posVal" style="font-size: 16px;">0 通貨</strong></span>
-                <button id="btnCloseAll" class="btn-close-all">全決済</button>
+        <div class="pos-dashboard">
+            <div class="pos-side pos-sell">
+                <div class="pos-header-title">売 ポジション</div>
+                <div class="pos-stats">
+                    <div class="pos-stats-row"><span class="label">数量</span> <span id="shortUnits" class="val">0</span></div>
+                    <div class="pos-stats-row"><span class="label">平均建値</span> <span id="shortAvg" class="val">---.---</span></div>
+                    <div class="pos-stats-row"><span class="label">評価損益</span> <span id="shortPL" class="val">0 円</span></div>
+                </div>
+                <button id="btnSideCloseShort" class="btn-close-side btn-close-sell" disabled>売 全決済</button>
             </div>
 
+            <div class="pos-side pos-buy">
+                <div class="pos-header-title">買 ポジション</div>
+                <div class="pos-stats">
+                    <div class="pos-stats-row"><span class="label">数量</span> <span id="longUnits" class="val">0</span></div>
+                    <div class="pos-stats-row"><span class="label">平均建値</span> <span id="longAvg" class="val">---.---</span></div>
+                    <div class="pos-stats-row"><span class="label">評価損益</span> <span id="longPL" class="val">0 円</span></div>
+                </div>
+                <button id="btnSideCloseLong" class="btn-close-side btn-close-buy" disabled>買 全決済</button>
+            </div>
+        </div>
+
+        <div class="order-panel">
             <div class="lot-selector">
                 <span>通貨ペア: <strong>USD/JPY</strong></span>
                 <div>
@@ -94,24 +130,23 @@
                 </div>
             </div>
             <div class="trade-buttons">
-                <button id="btnSell" class="btn-trade btn-sell">
+                <button id="btnSell" class="btn-trade btn-sell-big">
                     <span class="btn-label">BID | 売</span>
                     <span id="bidPrice" class="btn-price">---.---</span>
                 </button>
-                <button id="btnBuy" class="btn-trade btn-buy">
+                <button id="btnBuy" class="btn-trade btn-buy-big">
                     <span class="btn-label">ASK | 買</span>
                     <span id="askPrice" class="btn-price">---.---</span>
                 </button>
             </div>
         </div>
 
-        <!-- ③ 自動売買コントロールパネル -->
         <div class="auto-panel">
             <div class="auto-header">
                 <span style="font-weight:bold; color:#cbd5e1;">🤖 自動売買</span>
                 <div>
-                    ロット: <input type="number" id="autoLot" min="0.01" max="1.00" step="0.01" value="0.01" style="width: 60px; text-align: center;"> 
-                    <span style="color: #a0aec0; font-size: 11px;">(1.00=10万通貨)</span>
+                    ロット: <input type="number" id="autoLot" min="0.01" max="1.00" step="0.01" value="0.01" style="width: 50px; text-align: center; padding: 4px;"> 
+                    <span style="color: #a0aec0; font-size: 10px;">(1.00=10万)</span>
                 </div>
             </div>
             <div class="auto-controls">
@@ -121,7 +156,7 @@
         </div>
 
         <div class="history-panel">
-            <div style="color: #a0aec0; margin-bottom: 5px; position: sticky; top: 0; background: #0b101e; padding-bottom: 5px;">直近の取引履歴</div>
+            <div style="color: #a0aec0; margin-bottom: 5px; position: sticky; top: 0; background: #0b101e; padding-bottom: 2px;">直近の取引履歴</div>
             <div id="historyList">履歴はありません</div>
         </div>
     </div>
@@ -151,9 +186,10 @@
         let isDragging = false;
         let lastTouchX = 0;
 
-        // ポジションと自動売買の管理変数
-        let currentNetPosition = 0; // 保有ポジション（プラスは買、マイナスは売）
-        let isAutoTrading = false;  // 自動売買の稼働フラグ
+        // ポジション管理
+        let currentLongUnits = 0;
+        let currentShortUnits = 0;
+        let isAutoTrading = false;
 
         window.onload = () => {
             apiToken = localStorage.getItem('oanda_lion_key');
@@ -182,6 +218,7 @@
             drawChart();
         }
 
+        // タッチイベント（ズーム・スクロール）
         function setupTouchEvents() {
             canvas.addEventListener('touchstart', (e) => {
                 if (e.touches.length === 1) {
@@ -232,7 +269,6 @@
             canvas.addEventListener('touchend', () => { isDragging = false; initialPinchDist = null; });
         }
 
-        // 自動売買ボタンのイベント設定
         function setupAutoTradeEvents() {
             const btnStart = document.getElementById('btnAutoStart');
             const btnStop = document.getElementById('btnAutoStop');
@@ -255,64 +291,71 @@
 
         async function initApp() {
             await fetchAccount();
-            await fetchPosition(); // 初期ポジション取得
+            await fetchPosition();
             await fetchHistory();
             await fetchHistoricalCandles();
             
             setInterval(fetchPricingAndUpdateChart, 1000);
             setInterval(fetchAccount, 5000);
-            setInterval(fetchPosition, 5000); // 5秒ごとにポジション情報を同期
+            setInterval(fetchPosition, 3000); // ポジション更新を少し早める
         }
 
         async function apiRequest(endpoint, method = 'GET', body = null) {
             const options = { method: method, headers: { 'Authorization': `Bearer ${apiToken}`, 'Accept-Datetime-Format': 'UNIX', 'Content-Type': 'application/json' } };
             if (body) options.body = JSON.stringify(body);
             const response = await fetch(`${baseUrl}${endpoint}`, options);
-            
-            // ポジションが存在しない時の404エラーは正常なので握りつぶす
             if (!response.ok && response.status !== 404) throw new Error(`API Error: ${response.status}`);
             return response.status === 404 ? null : await response.json();
         }
 
+        // 総合口座情報
         async function fetchAccount() {
             try {
                 const data = await apiRequest(`/accounts/${accountId}/summary`);
                 if(!data) return;
                 const balance = Math.floor(parseFloat(data.account.balance)).toLocaleString();
-                const pl = Math.floor(parseFloat(data.account.unrealizedPL)).toLocaleString();
+                const pl = Math.floor(parseFloat(data.account.unrealizedPL));
                 document.getElementById('balanceVal').innerText = balance;
-                document.getElementById('plVal').innerText = pl;
-                document.getElementById('plVal').style.color = parseFloat(data.account.unrealizedPL) >= 0 ? '#4ade80' : '#f87171';
+                document.getElementById('plVal').innerText = pl.toLocaleString();
+                document.getElementById('plVal').className = pl >= 0 ? 'val text-green' : 'val text-red';
             } catch (e) {}
         }
 
-        // ① 現在のポジションを取得して表示する関数
+        // ① 左右分割されたポジション情報を取得・表示
         async function fetchPosition() {
             try {
                 const data = await apiRequest(`/accounts/${accountId}/positions/${instrument}`);
-                const posElem = document.getElementById('posVal');
                 
-                if (!data || !data.position) {
-                    currentNetPosition = 0;
-                    posElem.innerText = `0 通貨`;
-                    posElem.style.color = '#ffffff';
-                    return;
+                // 初期化
+                currentLongUnits = 0; currentShortUnits = 0;
+                let longAvg = 0, longPL = 0;
+                let shortAvg = 0, shortPL = 0;
+
+                if (data && data.position) {
+                    currentLongUnits = parseInt(data.position.long.units) || 0;
+                    longAvg = parseFloat(data.position.long.averagePrice) || 0;
+                    longPL = parseFloat(data.position.long.unrealizedPL) || 0;
+
+                    // OANDAはショートのunitsをマイナスで返すため絶対値をとる
+                    currentShortUnits = Math.abs(parseInt(data.position.short.units) || 0);
+                    shortAvg = parseFloat(data.position.short.averagePrice) || 0;
+                    shortPL = parseFloat(data.position.short.unrealizedPL) || 0;
                 }
 
-                const longQty = parseInt(data.position.long.units) || 0;
-                const shortQty = parseInt(data.position.short.units) || 0;
-                currentNetPosition = longQty + shortQty; // shortはマイナス値で返ってくる
+                // 買(Long)UI更新
+                document.getElementById('longUnits').innerText = currentLongUnits.toLocaleString();
+                document.getElementById('longAvg').innerText = currentLongUnits > 0 ? longAvg.toFixed(3) : "---.---";
+                document.getElementById('longPL').innerText = `${Math.floor(longPL).toLocaleString()} 円`;
+                document.getElementById('longPL').className = longPL >= 0 ? 'val text-green' : 'val text-red';
+                document.getElementById('btnSideCloseLong').disabled = (currentLongUnits === 0);
 
-                if (currentNetPosition > 0) {
-                    posElem.innerText = `買 ${currentNetPosition.toLocaleString()} 通貨`;
-                    posElem.style.color = '#ef4444';
-                } else if (currentNetPosition < 0) {
-                    posElem.innerText = `売 ${Math.abs(currentNetPosition).toLocaleString()} 通貨`;
-                    posElem.style.color = '#3b82f6';
-                } else {
-                    posElem.innerText = `0 通貨`;
-                    posElem.style.color = '#ffffff';
-                }
+                // 売(Short)UI更新
+                document.getElementById('shortUnits').innerText = currentShortUnits.toLocaleString();
+                document.getElementById('shortAvg').innerText = currentShortUnits > 0 ? shortAvg.toFixed(3) : "---.---";
+                document.getElementById('shortPL').innerText = `${Math.floor(shortPL).toLocaleString()} 円`;
+                document.getElementById('shortPL').className = shortPL >= 0 ? 'val text-green' : 'val text-red';
+                document.getElementById('btnSideCloseShort').disabled = (currentShortUnits === 0);
+
             } catch (e) { console.error(e); }
         }
 
@@ -395,7 +438,6 @@
                         }
                     }
 
-                    // ③ 自動売買の判定ロジック呼び出し
                     if (isAutoTrading) evaluateAutoTradeLogic(currentPrice);
 
                     if (scrollOffset === 0) {
@@ -406,14 +448,9 @@
             } catch (e) {}
         }
 
-        // 自動売買のロジック（※現状は仮の関数。ここにMAクロスなどの条件を記述します）
+        // 自動売買ロジック用
         async function evaluateAutoTradeLogic(currentPrice) {
-            // 例: ポジションがなく、ある条件を満たした場合に注文を出す
-            // if (currentNetPosition === 0 && (買い条件)) {
-            //     const lot = parseFloat(document.getElementById('autoLot').value);
-            //     const units = Math.floor(lot * 100000); // 1.00ロット=10万通貨
-            //     executeOrder('BUY', units, true);
-            // }
+            // ここにロジックを記載します
         }
 
         function calcIndicators() {
@@ -436,10 +473,8 @@
 
         function drawChart() {
             if (!ctx || candlesData.length === 0) return;
-            const w = canvas.width;
-            const h = canvas.height;
-            const chartW = w - yAxisWidth; 
-            const chartH = h - xAxisHeight;
+            const w = canvas.width; const h = canvas.height;
+            const chartW = w - yAxisWidth; const chartH = h - xAxisHeight;
 
             ctx.clearRect(0, 0, w, h);
 
@@ -451,17 +486,14 @@
 
             let minP = Infinity, maxP = -Infinity;
             dataToDraw.forEach(c => {
-                if (c.h > maxP) maxP = c.h;
-                if (c.l < minP) minP = c.l;
-                if (c.upper && c.upper > maxP) maxP = c.upper;
-                if (c.lower && c.lower < minP) minP = c.lower;
+                if (c.h > maxP) maxP = c.h; if (c.l < minP) minP = c.l;
+                if (c.upper && c.upper > maxP) maxP = c.upper; if (c.lower && c.lower < minP) minP = c.lower;
             });
 
             const midP = (maxP + minP) / 2;
             const baseRange = (maxP - minP) || 0.01;
             const zoomedRange = baseRange * yScaleMultiplier;
-            maxP = midP + (zoomedRange / 2) * 1.1; 
-            minP = midP - (zoomedRange / 2) * 1.1;
+            maxP = midP + (zoomedRange / 2) * 1.1; minP = midP - (zoomedRange / 2) * 1.1;
             const finalRange = maxP - minP;
 
             const candleWidth = chartW / dataToDraw.length;
@@ -469,16 +501,14 @@
 
             ctx.lineWidth = 1;
             ['upper', 'lower'].forEach(band => {
-                ctx.beginPath();
-                ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+                ctx.beginPath(); ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
                 dataToDraw.forEach((c, i) => {
                     if(c[band]) { const x = i * candleWidth + candleWidth / 2; i === 0 ? ctx.moveTo(x, getY(c[band])) : ctx.lineTo(x, getY(c[band])); }
                 });
                 ctx.stroke();
             });
 
-            ctx.beginPath();
-            ctx.strokeStyle = 'rgba(250, 204, 21, 0.8)';
+            ctx.beginPath(); ctx.strokeStyle = 'rgba(250, 204, 21, 0.8)';
             dataToDraw.forEach((c, i) => {
                 if(c.sma) { const x = i * candleWidth + candleWidth / 2; i === 0 ? ctx.moveTo(x, getY(c.sma)) : ctx.lineTo(x, getY(c.sma)); }
             });
@@ -488,7 +518,6 @@
                 const x = i * candleWidth;
                 const yO = getY(c.o); const yC = getY(c.c); const yH = getY(c.h); const yL = getY(c.l);
                 const color = c.c >= c.o ? '#ef4444' : '#3b82f6';
-
                 ctx.strokeStyle = color; ctx.fillStyle = color;
                 ctx.beginPath(); ctx.moveTo(x + candleWidth / 2, yH); ctx.lineTo(x + candleWidth / 2, yL); ctx.stroke();
                 const bodyTop = Math.min(yO, yC);
@@ -499,20 +528,14 @@
             txHistoryData.forEach(tx => {
                 const txTime = parseFloat(tx.time) * 1000;
                 const cIndex = dataToDraw.findIndex(c => Math.abs(c.time - txTime) <= CANDLE_INTERVAL_SEC * 1000);
-                
                 if (cIndex !== -1) {
-                    const c = dataToDraw[cIndex];
-                    const x = cIndex * candleWidth + candleWidth / 2;
-                    const units = parseInt(tx.units);
-                    
+                    const c = dataToDraw[cIndex]; const x = cIndex * candleWidth + candleWidth / 2; const units = parseInt(tx.units);
                     ctx.beginPath();
                     if (units > 0) {
-                        ctx.fillStyle = '#ef4444';
-                        const y = getY(c.l) + 10;
+                        ctx.fillStyle = '#ef4444'; const y = getY(c.l) + 10;
                         ctx.moveTo(x, y - 5); ctx.lineTo(x - 5, y + 5); ctx.lineTo(x + 5, y + 5);
                     } else {
-                        ctx.fillStyle = '#3b82f6';
-                        const y = getY(c.h) - 10;
+                        ctx.fillStyle = '#3b82f6'; const y = getY(c.h) - 10;
                         ctx.moveTo(x, y + 5); ctx.lineTo(x - 5, y - 5); ctx.lineTo(x + 5, y - 5);
                     }
                     ctx.fill();
@@ -536,15 +559,9 @@
             }
         }
 
-        // 成行注文実行 (手動用と自動用の兼任)
         async function executeOrder(direction, forceUnits = null, isAuto = false) {
-            let units;
-            if (forceUnits) {
-                units = forceUnits; // 自動売買時
-            } else {
-                units = parseInt(document.getElementById('lotSize').value); // 手動時
-                if (!confirm(`USD/JPY を ${units}通貨 ${direction === 'BUY' ? '買' : '売'} しますか？`)) return;
-            }
+            let units = forceUnits || parseInt(document.getElementById('lotSize').value);
+            if (!isAuto && !confirm(`USD/JPY を ${units}通貨 ${direction === 'BUY' ? '買' : '売'} しますか？`)) return;
 
             const orderUnits = direction === 'SELL' ? (units * -1).toString() : units.toString();
             const body = { order: { units: orderUnits, instrument: instrument, timeInForce: "FOK", type: "MARKET", positionFill: "DEFAULT" } };
@@ -557,39 +574,37 @@
                 } else {
                     if(!isAuto) alert("注文拒否。");
                 }
-            } catch (e) {
-                if(!isAuto) alert("注文エラー (CORS制限の可能性)");
-            }
+            } catch (e) { if(!isAuto) alert("注文エラー (CORS制限の可能性)"); }
         }
 
-        // ② 全決済の実行
-        async function executeCloseAll() {
-            if (currentNetPosition === 0) {
-                alert("決済するポジションがありません。");
-                return;
-            }
-            if (!confirm(`現在のポジション (${currentNetPosition > 0 ? '買' : '売'} ${Math.abs(currentNetPosition)}通貨) をすべて成行決済しますか？`)) return;
-
+        // ② 独立した全決済処理（引数で方向を指定）
+        async function executeSideClose(side) {
             const body = {};
-            if (currentNetPosition > 0) body.longUnits = "ALL";
-            else body.shortUnits = "ALL";
+            if (side === 'LONG') {
+                if (currentLongUnits === 0) return;
+                if (!confirm(`買ポジション (${currentLongUnits}通貨) をすべて成行決済しますか？`)) return;
+                body.longUnits = "ALL";
+            } else if (side === 'SHORT') {
+                if (currentShortUnits === 0) return;
+                if (!confirm(`売ポジション (${currentShortUnits}通貨) をすべて成行決済しますか？`)) return;
+                body.shortUnits = "ALL";
+            }
 
             try {
                 const result = await apiRequest(`/accounts/${accountId}/positions/${instrument}/close`, 'PUT', body);
                 if (result && (result.longOrderFillTransaction || result.shortOrderFillTransaction)) {
-                    alert("全決済が完了しました。");
+                    alert("決済が完了しました。");
                     fetchAccount(); fetchPosition(); fetchHistory();
                 } else {
                     alert("決済が拒否されました。");
                 }
-            } catch (e) {
-                alert("決済エラー (CORS制限の可能性)");
-            }
+            } catch (e) { alert("決済エラー (CORS制限の可能性)"); }
         }
 
         document.getElementById('btnSell').addEventListener('click', () => executeOrder('SELL'));
         document.getElementById('btnBuy').addEventListener('click', () => executeOrder('BUY'));
-        document.getElementById('btnCloseAll').addEventListener('click', executeCloseAll);
+        document.getElementById('btnSideCloseLong').addEventListener('click', () => executeSideClose('LONG'));
+        document.getElementById('btnSideCloseShort').addEventListener('click', () => executeSideClose('SHORT'));
 
     </script>
 </body>
