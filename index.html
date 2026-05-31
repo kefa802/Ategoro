@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OANDA API テスト（自動記憶版）</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .card { border: 1px solid #ccc; padding: 15px; border-radius: 8px; max-width: 400px; }
+        .settings-area { margin-bottom: 20px; padding: 10px; background-color: #f0f8ff; border-radius: 4px; }
+        input[type="text"] { width: 90%; padding: 8px; margin-bottom: 10px; }
+        button { padding: 10px 15px; cursor: pointer; background-color: #0056b3; color: white; border: none; border-radius: 4px; }
+        button:hover { background-color: #004494; }
+        .btn-clear { background-color: #dc3545; }
+        .btn-clear:hover { background-color: #c82333; }
+        #result { margin-top: 15px; font-weight: bold; white-space: pre-line; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>OANDA 口座サマリー</h2>
+        
+        <div id="settingsArea" class="settings-area">
+            <label>APIキーを登録（初回のみ）:</label>
+            <input type="text" id="apiKeyInput" placeholder="APIキーを貼り付け">
+            <button id="saveBtn">キーをブラウザに保存</button>
+        </div>
+
+        <div>
+            <button id="fetchBtn">残高を取得する</button>
+            <button id="clearBtn" class="btn-clear" style="display:none;">キーを削除</button>
+        </div>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const accountId = "001-009-11732183-002";
+        const baseUrl = "https://api-fxtrade.oanda.com/v3";
+        
+        // 画面読み込み時の処理：保存されたキーがあるかチェック
+        window.onload = () => {
+            const savedKey = localStorage.getItem('oanda_api_key');
+            if (savedKey) {
+                // キーがあれば設定エリアを隠し、削除ボタンを表示
+                document.getElementById('settingsArea').style.display = 'none';
+                document.getElementById('clearBtn').style.display = 'inline-block';
+                document.getElementById('result').innerText = "APIキー読込完了。ボタンを押してください。";
+            } else {
+                document.getElementById('result').innerText = "まずはAPIキーを保存してください。";
+            }
+        };
+
+        // 「キーをブラウザに保存」ボタンの処理
+        document.getElementById('saveBtn').addEventListener('click', () => {
+            const inputKey = document.getElementById('apiKeyInput').value.trim();
+            if (inputKey) {
+                // ブラウザの内部ストレージに保存
+                localStorage.setItem('oanda_api_key', inputKey);
+                alert("ブラウザにAPIキーを保存しました！次回からは入力不要です。");
+                location.reload(); // 画面を更新して状態を反映
+            }
+        });
+
+        // 「キーを削除」ボタンの処理
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            localStorage.removeItem('oanda_api_key');
+            alert("保存されていたAPIキーを削除しました。");
+            location.reload();
+        });
+
+        // 「残高を取得する」ボタンの処理
+        document.getElementById('fetchBtn').addEventListener('click', async () => {
+            const apiToken = localStorage.getItem('oanda_api_key');
+            
+            if (!apiToken) {
+                alert("APIキーが設定されていません。");
+                return;
+            }
+
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = "";
+            resultDiv.innerText = "通信中...";
+
+            const url = `${baseUrl}/accounts/${accountId}/summary`;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${apiToken}`,
+                        'Accept-Datetime-Format': 'RFC3339',
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTPエラー: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                const balance = data.account.balance;
+                const unrealizedPL = data.account.unrealizedPL;
+                const marginAvailable = data.account.marginAvailable;
+
+                resultDiv.innerText = `残高: ${balance} 円\n含み損益: ${unrealizedPL} 円\n取引可能額: ${marginAvailable} 円`;
+
+            } catch (error) {
+                console.error("エラー詳細:", error);
+                resultDiv.className = "error";
+                resultDiv.innerText = `データの取得に失敗しました。\n（※ブラウザのCORS制限によりブロックされている可能性があります。）`;
+            }
+        });
+    </script>
+
+</body>
+</html>
