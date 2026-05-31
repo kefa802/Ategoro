@@ -88,7 +88,7 @@
             
             <div class="input-group">
                 <label>口座ID (Account ID)</label>
-                <input type="text" id="accountIdInput" placeholder="例: 001-009-11732183-002">
+                <input type="text" id="accountIdInput" placeholder="例: 001-001-1234567-001">
                 <label class="checkbox-group">
                     <input type="checkbox" id="saveIdCheck"> 口座IDを保存する
                 </label>
@@ -135,7 +135,7 @@
                     <div class="pos-stats-row"><span class="label">数量</span> <span id="shortUnits" class="val">0</span></div>
                     <div class="pos-stats-row"><span class="label">平均建値</span> <span id="shortAvg" class="val">---.---</span></div>
                     <div class="pos-stats-row"><span class="label">損益(円)</span> <span id="shortPL" class="val">0</span></div>
-                    <div class="pos-stats-row"><span class="label">Pips</span> <span id="shortPips" class="val text-gray">0.0</span></div>
+                    <div class="pos-stats-row"><span class="label">Pips</span> <span id="shortPips" class="val text-gray">0</span></div>
                 </div>
             </div>
 
@@ -148,7 +148,7 @@
                     <div class="pos-stats-row"><span class="label">数量</span> <span id="longUnits" class="val">0</span></div>
                     <div class="pos-stats-row"><span class="label">平均建値</span> <span id="longAvg" class="val">---.---</span></div>
                     <div class="pos-stats-row"><span class="label">損益(円)</span> <span id="longPL" class="val">0</span></div>
-                    <div class="pos-stats-row"><span class="label">Pips</span> <span id="longPips" class="val text-gray">0.0</span></div>
+                    <div class="pos-stats-row"><span class="label">Pips</span> <span id="longPips" class="val text-gray">0</span></div>
                 </div>
             </div>
         </div>
@@ -226,7 +226,6 @@
 
         let priceInterval, accountInterval, posInterval;
 
-        // アプリ起動時の処理（保存データの読み込み）
         window.onload = () => {
             const savedId = localStorage.getItem('oanda_account_id');
             const savedToken = localStorage.getItem('oanda_api_token');
@@ -241,7 +240,6 @@
             }
         };
 
-        // ログインボタンの処理
         document.getElementById('loginBtn').addEventListener('click', () => {
             const idInput = document.getElementById('accountIdInput').value.trim();
             const tokenInput = document.getElementById('apiTokenInput').value.trim();
@@ -251,7 +249,6 @@
                 return;
             }
             
-            // チェックボックスの状態に応じて保存・削除
             if (document.getElementById('saveIdCheck').checked) {
                 localStorage.setItem('oanda_account_id', idInput);
             } else {
@@ -267,17 +264,14 @@
             accountId = idInput;
             apiToken = tokenInput;
             
-            // 画面の切り替え
             document.getElementById('loginArea').classList.add('hidden');
             document.getElementById('mainUI').classList.remove('hidden');
             
-            // UIの初期化
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
             setupTouchEvents();
             setupAutoTradeEvents();
             
-            // 通貨ペア変更イベント
             document.getElementById('instrumentSelector').addEventListener('change', (e) => {
                 instrument = e.target.value;
                 resetDataAndReload();
@@ -496,27 +490,27 @@
                     document.getElementById('bidPrice').innerText = priceData.bids[0].price;
                     document.getElementById('askPrice').innerText = priceData.asks[0].price;
 
-                    // Pip計算 (JPYペアとそれ以外で桁数を自動判定)
+                    // Pip計算 (小数点切り捨て)
                     const isJPY = instrument.includes('JPY');
                     const pipMultiplier = isJPY ? 100 : 10000;
 
                     if (currentShortUnits > 0 && currentShortAvg > 0) {
                         const pips = (currentShortAvg - askPrice) * pipMultiplier;
                         const pElem = document.getElementById('shortPips');
-                        pElem.innerText = `${pips.toFixed(1)}`;
+                        pElem.innerText = `${Math.trunc(pips)}`;
                         pElem.className = pips >= 0 ? 'val text-green' : 'val text-red';
                     } else {
-                        document.getElementById('shortPips').innerText = `0.0`;
+                        document.getElementById('shortPips').innerText = `0`;
                         document.getElementById('shortPips').className = 'val text-gray';
                     }
 
                     if (currentLongUnits > 0 && currentLongAvg > 0) {
                         const pips = (bidPrice - currentLongAvg) * pipMultiplier;
                         const pElem = document.getElementById('longPips');
-                        pElem.innerText = `${pips.toFixed(1)}`;
+                        pElem.innerText = `${Math.trunc(pips)}`;
                         pElem.className = pips >= 0 ? 'val text-green' : 'val text-red';
                     } else {
-                        document.getElementById('longPips').innerText = `0.0`;
+                        document.getElementById('longPips').innerText = `0`;
                         document.getElementById('longPips').className = 'val text-gray';
                     }
 
