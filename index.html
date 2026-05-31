@@ -16,9 +16,12 @@
         .header span { font-weight: bold; color: #a0aec0; }
         .header .val { color: #ffffff; font-size: 16px; }
 
-        /* ① チャートは画面の約1/4 (25vh) に設定 */
-        #chartWrapper { height: 25vh; min-height: 150px; width: 100%; border-bottom: 1px solid #2d3748; position: relative; background: #0b101e; }
-        canvas { display: block; width: 100%; height: 100%; touch-action: none; /* ピンチ操作時のブラウザスクロールを防止 */ }
+        /* チャートエリア */
+        #chartWrapper { height: 30vh; min-height: 180px; width: 100%; border-bottom: 1px solid #2d3748; position: relative; background: #0b101e; }
+        canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+        
+        /* 休場時のオーバーレイ */
+        #marketClosedLabel { position: absolute; top: 10px; left: 10px; background: rgba(220, 38, 38, 0.8); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: none; }
 
         .order-panel { padding: 10px 15px; background-color: #161b26; border-bottom: 1px solid #2d3748; }
         .lot-selector { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 14px; }
@@ -32,7 +35,6 @@
         .btn-label { font-size: 12px; margin-bottom: 5px; opacity: 0.9; }
         .btn-price { font-size: 24px; letter-spacing: 1px; }
 
-        /* ③ 取引履歴は残りスペースを全て使い、スクロール可能に */
         .history-panel { flex: 1; padding: 10px 15px; background-color: #0b101e; font-size: 12px; overflow-y: auto; }
         .history-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1a202c; }
         .hist-sell { color: #60a5fa; font-weight: bold; }
@@ -55,6 +57,7 @@
         </div>
 
         <div id="chartWrapper">
+            <div id="marketClosedLabel">市場休場中</div>
             <canvas id="myCanvas"></canvas>
         </div>
 
@@ -83,7 +86,7 @@
         </div>
 
         <div class="history-panel">
-            <div style="color: #a0aec0; margin-bottom: 5px; position: sticky; top: 0; background: #0b101e; padding-bottom: 5px;">直近の取引履歴 (スクロール可)</div>
+            <div style="color: #a0aec0; margin-bottom: 5px; position: sticky; top: 0; background: #0b101e; padding-bottom: 5px;">直近の取引履歴</div>
             <div id="historyList">履歴はありません</div>
         </div>
     </div>
@@ -94,20 +97,26 @@
         const instrument = "USD_JPY";
         let apiToken = "";
         
-        // チャート制御変数
+        // チャート・データ用変数
         let candlesData = [];
+        let txHistoryData = []; // 取引履歴（マーカー用）
         const canvas = document.getElementById('myCanvas');
         const ctx = canvas.getContext('2d');
         const CANDLE_INTERVAL_SEC = 5; 
         
-        // ④⑤ ズーム・表示制御用の変数
-        let displayCount = 60; // X軸: デフォルト表示本数
-        let yScaleMultiplier = 1.0; // Y軸: 縦の拡大率
+        // 描画・ズーム・スクロール用変数
+        let displayCount = 200; // 初期表示本数（200本）
+        let yScaleMultiplier = 1.0; 
+        let scrollOffset = 0; // 横スクロールのオフセット（0=最新）
+        
         const yAxisWidth = 55; // 価格軸の幅
+        const xAxisHeight = 20; // 時刻軸の高さ
         
         let initialPinchDist = null;
-        let initialDisplayCount = 60;
+        let initialDisplayCount = 200;
         let initialYScale = 1.0;
+        let isDragging = false;
+        let lastTouchX = 0;
 
         window.onload = () => {
             apiToken = localStorage.getItem('oanda_lion_key');
@@ -116,7 +125,7 @@
                 document.getElementById('mainUI').classList.remove('hidden');
                 resizeCanvas();
                 window.addEventListener('resize', resizeCanvas);
-                setupTouchEvents(); // タッチイベントの初期化
+                setupTouchEvents();
                 initApp();
             }
         };
@@ -135,10 +144,14 @@
             drawChart();
         }
 
-        // ④⑤ タッチ（ピンチ）イベントの処理
+        // ③④ タッチイベント（スクロールとズーム）
         function setupTouchEvents() {
             canvas.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 2) {
+                if (e.touches.length === 1) {
+                    isDragging = true;
+                    lastTouchX = e.touches[0].clientX;
+                } else if (e.touches.length === 2) {
+                    isDragging = false;
                     const dx = e.touches[0].clientX - e.touches[1].clientX;
                     const dy = e.touches[0].clientY - e.touches[1].clientY;
                     initialPinchDist = Math.sqrt(dx * dx + dy * dy);
@@ -148,26 +161,48 @@
             }, { passive: false });
 
             canvas.addEventListener('touchmove', (e) => {
-                if (e.touches.length === 2 && initialPinchDist) {
-                    e.preventDefault(); // 画面全体のスクロールを防ぐ
+                e.preventDefault(); // スクロール防止
+                if (e.touches.length === 1 && isDragging) {
+                    // 1本指：横スクロール
+                    const currentX = e.touches[0].clientX;
+                    const dx = currentX - lastTouchX;
+                    const chartW = canvas.width - yAxisWidth;
+                    const candleWidth = chartW / displayCount;
+                    
+                    // ピクセル移動量をローソク足の本数に変換
+                    scrollOffset += dx / candleWidth;
+                    
+                    // スクロール範囲の制限 (0 ~ 古いデータの限界まで)
+                    const maxOffset = Math.max(0, candlesData.length - displayCount);
+                    if (scrollOffset < 0) scrollOffset = 0;
+                    if (scrollOffset > maxOffset) scrollOffset = maxOffset;
+                    
+                    lastTouchX = currentX;
+                    drawChart();
+                    
+                } else if (e.touches.length === 2 && initialPinchDist) {
+                    // 2本指：ピンチズーム
                     const dx = e.touches[0].clientX - e.touches[1].clientX;
                     const dy = e.touches[0].clientY - e.touches[1].clientY;
                     const currentDist = Math.sqrt(dx * dx + dy * dy);
                     const ratio = currentDist / initialPinchDist;
 
-                    // 横方向のピンチか縦方向のピンチかを判定
                     if (Math.abs(dx) > Math.abs(dy)) {
-                        // 横ピンチ (X軸ズーム): 比率に反比例して表示本数を変える（最大150本、最小10本）
-                        displayCount = Math.max(10, Math.min(150, Math.floor(initialDisplayCount / ratio)));
+                        // 横ピンチ
+                        displayCount = Math.max(20, Math.min(1000, Math.floor(initialDisplayCount / ratio)));
+                        // ズーム時にスクロール範囲が狂わないように補正
+                        const maxOffset = Math.max(0, candlesData.length - displayCount);
+                        if (scrollOffset > maxOffset) scrollOffset = maxOffset;
                     } else {
-                        // 縦ピンチ (Y軸ズーム): スケール倍率を変える（0.1倍 ~ 5倍）
-                        yScaleMultiplier = Math.max(0.1, Math.min(5.0, initialYScale / ratio));
+                        // 縦ピンチ
+                        yScaleMultiplier = Math.max(0.1, Math.min(10.0, initialYScale / ratio));
                     }
                     drawChart();
                 }
             }, { passive: false });
 
             canvas.addEventListener('touchend', () => {
+                isDragging = false;
                 initialPinchDist = null;
             });
         }
@@ -175,7 +210,8 @@
         async function initApp() {
             await fetchAccount();
             await fetchHistory();
-            await fetchHistoricalCandles(); 
+            await fetchHistoricalCandles(); // 12時間分の取得
+            
             setInterval(fetchPricingAndUpdateChart, 1000);
             setInterval(fetchAccount, 5000);
         }
@@ -206,15 +242,16 @@
             } catch (e) {}
         }
 
-        // ③ 履歴の取得件数を50件に増強
         async function fetchHistory() {
             try {
                 const data = await apiRequest(`/accounts/${accountId}/transactions?type=ORDER_FILL&count=50`);
+                txHistoryData = data.transactions || []; // マーカー用にグローバル保存
+                
                 const list = document.getElementById('historyList');
                 list.innerHTML = '';
-                if (!data.transactions || data.transactions.length === 0) return;
+                if (txHistoryData.length === 0) return;
 
-                data.transactions.forEach(t => {
+                txHistoryData.forEach(t => {
                     const time = new Date(parseFloat(t.time) * 1000).toLocaleTimeString();
                     const units = parseInt(t.units);
                     const typeStr = units > 0 ? '買' : '売';
@@ -227,22 +264,39 @@
                         </div>
                     `;
                 });
+                drawChart(); // 履歴更新時にマーカーも再描画
             } catch (e) {}
         }
 
+        // ② 12時間分（8640本）のデータをAPI制限を回避して取得する
         async function fetchHistoricalCandles() {
             try {
-                const data = await apiRequest(`/instruments/${instrument}/candles?granularity=S5&count=200`);
-                candlesData = data.candles.filter(c => c.complete).map(c => ({
+                let allCandles = [];
+                // 1回目: 直近5000件（API上限、約7時間分）
+                const res1 = await apiRequest(`/instruments/${instrument}/candles?granularity=S5&count=5000`);
+                if(res1.candles) allCandles = allCandles.concat(res1.candles);
+
+                // 2回目: 足りない約5時間分（3640件）を、1回目の最古の時刻より前から取得
+                if (allCandles.length > 0) {
+                    const oldestTime = allCandles[0].time;
+                    const res2 = await apiRequest(`/instruments/${instrument}/candles?granularity=S5&count=3640&to=${oldestTime}`);
+                    if(res2.candles) allCandles = res2.candles.concat(allCandles);
+                }
+
+                // 時間順にソートして整形
+                allCandles.sort((a, b) => parseFloat(a.time) - parseFloat(b.time));
+                
+                candlesData = allCandles.filter(c => c.complete).map(c => ({
                     time: parseFloat(c.time) * 1000,
                     o: parseFloat(c.mid.o),
                     h: parseFloat(c.mid.h),
                     l: parseFloat(c.mid.l),
                     c: parseFloat(c.mid.c)
                 }));
-                calcIndicators(); // インジケーター計算
+                
+                calcIndicators();
                 drawChart();
-            } catch (e) {}
+            } catch (e) { console.error("データ取得エラー:", e); }
         }
 
         async function fetchPricingAndUpdateChart() {
@@ -250,8 +304,16 @@
                 const data = await apiRequest(`/accounts/${accountId}/pricing?instruments=${instrument}`);
                 if (data.prices && data.prices.length > 0) {
                     const priceData = data.prices[0];
-                    const currentPrice = parseFloat(priceData.bids[0].price);
                     
+                    // ⑤ 休場・取引停止チェック
+                    if (priceData.status !== 'tradeable') {
+                        document.getElementById('marketClosedLabel').style.display = 'block';
+                        return; // チャートの追加・更新処理をスキップ
+                    } else {
+                        document.getElementById('marketClosedLabel').style.display = 'none';
+                    }
+
+                    const currentPrice = parseFloat(priceData.bids[0].price);
                     document.getElementById('bidPrice').innerText = priceData.bids[0].price;
                     document.getElementById('askPrice').innerText = priceData.asks[0].price;
 
@@ -263,20 +325,23 @@
                             candlesData.push({
                                 time: now, o: currentPrice, h: currentPrice, l: currentPrice, c: currentPrice
                             });
-                            if (candlesData.length > 300) candlesData.shift();
+                            // データが増えすぎたら一番古いものを削除
+                            if (candlesData.length > 10000) candlesData.shift();
                         } else {
                             lastCandle.c = currentPrice;
                             if (currentPrice > lastCandle.h) lastCandle.h = currentPrice;
                             if (currentPrice < lastCandle.l) lastCandle.l = currentPrice;
                         }
                     }
-                    calcIndicators(); // 更新後に再計算
-                    drawChart();
+                    // スクロール位置が最新(0)の時だけリアルタイムに追従描画する
+                    if (scrollOffset === 0) {
+                        calcIndicators();
+                        drawChart();
+                    }
                 }
             } catch (e) {}
         }
 
-        // ② SMA(25)とボリンジャーバンド(2σ)の計算
         function calcIndicators() {
             const period = 25;
             for (let i = 0; i < candlesData.length; i++) {
@@ -301,66 +366,53 @@
             if (!ctx || candlesData.length === 0) return;
             const w = canvas.width;
             const h = canvas.height;
-            const chartW = w - yAxisWidth; // Y軸のスペースを引いた描画幅
+            const chartW = w - yAxisWidth; 
+            const chartH = h - xAxisHeight; // X軸の高さを引く
 
             ctx.clearRect(0, 0, w, h);
 
-            // 表示するデータの切り出し
-            const actualDisplayCount = Math.min(candlesData.length, displayCount);
-            const dataToDraw = candlesData.slice(-actualDisplayCount);
+            // スクロール位置に応じたデータの切り出し
+            const startIndex = Math.max(0, candlesData.length - displayCount - Math.floor(scrollOffset));
+            const endIndex = Math.min(candlesData.length, startIndex + displayCount);
+            const dataToDraw = candlesData.slice(startIndex, endIndex);
 
-            // 最高値・最安値の計算
+            if(dataToDraw.length === 0) return;
+
             let minP = Infinity, maxP = -Infinity;
             dataToDraw.forEach(c => {
                 if (c.h > maxP) maxP = c.h;
                 if (c.l < minP) minP = c.l;
-                // インジケーターも含めてスケールを合わせる
                 if (c.upper && c.upper > maxP) maxP = c.upper;
                 if (c.lower && c.lower < minP) minP = c.lower;
             });
 
-            // ⑤ Y軸のズーム（スケール）適用
             const midP = (maxP + minP) / 2;
             const baseRange = (maxP - minP) || 0.01;
             const zoomedRange = baseRange * yScaleMultiplier;
-            
-            // 余白をつけて最終的な描画レンジを決定
             maxP = midP + (zoomedRange / 2) * 1.1; 
             minP = midP - (zoomedRange / 2) * 1.1;
             const finalRange = maxP - minP;
 
-            const candleWidth = chartW / actualDisplayCount;
+            const candleWidth = chartW / dataToDraw.length;
+            const getY = (price) => chartH - ((price - minP) / finalRange) * chartH;
 
-            // Y座標変換ヘルパー
-            const getY = (price) => h - ((price - minP) / finalRange) * h;
-
-            // インジケーターの描画 (SMA: 黄色, ボリバン: 薄い水色)
             ctx.lineWidth = 1;
             
-            // Upper Band
-            ctx.beginPath();
-            ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
-            dataToDraw.forEach((c, i) => {
-                if(c.upper) {
-                    const x = i * candleWidth + candleWidth / 2;
-                    i === 0 ? ctx.moveTo(x, getY(c.upper)) : ctx.lineTo(x, getY(c.upper));
-                }
+            // ボリンジャーバンド & SMA
+            ['upper', 'lower'].forEach(band => {
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+                dataToDraw.forEach((c, i) => {
+                    if(c[band]) {
+                        const x = i * candleWidth + candleWidth / 2;
+                        i === 0 ? ctx.moveTo(x, getY(c[band])) : ctx.lineTo(x, getY(c[band]));
+                    }
+                });
+                ctx.stroke();
             });
-            ctx.stroke();
 
-            // Lower Band
             ctx.beginPath();
-            dataToDraw.forEach((c, i) => {
-                if(c.lower) {
-                    const x = i * candleWidth + candleWidth / 2;
-                    i === 0 ? ctx.moveTo(x, getY(c.lower)) : ctx.lineTo(x, getY(c.lower));
-                }
-            });
-            ctx.stroke();
-
-            // SMA 25
-            ctx.beginPath();
-            ctx.strokeStyle = 'rgba(250, 204, 21, 0.8)'; // 黄色
+            ctx.strokeStyle = 'rgba(250, 204, 21, 0.8)';
             dataToDraw.forEach((c, i) => {
                 if(c.sma) {
                     const x = i * candleWidth + candleWidth / 2;
@@ -369,51 +421,90 @@
             });
             ctx.stroke();
 
-            // ローソク足の描画
+            // ローソク足
             dataToDraw.forEach((c, i) => {
                 const x = i * candleWidth;
                 const yO = getY(c.o);
                 const yC = getY(c.c);
                 const yH = getY(c.h);
                 const yL = getY(c.l);
-
                 const isUp = c.c >= c.o;
                 const color = isUp ? '#ef4444' : '#3b82f6';
 
                 ctx.strokeStyle = color;
                 ctx.fillStyle = color;
 
-                // ヒゲ
                 ctx.beginPath();
                 ctx.moveTo(x + candleWidth / 2, yH);
                 ctx.lineTo(x + candleWidth / 2, yL);
                 ctx.stroke();
 
-                // 実体
                 const bodyTop = Math.min(yO, yC);
-                let bodyHeight = Math.abs(yO - yC);
-                if (bodyHeight < 1) bodyHeight = 1;
-                
+                let bodyHeight = Math.max(1, Math.abs(yO - yC));
                 ctx.fillRect(x + candleWidth * 0.1, bodyTop, candleWidth * 0.8, bodyHeight);
             });
 
-            // ⑤ Y軸（価格目盛り）の背景とテキスト描画
-            ctx.fillStyle = '#161b26'; // 背景色
+            // ④ 売買マーカーの描画
+            txHistoryData.forEach(tx => {
+                const txTime = parseFloat(tx.time) * 1000;
+                // 現在表示中のデータ範囲内に取引時間があるかチェック
+                const cIndex = dataToDraw.findIndex(c => Math.abs(c.time - txTime) <= CANDLE_INTERVAL_SEC * 1000);
+                
+                if (cIndex !== -1) {
+                    const c = dataToDraw[cIndex];
+                    const x = cIndex * candleWidth + candleWidth / 2;
+                    const units = parseInt(tx.units);
+                    
+                    ctx.beginPath();
+                    if (units > 0) {
+                        // 買い：ローソク足の下に赤の上矢印(▲)
+                        ctx.fillStyle = '#ef4444';
+                        const y = getY(c.l) + 10;
+                        ctx.moveTo(x, y - 5);
+                        ctx.lineTo(x - 5, y + 5);
+                        ctx.lineTo(x + 5, y + 5);
+                    } else {
+                        // 売り：ローソク足の上に青の下矢印(▼)
+                        ctx.fillStyle = '#3b82f6';
+                        const y = getY(c.h) - 10;
+                        ctx.moveTo(x, y + 5);
+                        ctx.lineTo(x - 5, y - 5);
+                        ctx.lineTo(x + 5, y - 5);
+                    }
+                    ctx.fill();
+                }
+            });
+
+            // ① X軸（時刻）の描画
+            ctx.fillStyle = '#161b26';
+            ctx.fillRect(0, chartH, chartW, xAxisHeight);
+            ctx.fillStyle = '#a0aec0';
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'center';
+            
+            // 重ならないように適当な間隔（約60px毎）で時刻を描画
+            const step = Math.max(1, Math.floor(60 / candleWidth));
+            for (let i = 0; i < dataToDraw.length; i += step) {
+                const d = new Date(dataToDraw[i].time);
+                const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                const x = i * candleWidth + candleWidth / 2;
+                ctx.fillText(timeStr, x, h - 4);
+            }
+
+            // Y軸（価格）の描画
+            ctx.fillStyle = '#161b26';
             ctx.fillRect(chartW, 0, yAxisWidth, h);
             ctx.beginPath();
-            ctx.strokeStyle = '#2d3748'; // 境界線
+            ctx.strokeStyle = '#2d3748';
             ctx.moveTo(chartW, 0);
             ctx.lineTo(chartW, h);
             ctx.stroke();
 
             ctx.fillStyle = '#a0aec0';
-            ctx.font = '10px sans-serif';
             ctx.textAlign = 'left';
-            
-            // 5分割して目盛りを描画
             for (let i = 1; i <= 5; i++) {
-                const yPos = (h / 6) * i;
-                const price = maxP - ((maxP - minP) * (yPos / h));
+                const yPos = (chartH / 6) * i;
+                const price = maxP - ((maxP - minP) * (yPos / chartH));
                 ctx.fillText(price.toFixed(3), chartW + 5, yPos + 4);
             }
         }
