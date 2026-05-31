@@ -20,8 +20,17 @@
         /* === ヘッダー・チャート === */
         .header { display: flex; justify-content: space-between; padding: 8px 10px; background-color: #161b26; border-bottom: 1px solid #2d3748; font-size: 14px; flex-shrink: 0; }
         #chartWrapper { height: 35vh; min-height: 200px; width: 100%; border-bottom: 1px solid #2d3748; position: relative; background: #0b101e; flex-shrink: 0; }
-        #chartControls { position: absolute; top: 5px; left: 5px; z-index: 10; display: flex; gap: 5px; }
+        #chartControls { position: absolute; top: 5px; left: 5px; z-index: 10; display: flex; gap: 5px; align-items: center; }
         #chartControls select { background: #1a202c; color: white; border: 1px solid #4a5568; padding: 4px 6px; border-radius: 4px; font-size: 12px; }
+        
+        /* マークのヘルプボタン＆パネル */
+        .btn-legend { background: #1e293b; color: #cbd5e1; border: 1px solid #4a5568; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; }
+        .btn-legend:active { opacity: 0.8; }
+        .legend-panel { position: absolute; top: 35px; left: 5px; background: rgba(22, 27, 38, 0.9); border: 1px solid #4a5568; border-radius: 6px; padding: 10px; font-size: 12px; z-index: 20; backdrop-filter: blur(2px); box-shadow: 0 4px 6px rgba(0,0,0,0.5); }
+        .legend-item { display: flex; align-items: center; margin-bottom: 6px; }
+        .legend-item:last-child { margin-bottom: 0; }
+        .leg-icon { font-size: 14px; width: 16px; text-align: center; margin-right: 6px; }
+
         canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 
         /* === 下部スクロールエリア === */
@@ -111,7 +120,19 @@
                     <option value="60">1時間足</option>
                     <option value="240">4時間足</option>
                 </select>
+                <!-- ヘルプボタン追加 -->
+                <button id="btnLegend" class="btn-legend">[?] マークの意味</button>
             </div>
+            
+            <!-- マークの意味（凡例）パネル -->
+            <div id="legendPanel" class="legend-panel hidden">
+                <div class="legend-item"><span class="leg-icon text-red">▲</span> 新規 買(ASK) エントリー</div>
+                <div class="legend-item"><span class="leg-icon text-blue">▼</span> 新規 売(BID) エントリー</div>
+                <div class="legend-item"><span class="leg-icon text-green">●</span> 決済 (利確 / プラス)</div>
+                <div class="legend-item"><span class="leg-icon text-yellow">●</span> 決済 (損切 / マイナス)</div>
+                <div class="legend-item"><span class="leg-icon text-orange">●</span> 時間外による強制決済</div>
+            </div>
+
             <canvas id="myCanvas"></canvas>
         </div>
 
@@ -200,7 +221,13 @@
         const yAxisWidth = 55, xAxisHeight = 20;
         let isDragging = false, lastTouchX = 0, initialPinchDist = null, initialDisplayCount = 300;
         
-        let highlightedTime = null; // ジャンプ先のハイライト時刻用
+        let highlightedTime = null; 
+
+        // 凡例パネルのトグル処理
+        document.getElementById('btnLegend').addEventListener('click', () => {
+            const panel = document.getElementById('legendPanel');
+            panel.classList.toggle('hidden');
+        });
 
         document.getElementById('toggleSettingsBtn').addEventListener('click', () => {
             const body = document.getElementById('settingsBody');
@@ -275,10 +302,8 @@
                     
                     const rawCandles = data.candles.filter(c => c.complete);
                     if (rawCandles.length > 0) {
-                        // 【修正①】終了日時（endUnix）を1秒でも超過している足は完全に弾く（翌日の混入防止）
                         const targetCandles = rawCandles.filter(c => parseFloat(c.time) <= endUnix);
                         allCandles = allCandles.concat(targetCandles);
-                        
                         const lastTime = parseFloat(rawCandles[rawCandles.length - 1].time);
                         if (lastTime >= endUnix) break; 
                         currentFrom = lastTime + 5;
@@ -393,9 +418,7 @@
             if (displayCandles.length === 0) return;
             let targetIndex = displayCandles.findIndex(c => targetTime >= c.startTime && targetTime <= c.endTime + 4999);
             if (targetIndex !== -1) {
-                // 【修正②】ジャンプ先の時刻を記憶する
                 highlightedTime = targetTime;
-                
                 let newOffset = (displayCandles.length - 1 - targetIndex) - Math.floor(displayCount * 0.3);
                 const maxOffset = Math.max(0, displayCandles.length - displayCount);
                 if (newOffset < 0) newOffset = 0; if (newOffset > maxOffset) newOffset = maxOffset;
@@ -555,23 +578,14 @@
             const finalRange = maxP - minP;
             const getY = (price) => chartH - ((price - minP) / finalRange) * chartH;
 
-            // 【修正②】ジャンプ先ローソク足の背景＆縦線ハイライト描画
             if (highlightedTime) {
                 const hIndex = dataToDraw.findIndex(c => highlightedTime >= c.startTime && highlightedTime <= c.endTime + 4999);
                 if (hIndex !== -1) {
                     const hx = hIndex * candleWidth + candleWidth / 2;
-                    
                     ctx.fillStyle = 'rgba(251, 191, 36, 0.15)'; 
                     ctx.fillRect(hIndex * candleWidth, 0, candleWidth, chartH);
-                    
-                    ctx.beginPath();
-                    ctx.strokeStyle = '#fbbf24';
-                    ctx.lineWidth = 1;
-                    ctx.setLineDash([4, 4]);
-                    ctx.moveTo(hx, 0);
-                    ctx.lineTo(hx, chartH);
-                    ctx.stroke();
-                    ctx.setLineDash([]); 
+                    ctx.beginPath(); ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+                    ctx.moveTo(hx, 0); ctx.lineTo(hx, chartH); ctx.stroke(); ctx.setLineDash([]); 
                 }
             }
 
@@ -626,8 +640,8 @@
 
         function setupTouchEvents() {
             canvas.addEventListener('touchstart', (e) => {
-                // 【修正②】チャートを触った時点でハイライト線を消す
                 highlightedTime = null; 
+                document.getElementById('legendPanel').classList.add('hidden'); // タッチしたら凡例も消す
 
                 if (e.touches.length === 1) { isDragging = true; lastTouchX = e.touches[0].clientX; }
                 else if (e.touches.length === 2) {
