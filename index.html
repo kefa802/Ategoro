@@ -311,7 +311,7 @@
                 <div class="auto-panel">
                     <div class="auto-header">
                         <span style="font-weight:bold; color:#cbd5e1;">🤖 実運用自動売買 (未実装)</span>
-                        <div>ロット: <input type="number" id="autoLot" min="0.01" value="0.01" style="width: 50px; text-align: center;"></div>
+                        <div>ロット: <input type="number" id="autoLot" min="0.01" value="0.01" style="width: 50px; text-align: center;"> <span style="font-size:10px; color:#a0aec0;">(1.0=10万)</span></div>
                     </div>
                     <div class="auto-controls">
                         <button id="btnAutoStart" class="btn-auto start">▶ スタート</button>
@@ -385,17 +385,22 @@
                 localStorage.setItem('oanda_api_token', apiToken);
                 
                 const selectedMode = document.querySelector('input[name="startMode"]:checked').value;
+                
                 document.getElementById('loginArea').classList.add('hidden'); 
                 document.getElementById('mainUI').classList.remove('hidden');
                 
-                resizeCanvas(); window.addEventListener('resize', resizeCanvas); 
-                setupTouchEvents(); setupRealTradeEvents(); 
+                resizeCanvas(); 
+                window.addEventListener('resize', resizeCanvas); 
+                setupTouchEvents();
+                setupRealTradeEvents();
+
                 switchMode(selectedMode);
             });
 
             document.getElementById('instrumentSelector').addEventListener('change', (e) => {
                 instrument = e.target.value; 
-                if (appMode === 'REAL') startRealTrade(); else clearDataAndRedraw("再実行してください。");
+                if (appMode === 'REAL') startRealTrade();
+                else clearDataAndRedraw("再実行してください。");
             });
 
             document.getElementById('tfSelector').addEventListener('change', () => {
@@ -422,21 +427,27 @@
                 document.getElementById('btnTopRun').classList.add('hidden');
                 document.getElementById('dailyPnlContainer').classList.add('hidden');
                 document.getElementById('btnTogglePnL').classList.add('hidden');
+                
                 document.getElementById('historyTitle').innerHTML = '直近の約定履歴 (リアル) <span style="font-size: 10px; font-weight: normal;">※タップでジャンプ</span>';
+                
                 startRealTrade();
             } else {
                 document.getElementById('tradePanel').classList.add('hidden');
                 document.getElementById('backtestDatePanel').classList.remove('hidden');
                 document.getElementById('btnTopRun').classList.remove('hidden');
+                
                 document.getElementById('historyTitle').innerHTML = '取引履歴 (バックテスト) <span style="font-size: 10px; font-weight: normal;">※タップでジャンプ</span>';
                 document.getElementById('historyList').innerText = '日付を指定して右上の「▶ 実行」を押してください。';
+                
                 stopRealTrade();
             }
         }
 
         function clearDataAndRedraw(msg) {
-            candlesData = []; displayCandles = []; txHistoryData = []; scrollOffset = 0; highlightedTime = null;
-            document.getElementById('testResult').innerText = ''; document.getElementById('testMarginResult').innerText = '';
+            candlesData = []; displayCandles = []; txHistoryData = []; 
+            scrollOffset = 0; highlightedTime = null;
+            document.getElementById('testResult').innerText = '';
+            document.getElementById('testMarginResult').innerText = '';
             document.getElementById('historyList').innerText = msg;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
@@ -449,9 +460,6 @@
             return response.status === 404 ? null : await response.json();
         }
 
-        // ==========================================
-        // リアルトレードロジック
-        // ==========================================
         async function startRealTrade() {
             stopRealTrade();
             document.getElementById('historyList').innerText = '読込中...';
@@ -602,9 +610,6 @@
             });
         }
 
-        // ==========================================
-        // バックテスト ロジック
-        // ==========================================
         async function runBacktestFetch() {
             const btn = document.getElementById('btnTopRun');
             if (isTestRunning) { shouldStopTest = true; btn.innerText = "停止中..."; return; }
@@ -776,30 +781,6 @@
             }
         }
 
-        // ==========================================
-        // 共通チャート描画
-        // ==========================================
-        function calcIndicators(dataArray) {
-            const period = 25;
-            for (let i = 0; i < dataArray.length; i++) {
-                if (i >= period - 1) {
-                    let sum = 0;
-                    for (let j = 0; j < period; j++) sum += dataArray[i - j].c;
-                    dataArray[i].sma = sum / period;
-                    let varianceSum = 0;
-                    for (let j = 0; j < period; j++) varianceSum += Math.pow(dataArray[i - j].c - dataArray[i].sma, 2);
-                    dataArray[i].sd = Math.sqrt(varianceSum / period);
-                }
-            }
-        }
-
-        function jumpToTime(targetTime) {
-            if (displayCandles.length === 0) return;
-            const tfSeconds = tfIntervalMs[document.getElementById('tfSelector').value];
-            let targetIndex = displayCandles.findIndex(c => targetTime >= c.startTime && targetTime < c.endTime + (tfSeconds * 1000));
-            if (targetIndex !== -1) { highlightedTime = displayCandles[targetIndex].startTime; scrollOffset = (displayCandles.length - 1 - targetIndex) - Math.floor(displayCount * 0.3); drawChart(); }
-        }
-
         function drawChart() {
             if (!ctx) return; const w = canvas.width, h = canvas.height, chartW = w - yAxisWidth, chartH = h - xAxisHeight; ctx.clearRect(0, 0, w, h);
             if (displayCandles.length === 0) { ctx.fillStyle = '#64748b'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('データを取得中...', w / 2, h / 2); return; }
@@ -816,7 +797,8 @@
                 if (getAsk(c.h) > maxP) maxP = getAsk(c.h); if (getAsk(c.l) < minP) minP = getAsk(c.l);
                 if (c.sma && c.sd !== undefined) { const u = getAsk(c.sma + (drawBidSigma * c.sd)), l = getAsk(c.sma - (drawAskSigma * c.sd)); if (u > maxP) maxP = u; if (l < minP) minP = l; }
             });
-            const midP = (maxP + minP) / 2, zoomedRange = (maxP - minP) * yScaleMultiplier || 0.001; maxP = midP + (zRange / 2) * 1.1; minP = midP - (zRange / 2) * 1.1;
+            const midP = (maxP + minP) / 2, zoomedRange = (maxP - minP) * yScaleMultiplier || 0.001; 
+            maxP = midP + (zoomedRange / 2) * 1.1; minP = midP - (zoomedRange / 2) * 1.1;
             const finalRange = maxP - minP, getY = (price) => chartH - ((price - minP) / finalRange) * chartH;
 
             if (highlightedTime) { 
