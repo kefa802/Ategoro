@@ -231,43 +231,103 @@
         const tfGranularity = { "0": "S5", "1": "M1", "5": "M5", "10": "M10", "60": "H1", "240": "H4" };
         const tfIntervalMs = { "0": 5, "1": 60, "5": 300, "10": 600, "60": 3600, "240": 14400 };
 
-        document.getElementById('btnTopSettings').addEventListener('click', () => document.getElementById('modalSettings').classList.remove('hidden'));
-        document.getElementById('btnCloseModal').addEventListener('click', () => document.getElementById('modalSettings').classList.add('hidden'));
-        document.getElementById('btnLegend').addEventListener('click', () => document.getElementById('legendPanel').classList.toggle('hidden'));
+        // 要素の取得エラーを防ぐための安全なリスナー登録
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('btnTopSettings').addEventListener('click', () => document.getElementById('modalSettings').classList.remove('hidden'));
+            document.getElementById('btnCloseModal').addEventListener('click', () => document.getElementById('modalSettings').classList.add('hidden'));
+            document.getElementById('btnLegend').addEventListener('click', () => document.getElementById('legendPanel').classList.toggle('hidden'));
 
-        document.getElementById('btnTogglePnL').addEventListener('click', () => {
-            const container = document.getElementById('dailyPnlContainer');
-            const btn = document.getElementById('btnTogglePnL');
-            if (container.classList.contains('hidden')) {
-                container.classList.remove('hidden'); btn.innerText = '日別損益を閉じる ▲';
-            } else {
-                container.classList.add('hidden'); btn.innerText = '日別損益の詳細を見る ▼';
-            }
-        });
+            document.getElementById('btnTogglePnL').addEventListener('click', () => {
+                const container = document.getElementById('dailyPnlContainer');
+                const btn = document.getElementById('btnTogglePnL');
+                if (container.classList.contains('hidden')) {
+                    container.classList.remove('hidden'); btn.innerText = '日別損益を閉じる ▲';
+                } else {
+                    container.classList.add('hidden'); btn.innerText = '日別損益の詳細を見る ▼';
+                }
+            });
 
-        window.onload = () => {
             if (localStorage.getItem('oanda_account_id')) document.getElementById('accountIdInput').value = localStorage.getItem('oanda_account_id');
             if (localStorage.getItem('oanda_api_token')) document.getElementById('apiTokenInput').value = localStorage.getItem('oanda_api_token');
             resizeCanvas();
-        };
 
-        document.getElementById('loginBtn').addEventListener('click', () => {
-            accountId = document.getElementById('accountIdInput').value.trim();
-            apiToken = document.getElementById('apiTokenInput').value.trim();
-            if (!accountId || !apiToken) return alert("入力してください");
-            localStorage.setItem('oanda_account_id', accountId); localStorage.setItem('oanda_api_token', apiToken);
-            document.getElementById('loginArea').classList.add('hidden'); document.getElementById('mainUI').classList.remove('hidden');
-            resizeCanvas(); window.addEventListener('resize', resizeCanvas); setupTouchEvents();
-        });
+            document.getElementById('loginBtn').addEventListener('click', () => {
+                try {
+                    accountId = document.getElementById('accountIdInput').value.trim();
+                    apiToken = document.getElementById('apiTokenInput').value.trim();
+                    if (!accountId || !apiToken) return alert("入力してください");
+                    localStorage.setItem('oanda_account_id', accountId); localStorage.setItem('oanda_api_token', apiToken);
+                    document.getElementById('loginArea').classList.add('hidden'); document.getElementById('mainUI').classList.remove('hidden');
+                    resizeCanvas(); window.addEventListener('resize', resizeCanvas); setupTouchEvents();
+                } catch(e) { alert("エラー: " + e.message); }
+            });
 
-        document.getElementById('instrumentSelector').addEventListener('change', (e) => {
-            instrument = e.target.value; candlesData = []; txHistoryData = []; drawChart();
-        });
+            document.getElementById('instrumentSelector').addEventListener('change', (e) => { instrument = e.target.value; candlesData = []; txHistoryData = []; drawChart(); });
+            document.getElementById('tfSelector').addEventListener('change', () => { candlesData = []; txHistoryData = []; scrollOffset = 0; highlightedTime = null; document.getElementById('historyList').innerHTML = 'タイムフレームが変更されました。再実行してください。'; drawChart(); });
 
-        document.getElementById('tfSelector').addEventListener('change', () => {
-            candlesData = []; txHistoryData = []; scrollOffset = 0; highlightedTime = null; 
-            document.getElementById('historyList').innerHTML = 'タイムフレームが変更されました。再実行してください。';
-            drawChart();
+            document.getElementById('btnTopRun').addEventListener('click', async () => {
+                const btn = document.getElementById('btnTopRun');
+                if (isTestRunning) { shouldStopTest = true; btn.innerText = "停止中..."; return; }
+
+                const startUnix = new Date(`${document.getElementById('btStartDate').value}T00:00:00+09:00`).getTime() / 1000;
+                const endUnix = new Date(`${document.getElementById('btEndDate').value}T23:59:59+09:00`).getTime() / 1000;
+                if (endUnix < startUnix) return alert("終了日が開始日より前です。");
+
+                isTestRunning = true; shouldStopTest = false;
+                btn.classList.add('running'); btn.innerText = "■ 停止";
+
+                const resDiv = document.getElementById('testResult');
+                const resMarginDiv = document.getElementById('testMarginResult');
+                const histList = document.getElementById('historyList');
+                const pnlBtn = document.getElementById('btnTogglePnL');
+                
+                resDiv.innerText = ""; resMarginDiv.innerText = ""; histList.innerHTML = "データ取得中..."; 
+                pnlBtn.classList.add('hidden'); document.getElementById('dailyPnlContainer').classList.add('hidden');
+                txHistoryData = []; candlesData = []; highlightedTime = null;
+
+                try {
+                    const tfVal = document.getElementById('tfSelector').value;
+                    const granularity = tfGranularity[tfVal];
+                    const intervalSeconds = tfIntervalMs[tfVal];
+                    let currentFrom = startUnix; let allCandles = [];
+                    
+                    while (currentFrom < endUnix) {
+                        if (shouldStopTest) { histList.innerHTML = "中断されました。取得済みのデータでテストします。"; break; }
+                        const progressDate = new Date(currentFrom * 1000).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' });
+                        histList.innerHTML = `データ取得中... (${progressDate})`;
+                        
+                        const data = await apiRequest(`/instruments/${instrument}/candles?granularity=${granularity}&count=5000&from=${currentFrom}`);
+                        if (!data || !data.candles || data.candles.length === 0) break;
+                        
+                        const rawCandles = data.candles.filter(c => c.complete);
+                        if (rawCandles.length > 0) {
+                            const targetCandles = rawCandles.filter(c => parseFloat(c.time) <= endUnix);
+                            allCandles = allCandles.concat(targetCandles);
+                            const lastTime = parseFloat(rawCandles[rawCandles.length - 1].time);
+                            if (lastTime >= endUnix) break; 
+                            currentFrom = lastTime + intervalSeconds;
+                        } else { currentFrom += (intervalSeconds * 1000); }
+                    }
+
+                    if (allCandles.length === 0) throw new Error("データがありません。");
+                    candlesData = allCandles.map(c => ({
+                        time: parseFloat(c.time) * 1000, o: parseFloat(c.mid.o), h: parseFloat(c.mid.h), l: parseFloat(c.mid.l), c: parseFloat(c.mid.c)
+                    }));
+
+                    calcIndicators(candlesData); 
+                    const { totalPips, finalMargin } = runSimulation();
+                    
+                    scrollOffset = 0; drawChart(); renderHistory(); renderDailyPnL();
+
+                    resDiv.style.color = totalPips >= 0 ? '#4ade80' : '#f87171';
+                    resDiv.innerText = `結果: 合計 ${totalPips.toFixed(1)} Pips`;
+                    const initMargin = parseFloat(document.getElementById('btInitialMargin').value) || 0;
+                    const marginDiff = finalMargin - initMargin;
+                    resMarginDiv.innerHTML = `最終残高: <span style="color: white; font-weight: bold; font-size: 15px;">¥${Math.floor(finalMargin).toLocaleString()}</span> (<span style="color: ${marginDiff >= 0 ? '#4ade80' : '#f87171'};">${marginDiff >= 0 ? '+' : ''}¥${Math.floor(marginDiff).toLocaleString()}</span>)`;
+
+                } catch (e) { alert(e.message); histList.innerHTML = "エラーが発生しました。"; } 
+                finally { isTestRunning = false; shouldStopTest = false; btn.classList.remove('running'); btn.innerText = "▶ 実行"; }
+            });
         });
 
         async function apiRequest(endpoint) {
@@ -275,70 +335,6 @@
             if (!res.ok) throw new Error(`API Error: ${res.status}`);
             return await res.json();
         }
-
-        document.getElementById('btnTopRun').addEventListener('click', async () => {
-            const btn = document.getElementById('btnTopRun');
-            if (isTestRunning) { shouldStopTest = true; btn.innerText = "停止中..."; return; }
-
-            const startUnix = new Date(`${document.getElementById('btStartDate').value}T00:00:00+09:00`).getTime() / 1000;
-            const endUnix = new Date(`${document.getElementById('btEndDate').value}T23:59:59+09:00`).getTime() / 1000;
-            if (endUnix < startUnix) return alert("終了日が開始日より前です。");
-
-            isTestRunning = true; shouldStopTest = false;
-            btn.classList.add('running'); btn.innerText = "■ 停止";
-
-            const resDiv = document.getElementById('testResult');
-            const resMarginDiv = document.getElementById('testMarginResult');
-            const histList = document.getElementById('historyList');
-            const pnlBtn = document.getElementById('btnTogglePnL');
-            
-            resDiv.innerText = ""; resMarginDiv.innerText = ""; histList.innerHTML = "データ取得中..."; 
-            pnlBtn.classList.add('hidden'); document.getElementById('dailyPnlContainer').classList.add('hidden');
-            txHistoryData = []; candlesData = []; highlightedTime = null;
-
-            try {
-                const tfVal = document.getElementById('tfSelector').value;
-                const granularity = tfGranularity[tfVal];
-                const intervalSeconds = tfIntervalMs[tfVal];
-                let currentFrom = startUnix; let allCandles = [];
-                
-                while (currentFrom < endUnix) {
-                    if (shouldStopTest) { histList.innerHTML = "中断されました。取得済みのデータでテストします。"; break; }
-                    const progressDate = new Date(currentFrom * 1000).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' });
-                    histList.innerHTML = `データ取得中... (${progressDate})`;
-                    
-                    const data = await apiRequest(`/instruments/${instrument}/candles?granularity=${granularity}&count=5000&from=${currentFrom}`);
-                    if (!data || !data.candles || data.candles.length === 0) break;
-                    
-                    const rawCandles = data.candles.filter(c => c.complete);
-                    if (rawCandles.length > 0) {
-                        const targetCandles = rawCandles.filter(c => parseFloat(c.time) <= endUnix);
-                        allCandles = allCandles.concat(targetCandles);
-                        const lastTime = parseFloat(rawCandles[rawCandles.length - 1].time);
-                        if (lastTime >= endUnix) break; 
-                        currentFrom = lastTime + intervalSeconds;
-                    } else { currentFrom += (intervalSeconds * 1000); }
-                }
-
-                if (allCandles.length === 0) throw new Error("データがありません。");
-                candlesData = allCandles.map(c => ({
-                    time: parseFloat(c.time) * 1000, o: parseFloat(c.mid.o), h: parseFloat(c.mid.h), l: parseFloat(c.mid.l), c: parseFloat(c.mid.c)
-                }));
-
-                calcIndicators(candlesData); 
-                const { totalPips, finalMargin } = runSimulation();
-                
-                scrollOffset = 0; drawChart(); renderHistory(); renderDailyPnL();
-
-                resDiv.style.color = totalPips >= 0 ? '#4ade80' : '#f87171';
-                resDiv.innerText = `結果: 合計 ${totalPips.toFixed(1)} Pips`;
-                const initMargin = parseFloat(document.getElementById('btInitialMargin').value) || 0;
-                const marginDiff = finalMargin - initMargin;
-                resMarginDiv.innerHTML = `最終残高: <span style="color: white; font-weight: bold; font-size: 15px;">¥${Math.floor(finalMargin).toLocaleString()}</span> (<span style="color: ${marginDiff >= 0 ? '#4ade80' : '#f87171'};">${marginDiff >= 0 ? '+' : ''}¥${Math.floor(marginDiff).toLocaleString()}</span>)`;
-
-            } catch (e) { alert(e.message); histList.innerHTML = "エラーが発生しました。"; } 
-            finally { isTestRunning = false; shouldStopTest = false; btn.classList.remove('running'); btn.innerText = "▶ 実行"; }
-        });
 
         function renderHistory() {
             const list = document.getElementById('historyList'); list.innerHTML = '';
