@@ -8,7 +8,6 @@
         body { margin: 0; padding: 0; font-family: -apple-system, sans-serif; background-color: #0b101e; color: #ffffff; overflow: hidden; }
         .container { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
         
-        /* === ログイン画面 === */
         #loginArea { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100dvh; padding: 20px; }
         .login-box { background-color: #161b26; padding: 20px; border-radius: 8px; border: 1px solid #2d3748; width: 100%; max-width: 400px; box-sizing: border-box; }
         .login-box h2 { text-align: center; margin-top: 0; color: #cbd5e1; font-size: 18px; margin-bottom: 20px; }
@@ -17,7 +16,6 @@
         .input-group input[type="text"], .input-group input[type="password"] { width: 100%; padding: 12px; background: #2d3748; border: 1px solid #4a5568; color: white; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
         .btn-login { width: 100%; padding: 14px; background: linear-gradient(180deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; }
 
-        /* === ヘッダー・チャート === */
         .header { display: flex; justify-content: space-between; padding: 8px 10px; background-color: #161b26; border-bottom: 1px solid #2d3748; font-size: 14px; flex-shrink: 0; }
         #chartWrapper { height: 38vh; min-height: 220px; width: 100%; border-bottom: 1px solid #2d3748; position: relative; background: #0b101e; flex-shrink: 0; }
         
@@ -36,13 +34,11 @@
 
         canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 
-        /* === 設定別画面（モーダルオーバーレイ） === */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(11, 16, 30, 0.98); z-index: 100; overflow-y: auto; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d3748; padding-bottom: 12px; margin-bottom: 15px; }
         .modal-title { font-size: 16px; font-weight: bold; color: #cbd5e1; }
         .btn-close-modal { background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; font-size: 13px; cursor: pointer; }
 
-        /* === 下部スクロールエリア === */
         .bottom-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
         .bt-panel { padding: 15px; background-color: #161b26; font-size: 13px; flex-shrink: 0; }
         
@@ -64,7 +60,6 @@
         #testResult { text-align: center; font-weight: bold; font-size: 15px; margin-bottom: 10px; }
         #testMarginResult { text-align: center; font-size: 13px; color: #cbd5e1; margin-bottom: 15px; }
 
-        /* === 履歴パネル === */
         .history-panel { flex: 1; padding: 15px; background-color: #0b101e; border-top: 1px solid #2d3748; }
         .history-header { font-weight: bold; color: #a0aec0; margin-bottom: 10px; font-size: 14px; }
         
@@ -135,12 +130,13 @@
                 <div class="legend-item"><span class="leg-icon text-blue">▼</span> 新規 売(ASK) エントリー</div>
                 <div class="legend-item"><span class="leg-icon text-green">●</span> 決済 (利確 / プラス)</div>
                 <div class="legend-item"><span class="leg-icon text-yellow">●</span> 決済 (損切 / マイナス)</div>
-                <div class="legend-item"><span class="leg-icon text-orange">●</span> 時間外による強制決済</div>
+                <div class="legend-item"><span class="leg-icon text-orange">●</span> 時間外強制決済</div>
             </div>
 
             <canvas id="myCanvas"></canvas>
         </div>
 
+        <!-- ⚙️モーダル設定項目 -->
         <div id="modalSettings" class="modal-overlay hidden">
             <div class="modal-header">
                 <div class="modal-title">⚙️ バックテスト詳細設定</div>
@@ -386,6 +382,20 @@
             if (targetIndex !== -1) { highlightedTime = candlesData[targetIndex].time; scrollOffset = (candlesData.length - 1 - targetIndex) - Math.floor(displayCount * 0.3); drawChart(); }
         }
 
+        function calcIndicators(dataArray) {
+            const period = 25;
+            for (let i = 0; i < dataArray.length; i++) {
+                if (i >= period - 1) {
+                    let sum = 0;
+                    for (let j = 0; j < period; j++) sum += dataArray[i - j].c;
+                    dataArray[i].sma = sum / period;
+                    let varianceSum = 0;
+                    for (let j = 0; j < period; j++) varianceSum += Math.pow(dataArray[i - j].c - dataArray[i].sma, 2);
+                    dataArray[i].sd = Math.sqrt(varianceSum / period);
+                }
+            }
+        }
+
         function runSimulation() {
             const isJPY = instrument.includes('JPY'); const pipMultiplier = isJPY ? 1000 : 10000; const pipYenValue = isJPY ? 0.01 : 0.0001;
             const spreadPips = parseFloat(document.getElementById('btSpread').value) || 0; const spreadValue = spreadPips / pipMultiplier;
@@ -448,7 +458,7 @@
                 if (getAsk(c.h) > maxP) maxP = getAsk(c.h); if (getAsk(c.l) < minP) minP = getAsk(c.l);
                 if (c.sma && c.sd !== undefined) { const u = getAsk(c.sma + (drawBidSigma * c.sd)), l = getAsk(c.sma - (drawAskSigma * c.sd)); if (u > maxP) maxP = u; if (l < minP) minP = l; }
             });
-            const midP = (maxP + minP) / 2, zoomedRange = (maxP - minP) * yScaleMultiplier || 0.001; maxP = midP + (zoomedRange / 2) * 1.1; minP = midP - (zoomedRange / 2) * 1.1;
+            const midP = (maxP + minP) / 2, zoomedRange = (maxP - minP) * yScaleMultiplier || 0.001; maxP = midP + (zRange / 2) * 1.1; minP = midP - (zRange / 2) * 1.1;
             const finalRange = maxP - minP, getY = (price) => chartH - ((price - minP) / finalRange) * chartH;
 
             if (highlightedTime) { const hIndex = dataToDraw.findIndex(c => c.time === highlightedTime); if (hIndex !== -1) { const hx = hIndex * candleWidth + candleWidth / 2; ctx.fillStyle = 'rgba(251, 191, 36, 0.15)'; ctx.fillRect(hIndex * candleWidth, 0, candleWidth, chartH); ctx.beginPath(); ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]); ctx.moveTo(hx, 0); ctx.lineTo(hx, chartH); ctx.stroke(); ctx.setLineDash([]); } }
