@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>OANDA Pro Real Trading</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: -apple-system, sans-serif; background-color: #0b101e; color: #ffffff; overflow: hidden; }
+        .container { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
+        
+        /* === ログイン画面 === */
+        #loginArea { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100dvh; padding: 20px; }
+        .login-box { background-color: #161b26; padding: 20px; border-radius: 8px; border: 1px solid #2d3748; width: 100%; max-width: 400px; box-sizing: border-box; }
+        .login-box h2 { text-align: center; margin-top: 0; color: #cbd5e1; font-size: 18px; margin-bottom: 20px; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 5px; font-size: 13px; color: #a0aec0; }
+        .input-group input[type="text"], .input-group input[type="password"] { width: 100%; padding: 12px; background: #2d3748; border: 1px solid #4a5568; color: white; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
+        .btn-login { width: 100%; padding: 14px; background: linear-gradient(180deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; }
+
+        /* === メインUIスタイル === */
+        .header { display: flex; justify-content: space-between; padding: 8px 12px; background-color: #161b26; border-bottom: 1px solid #2d3748; font-size: 13px; flex-shrink: 0; }
+        .header span { font-weight: bold; color: #a0aec0; }
+        .header .val { color: #ffffff; font-size: 14px; font-weight: bold; }
+
+        #chartWrapper { height: 32vh; min-height: 180px; width: 100%; border-bottom: 1px solid #2d3748; position: relative; background: #0b101e; flex-shrink: 0; }
+        #chartControls { position: absolute; top: 5px; left: 5px; z-index: 10; display: flex; gap: 5px; }
+        #chartControls select { background: #1a202c; color: white; border: 1px solid #4a5568; padding: 4px; border-radius: 4px; font-size: 12px; }
+        #marketClosedLabel { position: absolute; top: 5px; right: 5px; background: rgba(220, 38, 38, 0.9); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: none; }
+        canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+
+        .trade-scroll-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; background-color: #161b26; }
+
+        .mode-tabs { display: flex; border-bottom: 1px solid #2d3748; flex-shrink: 0; }
+        .mode-tab { flex: 1; padding: 10px; text-align: center; background: #0b101e; color: #64748b; font-weight: bold; cursor: pointer; font-size: 13px; }
+        .mode-tab.active { background: #161b26; color: white; border-bottom: 2px solid #3b82f6; }
+
+        .pos-dashboard { display: flex; border-bottom: 1px solid #2d3748; background-color: #111622; }
+        .pos-side { flex: 1; padding: 8px 12px; display: flex; flex-direction: column; }
+        .pos-sell { border-right: 1px solid #2d3748; background: linear-gradient(to bottom, rgba(59, 130, 246, 0.05), transparent); }
+        .pos-buy { background: linear-gradient(to bottom, rgba(239, 68, 68, 0.05), transparent); }
+        .pos-header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #2d3748; padding-bottom: 4px; margin-bottom: 4px; }
+        .pos-title { font-size: 13px; font-weight: bold; }
+        .btn-close-small { padding: 4px 10px; font-size: 11px; border: none; border-radius: 4px; font-weight: bold; color: white; cursor: pointer; }
+        .btn-close-sell { background-color: #3b82f6; }
+        .btn-close-buy { background-color: #ef4444; }
+        .btn-close-small:disabled { background: #475569; color: #94a3b8; cursor: not-allowed; opacity: 0.4; }
+        .pos-stats { font-size: 12px; }
+        .pos-stats-row { display: flex; justify-content: space-between; margin-bottom: 2px; }
+        .pos-stats-row .label { color: #a0aec0; }
+        .pos-stats-row .val { font-weight: bold; }
+
+        .order-panel { padding: 10px 12px; border-bottom: 1px solid #2d3748; background-color: #161b26; }
+        .lot-selector { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; }
+        .lot-selector select { background: #2d3748; color: white; border: 1px solid #4a5568; padding: 4px 8px; border-radius: 4px; }
+        .trade-buttons { display: flex; justify-content: space-between; gap: 10px; }
+        .btn-trade { flex: 1; padding: 8px; border: none; border-radius: 6px; font-weight: bold; color: white; display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+        .btn-sell-big { background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%); }
+        .btn-buy-big { background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%); }
+        .btn-label { font-size: 11px; opacity: 0.9; }
+        .btn-price { font-size: 20px; letter-spacing: 1px; font-weight: bold; }
+
+        .auto-panel { padding: 10px 12px; background-color: #1e293b; border-bottom: 1px solid #2d3748; }
+        .auto-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; }
+        .auto-controls { display: flex; gap: 10px; }
+        .btn-auto { flex: 1; padding: 8px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; font-size: 13px; }
+        .btn-auto.start { background: #10b981; }
+        .btn-auto.stop { background: #ef4444; }
+        .btn-auto:disabled { background: #475569; color: #94a3b8; cursor: not-allowed; opacity: 0.5; }
+        
+        .history-panel { flex: 1; padding: 10px 12px; background-color: #0b101e; font-size: 12px; min-height: 150px; }
+        #historyList { padding-bottom: 60px; }
+        .history-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #1a202c; }
+        
+        .hidden { display: none !important; }
+        .text-green { color: #4ade80 !important; }
+        .text-red { color: #f87171 !important; }
+        .text-gray { color: #a0aec0 !important; }
+    </style>
+</head>
+<body>
+
+    <div id="loginArea">
+        <div class="login-box">
+            <h2>OANDA リアル口座 ログイン</h2>
+            <div class="input-group">
+                <label>口座ID (Account ID)</label>
+                <input type="text" id="accountIdInput">
+            </div>
+            <div class="input-group">
+                <label>APIトークン</label>
+                <input type="password" id="apiTokenInput">
+            </div>
+            <button id="loginBtn" class="btn-login">ログインして開始</button>
+        </div>
+    </div>
+
+    <div id="mainUI" class="container hidden">
+        <div class="header">
+            <div><span>総残高:</span> <span id="balanceVal">--</span> 円</div>
+            <div><span>総含み損益:</span> <span id="plVal">--</span> 円</div>
+        </div>
+
+        <div id="chartWrapper">
+            <div id="chartControls">
+                <select id="instrumentSelector">
+                    <option value="USD_JPY" selected>USD/JPY</option>
+                    <option value="EUR_JPY">EUR/JPY</option>
+                    <option value="GBP_JPY">GBP/JPY</option>
+                </select>
+            </div>
+            <div id="marketClosedLabel">休場中</div>
+            <canvas id="myCanvas"></canvas>
+        </div>
+
+        <div class="trade-scroll-area">
+            <div class="mode-tabs">
+                <div class="mode-tab active">リアルトレード</div>
+                <div class="mode-tab" onclick="location.href='index.html'">バックテスト</div>
+            </div>
+
+            <div class="pos-dashboard">
+                <div class="pos-side pos-sell">
+                    <div class="pos-header-bar">
+                        <span class="pos-title" style="color: #60a5fa;">売 (ASK基準)</span>
+                        <button id="btnSideCloseShort" class="btn-close-small btn-close-sell" disabled>全決済</button>
+                    </div>
+                    <div class="pos-stats">
+                        <div class="pos-stats-row"><span class="label">数量</span> <span id="shortUnits" class="val">0</span></div>
+                        <div class="pos-stats-row"><span class="label">平均建値</span> <span id="shortAvg" class="val">---.---</span></div>
+                        <div class="pos-stats-row"><span class="label">損益(円)</span> <span id="shortPL" class="val">0</span></div>
+                        <div class="pos-stats-row"><span class="label">Pips</span> <span id="shortPips" class="val text-gray">0</span></div>
+                    </div>
+                </div>
+                <div class="pos-side pos-buy">
+                    <div class="pos-header-bar">
+                        <span class="pos-title" style="color: #f87171;">買 (ASK基準)</span>
+                        <button id="btnSideCloseLong" class="btn-close-small btn-close-buy" disabled>全決済</button>
+                    </div>
+                    <div class="pos-stats">
+                        <div class="pos-stats-row"><span class="label">数量</span> <span id="longUnits" class="val">0</span></div>
+                        <div class="pos-stats-row"><span class="label">平均建値</span> <span id="longAvg" class="val">---.---</span></div>
+                        <div class="pos-stats-row"><span class="label">損益(円)</span> <span id="longPL" class="val">0</span></div>
+                        <div class="pos-stats-row"><span class="label">Pips</span> <span id="longPips" class="val text-gray">0</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="order-panel">
+                <div class="lot-selector">
+                    <span>手動数量:</span>
+                    <select id="lotSize">
+                        <option value="1000">1,000通貨</option>
+                        <option value="10000" selected>10,000通貨</option>
+                        <option value="100000">100,000通貨</option>
+                    </select>
+                </div>
+                <div class="trade-buttons">
+                    <button id="btnSell" class="btn-trade btn-sell-big">
+                        <span class="btn-label">売 | ASK</span>
+                        <span id="bidPrice" class="btn-price">---.---</span>
+                    </button>
+                    <button id="btnBuy" class="btn-trade btn-buy-big">
+                        <span class="btn-label">買 | ASK</span>
+                        <span id="askPrice" class="btn-price">---.---</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="auto-panel">
+                <div class="auto-header">
+                    <span style="font-weight:bold; color:#cbd5e1;">🤖 実運用自動売買</span>
+                    <div>ロット: <input type="number" id="autoLot" min="0.01" value="0.01" style="width: 50px; text-align: center;"> <span style="font-size:10px; color:#a0aec0;">(1.0=10万)</span></div>
+                </div>
+                <div class="auto-controls">
+                    <button id="btnAutoStart" class="btn-auto start">▶ スタート</button>
+                    <button id="btnAutoStop" class="btn-auto stop" disabled>■ ストップ</button>
+                </div>
+            </div>
+
+            <div class="history-panel">
+                <div style="color: #a0aec0; margin-bottom: 5px; font-weight: bold;">直近の約定履歴</div>
+                <div id="historyList">履歴はありません</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const baseUrl = "https://api-fxtrade.oanda.com/v3";
+        let accountId = "", apiToken = "", instrument = "USD_JPY";
+        let candlesData = [], txHistoryData = [];
+        const canvas = document.getElementById('myCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let displayCount = 200, scrollOffset = 0, yScaleMultiplier = 1.0;
+        const yAxisWidth = 65, xAxisHeight = 20;
+        let isDragging = false, lastTouchX = 0, initialPinchDist = null, initialDisplayCount = 200;
+
+        let currentLongUnits = 0, currentLongAvg = 0, currentShortUnits = 0, currentShortAvg = 0;
+        let isAutoTrading = false;
+        let priceInterval, accountInterval, posInterval;
+
+        window.onload = () => {
+            if (localStorage.getItem('oanda_account_id')) document.getElementById('accountIdInput').value = localStorage.getItem('oanda_account_id');
+            if (localStorage.getItem('oanda_api_token')) document.getElementById('apiTokenInput').value = localStorage.getItem('oanda_api_token');
+            resizeCanvas();
+        };
+
+        document.getElementById('loginBtn').addEventListener('click', () => {
+            accountId = document.getElementById('accountIdInput').value.trim();
+            apiToken = document.getElementById('apiTokenInput').value.trim();
+            if (!accountId || !apiToken) return alert("入力してください");
+            localStorage.setItem('oanda_account_id', accountId); localStorage.setItem('oanda_api_token', apiToken);
+            document.getElementById('loginArea').classList.add('hidden'); document.getElementById('mainUI').classList.remove('hidden');
+            resizeCanvas(); window.addEventListener('resize', resizeCanvas); setupTouchEvents(); setupAutoTradeEvents();
+            initApp();
+        });
+
+        document.getElementById('instrumentSelector').addEventListener('change', (e) => {
+            instrument = e.target.value; candlesData = []; txHistoryData = []; initApp();
+        });
+
+        async function apiRequest(endpoint, method = 'GET', body = null) {
+            const options = { method, headers: { 'Authorization': `Bearer ${apiToken}`, 'Accept-Datetime-Format': 'UNIX', 'Content-Type': 'application/json' } };
+            if (body) options.body = JSON.stringify(body);
+            const response = await fetch(`${baseUrl}${endpoint}`, options);
+            if (!response.ok && response.status !== 404) throw new Error(`API Error: ${response.status}`);
+            return response.status === 404 ? null : await response.json();
+        }
+
+        async function initApp() {
+            document.getElementById('historyList').innerText = '読込中...';
+            await fetchAccount(); await fetchPosition(); await fetchHistory(); await fetchHistoricalCandles();
+            if(priceInterval) clearInterval(priceInterval); if(accountInterval) clearInterval(accountInterval); if(posInterval) clearInterval(posInterval);
+            priceInterval = setInterval(fetchPricingAndUpdateChart, 1000); accountInterval = setInterval(fetchAccount, 5000); posInterval = setInterval(fetchPosition, 3000);
+        }
+
+        async function fetchAccount() {
+            try {
+                const data = await apiRequest(`/accounts/${accountId}/summary`); if(!data) return;
+                document.getElementById('balanceVal').innerText = Math.floor(parseFloat(data.account.balance)).toLocaleString();
+                const pl = Math.floor(parseFloat(data.account.unrealizedPL));
+                document.getElementById('plVal').innerText = pl.toLocaleString();
+                document.getElementById('plVal').className = pl >= 0 ? 'val text-green' : 'val text-red';
+            } catch (e) {}
+        }
+
+        async function fetchPosition() {
+            try {
+                const data = await apiRequest(`/accounts/${accountId}/positions/${instrument}`);
+                currentLongUnits = 0; currentLongAvg = 0; currentShortUnits = 0; currentShortAvg = 0;
+                let longPL = 0, shortPL = 0;
+                if (data && data.position) {
+                    currentLongUnits = parseInt(data.position.long.units) || 0; currentLongAvg = parseFloat(data.position.long.averagePrice) || 0; longPL = parseFloat(data.position.long.unrealizedPL) || 0;
+                    currentShortUnits = Math.abs(parseInt(data.position.short.units) || 0); currentShortAvg = parseFloat(data.position.short.averagePrice) || 0; shortPL = parseFloat(data.position.short.unrealizedPL) || 0;
+                }
+                document.getElementById('longUnits').innerText = currentLongUnits.toLocaleString();
+                document.getElementById('longAvg').innerText = currentLongUnits > 0 ? currentLongAvg.toFixed(3) : "---.---";
+                document.getElementById('longPL').innerText = Math.floor(longPL).toLocaleString();
+                document.getElementById('longPL').className = longPL >= 0 ? 'val text-green' : 'val text-red';
+                document.getElementById('btnSideCloseLong').disabled = (currentLongUnits === 0);
+
+                document.getElementById('shortUnits').innerText = currentShortUnits.toLocaleString();
+                document.getElementById('shortAvg').innerText = currentShortUnits > 0 ? currentShortAvg.toFixed(3) : "---.---";
+                document.getElementById('shortPL').innerText = Math.floor(shortPL).toLocaleString();
+                document.getElementById('shortPL').className = shortPL >= 0 ? 'val text-green' : 'val text-red';
+                document.getElementById('btnSideCloseShort').disabled = (currentShortUnits === 0);
+            } catch (e) {}
+        }
+
+        async function fetchHistory() {
+            try {
+                const data = await apiRequest(`/accounts/${accountId}/transactions?type=ORDER_FILL&count=30`); if(!data) return;
+                const list = document.getElementById('historyList'); list.innerHTML = '';
+                (data.transactions || []).forEach(t => {
+                    if(t.instrument === instrument) {
+                        const time = new Date(parseFloat(t.time) * 1000).toLocaleTimeString(); const units = parseInt(t.units);
+                        list.innerHTML += `<div class="history-item"><span>${time}</span><span class="${units > 0 ? 'text-red' : 'text-blue'}">${units > 0 ? '買' : '売'} ${Math.abs(units)}</span><span>@ ${parseFloat(t.price).toFixed(3)}</span></div>`;
+                    }
+                });
+            } catch (e) {}
+        }
+
+        async function fetchHistoricalCandles() {
+            try {
+                const res = await apiRequest(`/instruments/${instrument}/candles?granularity=S5&count=1000`); if(!res || !res.candles) return;
+                candlesData = res.candles.filter(c => c.complete).map(c => ({ time: parseFloat(c.time) * 1000, o: parseFloat(c.mid.o), h: parseFloat(c.mid.h), l: parseFloat(c.mid.l), c: parseFloat(c.mid.c) }));
+                calcIndicators(); drawChart();
+            } catch (e) {}
+        }
+
+        async function fetchPricingAndUpdateChart() {
+            try {
+                const data = await apiRequest(`/accounts/${accountId}/pricing?instruments=${instrument}`); if(!data || !data.prices) return;
+                const priceData = data.prices[0];
+                if (priceData.status !== 'tradeable') { document.getElementById('marketClosedLabel').style.display = 'block'; return; }
+                else { document.getElementById('marketClosedLabel').style.display = 'none'; }
+
+                const askPrice = parseFloat(priceData.prices[0].asks[0].price || priceData.asks[0].price);
+                document.getElementById('bidPrice').innerText = askPrice.toFixed(3);
+                document.getElementById('askPrice').innerText = askPrice.toFixed(3);
+
+                const pipMultiplier = instrument.includes('JPY') ? 1000 : 10000;
+                if (currentShortUnits > 0 && currentShortAvg > 0) {
+                    const pips = (currentShortAvg - askPrice) * pipMultiplier;
+                    document.getElementById('shortPips').innerText = Math.trunc(pips);
+                    document.getElementById('shortPips').className = pips >= 0 ? 'val text-green' : 'val text-red';
+                }
+                if (currentLongUnits > 0 && currentLongAvg > 0) {
+                    const pips = (askPrice - currentLongAvg) * pipMultiplier;
+                    document.getElementById('longPips').innerText = Math.trunc(pips);
+                    document.getElementById('longPips').className = pips >= 0 ? 'val text-green' : 'val text-red';
+                }
+
+                if (candlesData.length > 0) {
+                    const last = candlesData[candlesData.length - 1]; const now = Date.now();
+                    if (now - last.time >= 5000) { candlesData.push({ time: now, o: askPrice, h: askPrice, l: askPrice, c: askPrice }); if (candlesData.length > 2000) candlesData.shift(); }
+                    else { last.c = askPrice; last.h = Math.max(last.h, askPrice); last.l = Math.min(last.l, askPrice); }
+                }
+                if (scrollOffset === 0) { calcIndicators(); drawChart(); }
+            } catch (e) {}
+        }
+
+        function calcIndicators() {
+            const period = 25;
+            for (let i = 0; i < candlesData.length; i++) {
+                if (i >= period - 1) {
+                    let sum = 0; for (let j = 0; j < period; j++) sum += candlesData[i - j].c; candlesData[i].sma = sum / period;
+                    let vSum = 0; for (let j = 0; j < period; j++) vSum += Math.pow(candlesData[i - j].c - candlesData[i].sma, 2);
+                    candlesData[i].sd = Math.sqrt(vSum / period);
+                }
+            }
+        }
+
+        function drawChart() {
+            if (!ctx || candlesData.length === 0) return; const w = canvas.width, h = canvas.height, chartW = w - yAxisWidth, chartH = h - xAxisHeight; ctx.clearRect(0, 0, w, h);
+            const startIndex = Math.max(0, candlesData.length - displayCount - Math.floor(scrollOffset)), endIndex = Math.min(candlesData.length, startIndex + displayCount), dataToDraw = candlesData.slice(startIndex, endIndex); if(dataToDraw.length === 0) return;
+
+            let minP = Infinity, maxP = -Infinity;
+            dataToDraw.forEach(c => {
+                if (c.h > maxP) maxP = c.h; if (c.l < minP) minP = c.l;
+                if (c.sma && c.sd !== undefined) { const u = c.sma + (2 * c.sd), l = c.sma - (2 * c.sd); if (u > maxP) maxP = u; if (l < minP) minP = l; }
+            });
+            const midP = (maxP + minP) / 2, zRange = (maxP - minP) * yScaleMultiplier || 0.001; maxP = midP + (zRange / 2) * 1.1; minP = midP - (zRange / 2) * 1.1;
+            const finalRange = maxP - minP, getY = (price) => chartH - ((price - minP) / finalRange) * chartH, candleWidth = chartW / dataToDraw.length;
+
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)'; dataToDraw.forEach((c, i) => { if(c.sma && c.sd !== undefined) { const x = i * candleWidth + candleWidth / 2; i === 0 ? ctx.moveTo(x, getY(c.sma + (2 * c.sd))) : ctx.lineTo(x, getY(c.sma + (2 * c.sd))); }}); ctx.stroke();
+            ctx.beginPath(); ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)'; dataToDraw.forEach((c, i) => { if(c.sma && c.sd !== undefined) { const x = i * candleWidth + candleWidth / 2; i === 0 ? ctx.moveTo(x, getY(c.sma - (2 * c.sd))) : ctx.lineTo(x, getY(c.sma - (2 * c.sd)))); }}); ctx.stroke();
+            ctx.beginPath(); ctx.strokeStyle = 'rgba(250, 204, 21, 0.8)'; dataToDraw.forEach((c, i) => { if(c.sma) { const x = i * candleWidth + candleWidth / 2; i === 0 ? ctx.moveTo(x, getY(c.sma)) : ctx.lineTo(x, getY(c.sma)); }}); ctx.stroke();
+
+            dataToDraw.forEach((c, i) => {
+                const x = i * candleWidth, yO = getY(c.o), yC = getY(c.c), yH = getY(c.h), yL = getY(c.l); const color = c.c >= c.o ? '#ef4444' : '#3b82f6';
+                ctx.strokeStyle = color; ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(x + candleWidth / 2, yH); ctx.lineTo(x + candleWidth / 2, yL); ctx.stroke(); ctx.fillRect(x + candleWidth * 0.1, Math.min(yO, yC), candleWidth * 0.8, Math.max(1, Math.abs(yO - yC)));
+            });
+
+            ctx.fillStyle = '#161b26'; ctx.fillRect(0, chartH, chartW, xAxisHeight); ctx.fillStyle = '#a0aec0'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+            const step = Math.max(1, Math.floor(60 / candleWidth)); for (let i = 0; i < dataToDraw.length; i += step) { ctx.fillText(`${String(new Date(dataToDraw[i].time).getHours()).padStart(2, '0')}:${String(new Date(dataToDraw[i].time).getMinutes()).padStart(2, '0')}`, i * candleWidth + candleWidth / 2, h - 4); }
+            ctx.fillStyle = '#161b26'; ctx.fillRect(chartW, 0, yAxisWidth, h); ctx.beginPath(); ctx.strokeStyle = '#2d3748'; ctx.moveTo(chartW, 0); ctx.lineTo(chartW, h); ctx.stroke();
+            ctx.fillStyle = '#a0aec0'; ctx.textAlign = 'left'; ctx.font = 'bold 12px sans-serif'; for (let i = 1; i <= 5; i++) { ctx.fillText((maxP - ((maxP - minP) * ((chartH / 6) * i / chartH))).toFixed(3), chartW + 5, (chartH / 6) * i + 4); }
+        }
+
+        async function executeOrder(dir) {
+            let u = document.getElementById('lotSize').value; if (!confirm(`${instrument} を ${u}通貨 ${dir === 'BUY'?'買':'売'} しますか？`)) return;
+            const body = { order: { units: dir === 'SELL' ? "-" + u : u, instrument, timeInForce: "FOK", type: "MARKET", positionFill: "DEFAULT" } };
+            try { const res = await apiRequest(`/accounts/${accountId}/orders`, 'POST', body); if(res && res.orderFillTransaction) { alert("約定価格: " + res.orderFillTransaction.price); fetchAccount(); fetchPosition(); fetchHistory(); } } catch(e) { alert("注文エラー"); }
+        }
+
+        async function executeSideClose(side) {
+            const body = side === 'LONG' ? { longUnits: "ALL" } : { shortUnits: "ALL" }; if(!confirm(`全決済しますか？`)) return;
+            try { const res = await apiRequest(`/accounts/${accountId}/positions/${instrument}/close`, 'PUT', body); if(res) { fetchAccount(); fetchPosition(); fetchHistory(); } } catch (e) { alert("決済エラー"); }
+        }
+
+        function setupAutoTradeEvents() {
+            document.getElementById('btnAutoStart').addEventListener('click', () => { isAutoTrading = true; document.getElementById('btnAutoStart').disabled = true; document.getElementById('btnAutoStop').disabled = false; document.getElementById('btnAutoStart').innerText = "稼働中..."; });
+            document.getElementById('btnAutoStop').addEventListener('click', () => { isAutoTrading = false; document.getElementById('btnAutoStart').disabled = false; document.getElementById('btnAutoStop').disabled = true; document.getElementById('btnAutoStart').innerText = "▶ スタート"; });
+            document.getElementById('btnSell').addEventListener('click', () => executeOrder('SELL')); document.getElementById('btnBuy').addEventListener('click', () => executeOrder('BUY'));
+            document.getElementById('btnSideCloseLong').addEventListener('click', () => executeSideClose('LONG')); document.getElementById('btnSideCloseShort').addEventListener('click', () => executeSideClose('SHORT'));
+        }
+
+        function setupTouchEvents() {
+            canvas.addEventListener('touchstart', (e) => { if (e.touches.length === 1) { isDragging = true; lastTouchX = e.touches[0].clientX; } else if (e.touches.length === 2) { isDragging = false; initialPinchDist = Math.sqrt(Math.pow(e.touches[0].clientX - e.touches[1].clientX, 2) + Math.pow(e.touches[0].clientY - e.touches[1].clientY, 2)); initialDisplayCount = displayCount; } }, { passive: false });
+            canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if (e.touches.length === 1 && isDragging) { const dx = e.touches[0].clientX - lastTouchX, candleWidth = (canvas.width - yAxisWidth) / displayCount; scrollOffset = Math.max(0, Math.min(candlesData.length - displayCount, scrollOffset + dx / candleWidth)); lastTouchX = e.touches[0].clientX; drawChart(); } else if (e.touches.length === 2 && initialPinchDist) { const currentDist = Math.sqrt(Math.pow(e.touches[0].clientX - e.touches[1].clientX, 2) + Math.pow(e.touches[0].clientY - e.touches[1].clientY, 2)); displayCount = Math.max(20, Math.min(2000, Math.floor(initialDisplayCount / (currentDist / initialPinchDist)))); scrollOffset = Math.min(Math.max(0, candlesData.length - displayCount), scrollOffset); drawChart(); } }, { passive: false });
+            canvas.addEventListener('touchend', () => { isDragging = false; initialPinchDist = null; });
+        }
+        function resizeCanvas() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; drawChart(); }
+    </script>
+</body>
+</html>
