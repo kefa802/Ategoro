@@ -223,27 +223,29 @@
         const tfGranularity = { "0": "S5", "1": "M1", "5": "M5", "10": "M10", "60": "H1", "240": "H4" };
         const tfIntervalMs = { "0": 5, "1": 60, "5": 300, "10": 600, "60": 3600, "240": 14400 };
 
-        window.addEventListener('DOMContentLoaded', () => {
-            try {
-                document.getElementById('btnLegend').addEventListener('click', () => document.getElementById('legendPanel').classList.toggle('hidden'));
+        // DOMの読み込みを待たずに即時実行で確実に関数をバインド
+        const initUIEvents = () => {
+            document.getElementById('btnLegend').addEventListener('click', () => document.getElementById('legendPanel').classList.toggle('hidden'));
 
-                // URLパラメータとストレージをチェックし、連携されていれば即座にログインをパスする
-                const savedId = localStorage.getItem('oanda_account_id');
-                const savedToken = localStorage.getItem('oanda_api_token');
-                const urlParams = new URLSearchParams(window.location.search);
-                const isLoggedIn = urlParams.get('loggedin') === 'true';
+            // LocalStorageとURLパラメータでログイン自動スキップ判定
+            const savedId = localStorage.getItem('oanda_account_id');
+            const savedToken = localStorage.getItem('oanda_api_token');
+            const urlParams = new URLSearchParams(window.location.search);
+            const isLoggedIn = urlParams.get('loggedin') === 'true';
 
-                if (savedId) document.getElementById('accountIdInput').value = savedId;
-                if (savedToken) document.getElementById('apiTokenInput').value = savedToken;
+            if (savedId) document.getElementById('accountIdInput').value = savedId;
+            if (savedToken) document.getElementById('apiTokenInput').value = savedToken;
 
-                const performLogin = () => {
+            const performLogin = () => {
+                try {
                     accountId = document.getElementById('accountIdInput').value.trim();
                     apiToken = document.getElementById('apiTokenInput').value.trim();
-                    if (!accountId || !apiToken) return alert("入力してください");
+                    if (!accountId || !apiToken) return alert("口座IDとAPIトークンを入力してください");
+                    
                     localStorage.setItem('oanda_account_id', accountId); 
                     localStorage.setItem('oanda_api_token', apiToken);
                     
-                    document.getElementById('loginArea').style.display = 'none';
+                    document.getElementById('loginArea').classList.add('hidden'); 
                     document.getElementById('mainUI').classList.remove('hidden');
                     
                     resizeCanvas(); 
@@ -251,24 +253,29 @@
                     setupTouchEvents(); 
                     setupAutoTradeEvents();
                     initApp();
-                };
-
-                document.getElementById('loginBtn').addEventListener('click', performLogin);
-
-                // タブ移動での遷移時は、ログイン画面を一瞬も表示させずにスキップ
-                if (isLoggedIn && savedId && savedToken) {
-                    performLogin();
+                } catch(err) {
+                    alert("ログイン処理エラー: " + err.message);
                 }
+            };
 
-                document.getElementById('instrumentSelector').addEventListener('change', (e) => {
-                    instrument = e.target.value; candlesData = []; txHistoryData = []; initApp();
-                });
+            document.getElementById('loginBtn').addEventListener('click', performLogin);
 
-                document.getElementById('tfSelector').addEventListener('change', () => {
-                    candlesData = []; scrollOffset = 0; fetchHistoricalCandles();
-                });
-            } catch(e) { alert("初期化エラー: " + e.message); }
-        });
+            // タブからの遷移時のみログイン画面を自動スキップ
+            if (isLoggedIn && savedId && savedToken) {
+                performLogin();
+            }
+
+            document.getElementById('instrumentSelector').addEventListener('change', (e) => {
+                instrument = e.target.value; candlesData = []; txHistoryData = []; initApp();
+            });
+
+            document.getElementById('tfSelector').addEventListener('change', () => {
+                candlesData = []; scrollOffset = 0; fetchHistoricalCandles();
+            });
+        };
+
+        // UI初期化の確実な実行
+        initUIEvents();
 
         async function apiRequest(endpoint, method = 'GET', body = null) {
             const options = { method, headers: { 'Authorization': `Bearer ${apiToken}`, 'Accept-Datetime-Format': 'UNIX', 'Content-Type': 'application/json' } };
@@ -330,7 +337,7 @@
                         const units = parseInt(t.units);
                         
                         txHistoryData.push({ time: parseFloat(t.time) * 1000, type: units > 0 ? 'LONG' : 'SHORT', price: parseFloat(t.price) });
-                        list.innerHTML += `<div class="history-item"><span>${time}</span><span class="${units > 0 ? 'text-red' : 'text-blue'} font-bold">${units > 0 ? '買' : '売'} ${Math.abs(units)}</span><span style="font-weight:bold;">@ ${parseFloat(t.price).toFixed(3)}</span></div>`;
+                        list.innerHTML += `<div class="history-item"><span>${time}</span><span class="${units > 0 ? 'text-red font-bold' : 'text-blue font-bold'}">${units > 0 ? '買' : '売'} ${Math.abs(units)}</span><span style="font-weight:bold;">@ ${parseFloat(t.price).toFixed(3)}</span></div>`;
                     }
                 });
                 drawChart();
@@ -405,19 +412,8 @@
         }
 
         function drawChart() {
-            if (!ctx) return; 
-            const w = canvas.width, h = canvas.height, chartW = w - yAxisWidth, chartH = h - xAxisHeight; 
-            ctx.clearRect(0, 0, w, h);
-            
-            if (candlesData.length === 0) { 
-                ctx.fillStyle = '#64748b'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center'; 
-                ctx.fillText('データを取得中...', w / 2, h / 2); return; 
-            }
-
-            const startIndex = Math.max(0, candlesData.length - displayCount - Math.floor(scrollOffset));
-            const endIndex = Math.min(candlesData.length, startIndex + displayCount);
-            const dataToDraw = candlesData.slice(startIndex, endIndex); 
-            if(dataToDraw.length === 0) return;
+            if (!ctx || candlesData.length === 0) return; const w = canvas.width, h = canvas.height, chartW = w - yAxisWidth, chartH = h - xAxisHeight; ctx.clearRect(0, 0, w, h);
+            const startIndex = Math.max(0, candlesData.length - displayCount - Math.floor(scrollOffset)), endIndex = Math.min(candlesData.length, startIndex + displayCount), dataToDraw = candlesData.slice(startIndex, endIndex); if(dataToDraw.length === 0) return;
 
             const drawSigma = 2.0;
 
@@ -428,7 +424,6 @@
             });
             const midP = (maxP + minP) / 2, zRange = (maxP - minP) * yScaleMultiplier || 0.001; 
             maxP = midP + (zRange / 2) * 1.1; minP = midP - (zRange / 2) * 1.1;
-            
             const finalRange = maxP - minP, getY = (price) => chartH - ((price - minP) / finalRange) * chartH, candleWidth = chartW / dataToDraw.length;
 
             ctx.lineWidth = 1;
@@ -444,7 +439,6 @@
             txHistoryData.forEach(tx => {
                 const tfSeconds = tfIntervalMs[document.getElementById('tfSelector').value];
                 const cIndex = dataToDraw.findIndex(c => Math.abs(c.time - tx.time) <= (tfSeconds * 1000));
-                
                 if (cIndex !== -1) {
                     const c = dataToDraw[cIndex]; const x = cIndex * candleWidth + candleWidth / 2; let markerY = 0; ctx.beginPath();
                     if (tx.type === 'LONG') { ctx.fillStyle = '#ef4444'; markerY = getY(c.l) + 15; ctx.moveTo(x, markerY - 8); ctx.lineTo(x - 5, markerY + 2); ctx.lineTo(x + 5, markerY + 2); } 
