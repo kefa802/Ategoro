@@ -136,7 +136,6 @@
             <canvas id="myCanvas"></canvas>
         </div>
 
-        <!-- ⚙️モーダル設定項目 -->
         <div id="modalSettings" class="modal-overlay hidden">
             <div class="modal-header">
                 <div class="modal-title">⚙️ バックテスト詳細設定</div>
@@ -231,7 +230,6 @@
         const tfGranularity = { "0": "S5", "1": "M1", "5": "M5", "10": "M10", "60": "H1", "240": "H4" };
         const tfIntervalMs = { "0": 5, "1": 60, "5": 300, "10": 600, "60": 3600, "240": 14400 };
 
-        // 要素の取得エラーを防ぐための安全なリスナー登録
         window.addEventListener('DOMContentLoaded', () => {
             document.getElementById('btnTopSettings').addEventListener('click', () => document.getElementById('modalSettings').classList.remove('hidden'));
             document.getElementById('btnCloseModal').addEventListener('click', () => document.getElementById('modalSettings').classList.add('hidden'));
@@ -247,9 +245,20 @@
                 }
             });
 
-            if (localStorage.getItem('oanda_account_id')) document.getElementById('accountIdInput').value = localStorage.getItem('oanda_account_id');
-            if (localStorage.getItem('oanda_api_token')) document.getElementById('apiTokenInput').value = localStorage.getItem('oanda_api_token');
-            resizeCanvas();
+            // 【改善点①】LocalStorageの認証データチェック、あれば自動でログインをスキップ
+            const savedId = localStorage.getItem('oanda_account_id');
+            const savedToken = localStorage.getItem('oanda_api_token');
+            if (savedId && savedToken) {
+                accountId = savedId;
+                apiToken = savedToken;
+                document.getElementById('loginArea').classList.add('hidden'); 
+                document.getElementById('mainUI').classList.remove('hidden');
+                resizeCanvas();
+                window.addEventListener('resize', resizeCanvas); 
+                setupTouchEvents();
+            } else {
+                if (savedId) document.getElementById('accountIdInput').value = savedId;
+            }
 
             document.getElementById('loginBtn').addEventListener('click', () => {
                 try {
@@ -454,7 +463,7 @@
                 if (getAsk(c.h) > maxP) maxP = getAsk(c.h); if (getAsk(c.l) < minP) minP = getAsk(c.l);
                 if (c.sma && c.sd !== undefined) { const u = getAsk(c.sma + (drawBidSigma * c.sd)), l = getAsk(c.sma - (drawAskSigma * c.sd)); if (u > maxP) maxP = u; if (l < minP) minP = l; }
             });
-            const midP = (maxP + minP) / 2, zoomedRange = (maxP - minP) * yScaleMultiplier || 0.001; maxP = midP + (zRange / 2) * 1.1; minP = midP - (zRange / 2) * 1.1;
+            const midP = (maxP + minP) / 2, zRange = (maxP - minP) * yScaleMultiplier || 0.001; maxP = midP + (zRange / 2) * 1.1; minP = midP - (zRange / 2) * 1.1;
             const finalRange = maxP - minP, getY = (price) => chartH - ((price - minP) / finalRange) * chartH;
 
             if (highlightedTime) { const hIndex = dataToDraw.findIndex(c => c.time === highlightedTime); if (hIndex !== -1) { const hx = hIndex * candleWidth + candleWidth / 2; ctx.fillStyle = 'rgba(251, 191, 36, 0.15)'; ctx.fillRect(hIndex * candleWidth, 0, candleWidth, chartH); ctx.beginPath(); ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]); ctx.moveTo(hx, 0); ctx.lineTo(hx, chartH); ctx.stroke(); ctx.setLineDash([]); } }
