@@ -221,31 +221,34 @@
         let priceInterval, accountInterval, posInterval;
 
         const tfGranularity = { "0": "S5", "1": "M1", "5": "M5", "10": "M10", "60": "H1", "240": "H4" };
+        const tfIntervalMs = { "0": 5, "1": 60, "5": 300, "10": 600, "60": 3600, "240": 14400 };
 
-        document.getElementById('btnLegend').addEventListener('click', () => document.getElementById('legendPanel').classList.toggle('hidden'));
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('btnLegend').addEventListener('click', () => document.getElementById('legendPanel').classList.toggle('hidden'));
 
-        window.onload = () => {
             if (localStorage.getItem('oanda_account_id')) document.getElementById('accountIdInput').value = localStorage.getItem('oanda_account_id');
             if (localStorage.getItem('oanda_api_token')) document.getElementById('apiTokenInput').value = localStorage.getItem('oanda_api_token');
             resizeCanvas();
-        };
 
-        document.getElementById('loginBtn').addEventListener('click', () => {
-            accountId = document.getElementById('accountIdInput').value.trim();
-            apiToken = document.getElementById('apiTokenInput').value.trim();
-            if (!accountId || !apiToken) return alert("入力してください");
-            localStorage.setItem('oanda_account_id', accountId); localStorage.setItem('oanda_api_token', apiToken);
-            document.getElementById('loginArea').classList.add('hidden'); document.getElementById('mainUI').classList.remove('hidden');
-            resizeCanvas(); window.addEventListener('resize', resizeCanvas); setupTouchEvents(); setupAutoTradeEvents();
-            initApp();
-        });
+            document.getElementById('loginBtn').addEventListener('click', () => {
+                try {
+                    accountId = document.getElementById('accountIdInput').value.trim();
+                    apiToken = document.getElementById('apiTokenInput').value.trim();
+                    if (!accountId || !apiToken) return alert("入力してください");
+                    localStorage.setItem('oanda_account_id', accountId); localStorage.setItem('oanda_api_token', apiToken);
+                    document.getElementById('loginArea').classList.add('hidden'); document.getElementById('mainUI').classList.remove('hidden');
+                    resizeCanvas(); window.addEventListener('resize', resizeCanvas); setupTouchEvents(); setupAutoTradeEvents();
+                    initApp();
+                } catch(e) { alert("エラー: " + e.message); }
+            });
 
-        document.getElementById('instrumentSelector').addEventListener('change', (e) => {
-            instrument = e.target.value; candlesData = []; txHistoryData = []; initApp();
-        });
+            document.getElementById('instrumentSelector').addEventListener('change', (e) => {
+                instrument = e.target.value; candlesData = []; txHistoryData = []; initApp();
+            });
 
-        document.getElementById('tfSelector').addEventListener('change', () => {
-            candlesData = []; scrollOffset = 0; highlightedTime = null; fetchHistoricalCandles();
+            document.getElementById('tfSelector').addEventListener('change', () => {
+                candlesData = []; scrollOffset = 0; highlightedTime = null; fetchHistoricalCandles();
+            });
         });
 
         async function apiRequest(endpoint, method = 'GET', body = null) {
@@ -303,7 +306,7 @@
                 (data.transactions || []).forEach(t => {
                     if(t.instrument === instrument) {
                         const time = new Date(parseFloat(t.time) * 1000).toLocaleTimeString(); const units = parseInt(t.units);
-                        list.innerHTML += `<div class="history-item"><span>${time}</span><span class="${units > 0 ? 'text-red' : 'text-blue'}">${units > 0 ? '買' : '売'} ${Math.abs(units)}</span><span style="font-weight:bold;">@ ${parseFloat(t.price).toFixed(3)}</span></div>`;
+                        list.innerHTML += `<div class="history-item"><span>${time}</span><span class="${units > 0 ? 'text-red font-bold' : 'text-blue font-bold'}">${units > 0 ? '買' : '売'} ${Math.abs(units)}</span><span style="font-weight:bold;">@ ${parseFloat(t.price).toFixed(3)}</span></div>`;
                     }
                 });
             } catch (e) {}
@@ -313,7 +316,6 @@
             try {
                 const tfVal = document.getElementById('tfSelector').value;
                 const granularity = tfGranularity[tfVal];
-                // 実取引のチャートはOANDAから直接ASK(買値)のローソク足を取得して描画する
                 const res = await apiRequest(`/instruments/${instrument}/candles?granularity=${granularity}&count=1000&price=A`); 
                 if(!res || !res.candles) return;
                 candlesData = res.candles.filter(c => c.complete).map(c => ({ time: parseFloat(c.time) * 1000, o: parseFloat(c.ask.o), h: parseFloat(c.ask.h), l: parseFloat(c.ask.l), c: parseFloat(c.ask.c) }));
