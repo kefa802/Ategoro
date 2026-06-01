@@ -19,13 +19,21 @@
 
         /* === ヘッダー・チャート === */
         .header { display: flex; justify-content: space-between; padding: 8px 10px; background-color: #161b26; border-bottom: 1px solid #2d3748; font-size: 14px; flex-shrink: 0; }
-        #chartWrapper { height: 35vh; min-height: 200px; width: 100%; border-bottom: 1px solid #2d3748; position: relative; background: #0b101e; flex-shrink: 0; }
+        #chartWrapper { height: 38vh; min-height: 220px; width: 100%; border-bottom: 1px solid #2d3748; position: relative; background: #0b101e; flex-shrink: 0; }
+        
+        /* 左上のコントロール */
         #chartControls { position: absolute; top: 5px; left: 5px; z-index: 10; display: flex; gap: 5px; align-items: center; }
         #chartControls select { background: #1a202c; color: white; border: 1px solid #4a5568; padding: 4px 6px; border-radius: 4px; font-size: 12px; }
-        
-        /* マークのヘルプボタン＆パネル */
         .btn-legend { background: #1e293b; color: #cbd5e1; border: 1px solid #4a5568; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; }
-        .btn-legend:active { opacity: 0.8; }
+        
+        /* 右上のコントロール (追加) */
+        #topRightControls { position: absolute; top: 5px; right: 5px; z-index: 10; display: flex; gap: 5px; align-items: center; }
+        .btn-top-run { background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.3); min-width: 70px; text-align: center; }
+        .btn-top-run.running { background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%); }
+        .btn-top-settings { background: #1e293b; color: white; border: 1px solid #4a5568; padding: 5px 8px; border-radius: 4px; font-size: 14px; cursor: pointer; }
+        .btn-top-run:active, .btn-top-settings:active { opacity: 0.8; }
+
+        /* 凡例パネル */
         .legend-panel { position: absolute; top: 35px; left: 5px; background: rgba(22, 27, 38, 0.9); border: 1px solid #4a5568; border-radius: 6px; padding: 10px; font-size: 12px; z-index: 20; backdrop-filter: blur(2px); box-shadow: 0 4px 6px rgba(0,0,0,0.5); }
         .legend-item { display: flex; align-items: center; margin-bottom: 6px; }
         .legend-item:last-child { margin-bottom: 0; }
@@ -45,9 +53,6 @@
         .bt-setting-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .bt-setting-row input[type="date"], .bt-setting-row input[type="number"], .bt-setting-row input[type="time"] { background: #2d3748; color: white; border: 1px solid #4a5568; padding: 6px; border-radius: 4px; text-align: center; }
         .flex-row { display: flex; gap: 5px; align-items: center; }
-
-        .bt-setting-toggle { background: #1e293b; padding: 10px; border-radius: 6px; text-align: center; font-weight: bold; color: #cbd5e1; cursor: pointer; border: 1px solid #2d3748; margin-bottom: 15px; }
-        .bt-setting-toggle:active { opacity: 0.8; }
         
         .bt-grid { display: grid; grid-template-columns: 85px 1fr 1fr; gap: 8px; align-items: center; background: #1e293b; padding: 10px; border-radius: 6px; margin-bottom: 15px; }
         .bt-grid-header { font-weight: bold; text-align: center; border-bottom: 1px solid #2d3748; padding-bottom: 4px; }
@@ -56,10 +61,8 @@
         .bt-grid input[type="number"] { width: 45px; background: #0b101e; color: white; border: 1px solid #4a5568; padding: 4px; border-radius: 4px; text-align: center; }
         .bt-grid input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
 
-        .btn-run-test { width: 100%; padding: 14px; background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%); color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-        .btn-run-test:disabled { background: #475569; color: #94a3b8; cursor: not-allowed; box-shadow: none; }
-
-        #testResult { margin-top: 15px; text-align: center; font-weight: bold; font-size: 16px; }
+        #testResult { text-align: center; font-weight: bold; font-size: 15px; margin-bottom: 10px; }
+        #testMarginResult { text-align: center; font-size: 13px; color: #cbd5e1; margin-bottom: 15px; }
 
         /* === 履歴・損益詳細パネル === */
         .history-panel { flex: 1; padding: 15px; background-color: #0b101e; border-top: 1px solid #2d3748; }
@@ -72,8 +75,11 @@
         .daily-row:last-child { border-bottom: none; }
 
         #historyList { color: #64748b; padding-bottom: 80px; } 
-        .history-item { display: flex; justify-content: space-between; padding: 10px 5px; border-bottom: 1px solid #1a202c; font-size: 12px; cursor: pointer; }
+        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; border-bottom: 1px solid #1a202c; font-size: 12px; cursor: pointer; }
         .history-item:active { background-color: #1e293b; border-radius: 4px; }
+        
+        .hist-info { display: flex; flex-direction: column; gap: 4px; }
+        .hist-status { font-size: 10px; color: #94a3b8; }
         
         .hidden { display: none !important; }
         .text-blue { color: #60a5fa; }
@@ -113,18 +119,21 @@
                     <option value="GBP_JPY">GBP/JPY</option>
                 </select>
                 <select id="tfSelector">
-                    <option value="0">5秒足</option>
+                    <option value="0" selected>5秒足</option>
                     <option value="1">1分足</option>
                     <option value="5">5分足</option>
                     <option value="10">10分足</option>
                     <option value="60">1時間足</option>
                     <option value="240">4時間足</option>
                 </select>
-                <!-- ヘルプボタン追加 -->
-                <button id="btnLegend" class="btn-legend">[?] マークの意味</button>
+                <button id="btnLegend" class="btn-legend">[?]</button>
+            </div>
+
+            <div id="topRightControls">
+                <button id="btnTopRun" class="btn-top-run">▶ 実行</button>
+                <button id="btnTopSettings" class="btn-top-settings">⚙️</button>
             </div>
             
-            <!-- マークの意味（凡例）パネル -->
             <div id="legendPanel" class="legend-panel hidden">
                 <div class="legend-item"><span class="leg-icon text-red">▲</span> 新規 買(ASK) エントリー</div>
                 <div class="legend-item"><span class="leg-icon text-blue">▼</span> 新規 売(BID) エントリー</div>
@@ -137,7 +146,8 @@
         </div>
 
         <div class="bottom-area">
-            <div class="bt-panel">
+            
+            <div class="bt-panel" id="settingsBody">
                 <div class="mode-tabs">
                     <div class="mode-tab">リアルトレード</div>
                     <div class="mode-tab active">バックテスト</div>
@@ -152,56 +162,65 @@
                     </div>
                 </div>
 
-                <div class="bt-setting-toggle" id="toggleSettingsBtn">
-                    <span id="toggleSettingsIcon">▶</span> 詳細設定（時間・スプレッド・条件）を開く
-                </div>
-
-                <div id="settingsBody" class="hidden">
-                    <div class="bt-setting-row">
-                        <span>取引時間 (JST)</span>
-                        <div class="flex-row">
-                            <input type="time" id="btStartTime" value="08:00">
-                            <span>~</span>
-                            <input type="time" id="btEndTime" value="20:00">
-                        </div>
-                    </div>
-                    <div class="bt-setting-row">
-                        <span>スプレッド</span>
-                        <div class="flex-row">
-                            <input type="number" id="btSpread" min="0" step="1" value="8" style="width: 60px;">
-                            <span>pips</span>
-                        </div>
-                    </div>
-                    <div class="bt-setting-row">
-                        <span>最大ポジション数</span>
-                        <input type="number" id="btMaxPos" min="1" value="8">
-                    </div>
-                    <div class="bt-grid">
-                        <div></div>
-                        <div class="bt-grid-header text-blue">BID (売)</div>
-                        <div class="bt-grid-header text-red">ASK (買)</div>
-                        <div class="label-col">第1ポジ<br><span style="font-size:10px; font-weight:normal;">(BB乖離)</span></div>
-                        <div class="input-col"><input type="checkbox" id="e1Bid" checked><input type="number" id="e1BidSigma" value="2.0" step="0.1"> σ超</div>
-                        <div class="input-col"><input type="checkbox" id="e1Ask" checked><input type="number" id="e1AskSigma" value="2.0" step="0.1"> σ下</div>
-                        <div class="label-col">第2ポジ<br>以降</div>
-                        <div class="input-col"><input type="number" id="nBidPips" value="8"> pips</div>
-                        <div class="input-col"><input type="number" id="nAskPips" value="8"> pips</div>
-                        <div class="label-col" style="grid-column: span 3; border-bottom: 1px dashed #4a5568; margin-top: 5px;">全決済設定 (平均建値からのトータル損益)</div>
-                        <div class="label-col"><input type="checkbox" id="useTp" checked> TP</div>
-                        <div class="input-col"><input type="number" id="tpBid" value="20"> pips以上</div>
-                        <div class="input-col"><input type="number" id="tpAsk" value="20"> pips以上</div>
-                        <div class="label-col"><input type="checkbox" id="useSl" checked> SL</div>
-                        <div class="input-col"><input type="number" id="slBid" value="-20"> pips以下</div>
-                        <div class="input-col"><input type="number" id="slAsk" value="-20"> pips以下</div>
+                <div class="bt-setting-row">
+                    <span>取引時間 (JST)</span>
+                    <div class="flex-row">
+                        <input type="time" id="btStartTime" value="08:00">
+                        <span>~</span>
+                        <input type="time" id="btEndTime" value="20:00">
                     </div>
                 </div>
+                
+                <div class="bt-setting-row" style="border-top: 1px solid #2d3748; margin-top: 10px; padding-top: 10px;">
+                    <span>初期証拠金 (円)</span>
+                    <input type="number" id="btInitialMargin" value="100000" step="10000" style="width: 120px;">
+                </div>
 
-                <button id="btnRunTest" class="btn-run-test">▶ バックテスト実行</button>
-                <div id="testResult"></div>
+                <div class="bt-setting-row">
+                    <span>ロット (1.0 = 10万通貨)</span>
+                    <input type="number" id="btLot" step="0.01" min="0.01" value="0.01" style="width: 80px;">
+                </div>
+
+                <div class="bt-setting-row">
+                    <span>スプレッド</span>
+                    <div class="flex-row">
+                        <input type="number" id="btSpread" min="0" step="1" value="8" style="width: 60px;">
+                        <span>pips</span>
+                    </div>
+                </div>
+                
+                <div class="bt-setting-row">
+                    <span>最大ポジション数</span>
+                    <input type="number" id="btMaxPos" min="1" value="8">
+                </div>
+
+                <div class="bt-grid">
+                    <div></div>
+                    <div class="bt-grid-header text-blue">BID (売)</div>
+                    <div class="bt-grid-header text-red">ASK (買)</div>
+                    <div class="label-col">第1ポジ<br><span style="font-size:10px; font-weight:normal;">(BB乖離)</span></div>
+                    <div class="input-col"><input type="checkbox" id="e1Bid" checked><input type="number" id="e1BidSigma" value="2.0" step="0.1"> σ超</div>
+                    <div class="input-col"><input type="checkbox" id="e1Ask" checked><input type="number" id="e1AskSigma" value="2.0" step="0.1"> σ下</div>
+                    <div class="label-col">第2ポジ<br>以降</div>
+                    <div class="input-col"><input type="number" id="nBidPips" value="8"> pips</div>
+                    <div class="input-col"><input type="number" id="nAskPips" value="8"> pips</div>
+                    <div class="label-col" style="grid-column: span 3; border-bottom: 1px dashed #4a5568; margin-top: 5px;">全決済設定 (平均建値からのトータル損益)</div>
+                    <div class="label-col"><input type="checkbox" id="useTp" checked> TP</div>
+                    <div class="input-col"><input type="number" id="tpBid" value="20"> pips以上</div>
+                    <div class="input-col"><input type="number" id="tpAsk" value="20"> pips以上</div>
+                    <div class="label-col"><input type="checkbox" id="useSl" checked> SL</div>
+                    <div class="input-col"><input type="number" id="slBid" value="-20"> pips以下</div>
+                    <div class="input-col"><input type="number" id="slAsk" value="-20"> pips以下</div>
+                </div>
+                
+                <div style="text-align: center; color: #a0aec0; font-size: 11px;">※テストを実行するには右上の「▶ 実行」を押してください</div>
             </div>
 
             <div class="history-panel">
-                <div class="history-header">取引履歴 (結果) <span style="font-size: 10px; font-weight: normal;">※タップでチャートジャンプ</span></div>
+                <div id="testResult"></div>
+                <div id="testMarginResult"></div>
+
+                <div class="history-header">取引履歴 (結果) <span style="font-size: 10px; font-weight: normal;">※タップでジャンプ</span></div>
                 
                 <button id="btnTogglePnL" class="btn-toggle-pnl hidden">日別損益を閉じる ▲</button>
                 <div id="dailyPnlContainer" class="daily-summary hidden"></div>
@@ -214,30 +233,24 @@
     <script>
         const baseUrl = "https://api-fxtrade.oanda.com/v3";
         let accountId = "", apiToken = "", instrument = "USD_JPY";
-        let candlesData = [], displayCandles = [], txHistoryData = []; 
+        let candlesData = [], txHistoryData = []; 
         const canvas = document.getElementById('myCanvas');
         const ctx = canvas.getContext('2d');
-        let displayCount = 300, scrollOffset = 0, yScaleMultiplier = 1.0;
-        const yAxisWidth = 55, xAxisHeight = 20;
-        let isDragging = false, lastTouchX = 0, initialPinchDist = null, initialDisplayCount = 300;
-        
+        let displayCount = 200, scrollOffset = 0, yScaleMultiplier = 1.0;
+        const yAxisWidth = 60, xAxisHeight = 20;
+        let isDragging = false, lastTouchX = 0, initialPinchDist = null, initialDisplayCount = 200;
         let highlightedTime = null; 
+        
+        // 実行状態の管理フラグ
+        let isTestRunning = false;
+        let shouldStopTest = false;
 
-        // 凡例パネルのトグル処理
-        document.getElementById('btnLegend').addEventListener('click', () => {
-            const panel = document.getElementById('legendPanel');
-            panel.classList.toggle('hidden');
-        });
+        // OANDA APIの時間足マッピング
+        const tfGranularity = { "0": "S5", "1": "M1", "5": "M5", "10": "M10", "60": "H1", "240": "H4" };
+        const tfIntervalMs = { "0": 5, "1": 60, "5": 300, "10": 600, "60": 3600, "240": 14400 };
 
-        document.getElementById('toggleSettingsBtn').addEventListener('click', () => {
-            const body = document.getElementById('settingsBody');
-            const icon = document.getElementById('toggleSettingsIcon');
-            if (body.classList.contains('hidden')) {
-                body.classList.remove('hidden'); icon.innerText = '▼';
-            } else {
-                body.classList.add('hidden'); icon.innerText = '▶';
-            }
-        });
+        document.getElementById('btnLegend').addEventListener('click', () => document.getElementById('legendPanel').classList.toggle('hidden'));
+        document.getElementById('btnTopSettings').addEventListener('click', () => document.getElementById('settingsBody').classList.toggle('hidden'));
 
         document.getElementById('btnTogglePnL').addEventListener('click', () => {
             const container = document.getElementById('dailyPnlContainer');
@@ -265,11 +278,14 @@
         });
 
         document.getElementById('instrumentSelector').addEventListener('change', (e) => {
-            instrument = e.target.value; candlesData = []; displayCandles = []; txHistoryData = []; drawChart();
+            instrument = e.target.value; candlesData = []; txHistoryData = []; drawChart();
         });
 
+        // タイムフレーム変更時はデータをクリアして再取得を促す
         document.getElementById('tfSelector').addEventListener('change', () => {
-            if (candlesData.length > 0) { updateDisplayCandles(); scrollOffset = 0; highlightedTime = null; drawChart(); }
+            candlesData = []; txHistoryData = []; scrollOffset = 0; highlightedTime = null; 
+            document.getElementById('historyList').innerHTML = 'タイムフレームが変更されました。再実行してください。';
+            drawChart();
         });
 
         async function apiRequest(endpoint) {
@@ -278,97 +294,121 @@
             return await res.json();
         }
 
-        document.getElementById('btnRunTest').addEventListener('click', async () => {
-            const btn = document.getElementById('btnRunTest');
-            const resDiv = document.getElementById('testResult');
-            const histList = document.getElementById('historyList');
-            const pnlBtn = document.getElementById('btnTogglePnL');
+        // ==========================================
+        // 実行・停止コントロール
+        // ==========================================
+        document.getElementById('btnTopRun').addEventListener('click', async () => {
+            const btn = document.getElementById('btnTopRun');
             
+            // 実行中の場合は停止フラグを立てて抜ける
+            if (isTestRunning) {
+                shouldStopTest = true;
+                btn.innerText = "停止処理中...";
+                return;
+            }
+
+            // --- 以降、新規実行処理 ---
             const startUnix = new Date(`${document.getElementById('btStartDate').value}T00:00:00+09:00`).getTime() / 1000;
             const endUnix = new Date(`${document.getElementById('btEndDate').value}T23:59:59+09:00`).getTime() / 1000;
             if (endUnix < startUnix) return alert("終了日が開始日より前です。");
 
-            btn.disabled = true; resDiv.innerText = ""; histList.innerHTML = "データ取得中..."; 
+            isTestRunning = true;
+            shouldStopTest = false;
+            
+            // ボタン状態の変更
+            btn.classList.add('running');
+            btn.innerText = "■ 停止";
+
+            const resDiv = document.getElementById('testResult');
+            const resMarginDiv = document.getElementById('testMarginResult');
+            const histList = document.getElementById('historyList');
+            const pnlBtn = document.getElementById('btnTogglePnL');
+            
+            resDiv.innerText = ""; resMarginDiv.innerText = ""; 
+            histList.innerHTML = "データ取得中... (右上の停止ボタンで中断可能)"; 
             pnlBtn.classList.add('hidden'); document.getElementById('dailyPnlContainer').classList.add('hidden');
-            txHistoryData = []; candlesData = []; displayCandles = []; highlightedTime = null;
+            txHistoryData = []; candlesData = []; highlightedTime = null;
 
             try {
+                // 選択されたタイムフレームでの取得設定
+                const tfVal = document.getElementById('tfSelector').value;
+                const granularity = tfGranularity[tfVal];
+                const intervalSeconds = tfIntervalMs[tfVal];
+
                 let currentFrom = startUnix; let allCandles = [];
+                
                 while (currentFrom < endUnix) {
+                    if (shouldStopTest) {
+                        histList.innerHTML = "ユーザー操作によりデータ取得を中断しました。取得済みのデータでテストします。";
+                        break; // 停止指示があればループを抜ける
+                    }
+
                     const progressDate = new Date(currentFrom * 1000).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' });
-                    btn.innerText = `データ取得中... (${progressDate})`;
-                    const data = await apiRequest(`/instruments/${instrument}/candles?granularity=S5&count=5000&from=${currentFrom}`);
+                    histList.innerHTML = `データ取得中... (${progressDate})<br><span style="font-size:10px;">右上の停止ボタンで即座にテストへ移行できます</span>`;
+                    
+                    const data = await apiRequest(`/instruments/${instrument}/candles?granularity=${granularity}&count=5000&from=${currentFrom}`);
                     if (!data || !data.candles || data.candles.length === 0) break;
                     
                     const rawCandles = data.candles.filter(c => c.complete);
                     if (rawCandles.length > 0) {
                         const targetCandles = rawCandles.filter(c => parseFloat(c.time) <= endUnix);
                         allCandles = allCandles.concat(targetCandles);
+                        
                         const lastTime = parseFloat(rawCandles[rawCandles.length - 1].time);
                         if (lastTime >= endUnix) break; 
-                        currentFrom = lastTime + 5;
-                    } else { currentFrom += 25000; }
+                        
+                        // 取得した足の間隔分だけ進める
+                        currentFrom = lastTime + intervalSeconds;
+                    } else { 
+                        // データがない休場日などは適当に進める
+                        currentFrom += (intervalSeconds * 1000); 
+                    }
                 }
 
                 if (allCandles.length === 0) throw new Error("指定期間のデータがありません。");
+                
                 candlesData = allCandles.map(c => ({
                     time: parseFloat(c.time) * 1000, o: parseFloat(c.mid.o), h: parseFloat(c.mid.h), l: parseFloat(c.mid.l), c: parseFloat(c.mid.c)
                 }));
 
-                btn.innerText = "シミュレーション実行中...";
                 calcIndicators(candlesData); 
-                const resultPips = runSimulation();
+                const { totalPips, finalMargin } = runSimulation(); // シミュレーション実行
                 
-                updateDisplayCandles(); scrollOffset = 0; drawChart();
+                scrollOffset = 0; drawChart();
                 renderHistory();
                 renderDailyPnL();
 
-                const color = resultPips >= 0 ? '#4ade80' : '#f87171';
-                resDiv.style.color = color; resDiv.innerText = `結果: 合計損益 ${resultPips.toFixed(1)} Pips`;
+                const color = totalPips >= 0 ? '#4ade80' : '#f87171';
+                resDiv.style.color = color; resDiv.innerText = `結果: 合計 ${totalPips.toFixed(1)} Pips`;
                 
-                document.getElementById('settingsBody').classList.add('hidden');
-                document.getElementById('toggleSettingsIcon').innerText = '▶';
+                const initMargin = parseFloat(document.getElementById('btInitialMargin').value) || 0;
+                const marginDiff = finalMargin - initMargin;
+                const marginColor = marginDiff >= 0 ? '#4ade80' : '#f87171';
+                resMarginDiv.innerHTML = `最終残高: <span style="color: white; font-weight: bold; font-size: 15px;">¥${Math.floor(finalMargin).toLocaleString()}</span> (<span style="color: ${marginColor};">${marginDiff >= 0 ? '+' : ''}¥${Math.floor(marginDiff).toLocaleString()}</span>)`;
+                
+                document.getElementById('settingsBody').classList.add('hidden'); // 設定パネルを閉じる
 
             } catch (e) {
                 alert(e.message); histList.innerHTML = "エラーが発生しました。";
             } finally {
-                btn.disabled = false; btn.innerText = "▶ バックテスト再実行";
+                // ボタン状態を元に戻す
+                isTestRunning = false;
+                shouldStopTest = false;
+                btn.classList.remove('running');
+                btn.innerText = "▶ 実行";
             }
         });
 
-        function updateDisplayCandles() {
-            const tfMinutes = parseInt(document.getElementById('tfSelector').value);
-            if (tfMinutes === 0) {
-                displayCandles = candlesData.map(c => ({...c, startTime: c.time, endTime: c.time}));
-            } else {
-                const intervalMs = tfMinutes * 60 * 1000, offsetMs = 9 * 60 * 60 * 1000; 
-                let aggregated = [], currentCandle = null;
-                for (let i = 0; i < candlesData.length; i++) {
-                    const c = candlesData[i], periodStart = Math.floor((c.time + offsetMs) / intervalMs) * intervalMs - offsetMs;
-                    if (!currentCandle || currentCandle.time !== periodStart) {
-                        if (currentCandle) aggregated.push(currentCandle);
-                        currentCandle = { time: periodStart, o: c.o, h: c.h, l: c.l, c: c.c, startTime: c.time, endTime: c.time };
-                    } else {
-                        currentCandle.h = Math.max(currentCandle.h, c.h); currentCandle.l = Math.min(currentCandle.l, c.l);
-                        currentCandle.c = c.c; currentCandle.endTime = c.time;
-                    }
-                }
-                if (currentCandle) aggregated.push(currentCandle);
-                displayCandles = aggregated;
-            }
-            calcIndicators(displayCandles); 
-            const maxOffset = Math.max(0, displayCandles.length - displayCount);
-            if (scrollOffset > maxOffset) scrollOffset = maxOffset;
-        }
-
+        // 履歴の描画 (残高・累計ポジション追加)
         function renderHistory() {
             const list = document.getElementById('historyList');
             list.innerHTML = '';
-            if (txHistoryData.length === 0) { list.innerHTML = '<div style="color: #64748b;">取引は発生しませんでした。</div>'; return; }
+            if (txHistoryData.length === 0) { list.innerHTML = '<div style="color: #64748b; padding: 10px;">取引は発生しませんでした。</div>'; return; }
 
             [...txHistoryData].reverse().forEach(tx => {
                 const timeStr = new Date(tx.time).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo', month: '2-digit', day: '2-digit', hour: '2-digit', minute:'2-digit', second:'2-digit' });
                 let actionStr = '', pipsStr = '';
+                
                 if (tx.type === 'LONG') actionStr = '<span class="text-red font-bold">新規 買(ASK)</span>';
                 else if (tx.type === 'SHORT') actionStr = '<span class="text-blue font-bold">新規 売(BID)</span>';
                 else if (tx.type.includes('CLOSE')) {
@@ -378,23 +418,37 @@
                     actionStr = `<span class="${actionColor}">${actionText}</span>`;
                     pipsStr = `<span class="${pipsColor} font-bold" style="margin-left: 10px;">${tx.pips >= 0 ? '+' : ''}${tx.pips.toFixed(1)} pips</span>`;
                 }
-                list.innerHTML += `<div class="history-item" onclick="jumpToTime(${tx.time})"><span>${timeStr}</span><span>${actionStr}</span><span>@ ${tx.price.toFixed(3)} ${pipsStr}</span></div>`;
+
+                // 履歴アイテム（2段構成）
+                list.innerHTML += `
+                    <div class="history-item" onclick="jumpToTime(${tx.time})">
+                        <div class="hist-info">
+                            <div><span>${timeStr}</span> <span style="margin-left: 8px;">${actionStr}</span></div>
+                            <div class="hist-status">残高: ¥${Math.floor(tx.balance).toLocaleString()} | 保有: 売${tx.shortCount} 買${tx.longCount}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div>@ ${tx.price.toFixed(3)}</div>
+                            <div>${pipsStr}</div>
+                        </div>
+                    </div>
+                `;
             });
         }
 
         function renderDailyPnL() {
             const container = document.getElementById('dailyPnlContainer');
             const btn = document.getElementById('btnTogglePnL');
-            container.innerHTML = '<div style="font-weight:bold; border-bottom:1px solid #2d3748; padding-bottom:5px; margin-bottom:5px; color:#cbd5e1;">日別損益サマリー</div>';
+            container.innerHTML = '<div style="font-weight:bold; border-bottom:1px solid #2d3748; padding-bottom:5px; margin-bottom:5px; color:#cbd5e1;">日別損益サマリー (決済ベース)</div>';
             
             const dailyData = {};
             txHistoryData.forEach(tx => {
                 if (tx.type.includes('CLOSE')) {
                     const dateStr = new Date(tx.time).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo', month: '2-digit', day: '2-digit' });
-                    if (!dailyData[dateStr]) dailyData[dateStr] = { pips: 0, trades: 0 };
+                    if (!dailyData[dateStr]) dailyData[dateStr] = { pips: 0, trades: 0, profitYen: 0 };
                     const count = tx.count || 1;
                     dailyData[dateStr].pips += (tx.pips * count);
                     dailyData[dateStr].trades += count;
+                    dailyData[dateStr].profitYen += (tx.profitYen || 0); // 円ベースの利益も集計
                 }
             });
 
@@ -408,19 +462,25 @@
                     <div class="daily-row">
                         <span>${date}</span>
                         <span style="color:#a0aec0;">${data.trades} 決済</span>
-                        <span class="${color} font-bold">${sign}${data.pips.toFixed(1)} pips</span>
+                        <div style="text-align: right;">
+                            <div class="${color} font-bold">${sign}${data.pips.toFixed(1)} pips</div>
+                            <div style="font-size: 10px; color: #94a3b8;">${sign}¥${Math.floor(data.profitYen).toLocaleString()}</div>
+                        </div>
                     </div>
                 `;
             }
         }
 
         function jumpToTime(targetTime) {
-            if (displayCandles.length === 0) return;
-            let targetIndex = displayCandles.findIndex(c => targetTime >= c.startTime && targetTime <= c.endTime + 4999);
+            if (candlesData.length === 0) return;
+            // タイムフレームに依存しないよう、ローソク足の時間を判定
+            const tfSeconds = tfIntervalMs[document.getElementById('tfSelector').value];
+            let targetIndex = candlesData.findIndex(c => targetTime >= c.time && targetTime < c.time + (tfSeconds * 1000));
+            
             if (targetIndex !== -1) {
-                highlightedTime = targetTime;
-                let newOffset = (displayCandles.length - 1 - targetIndex) - Math.floor(displayCount * 0.3);
-                const maxOffset = Math.max(0, displayCandles.length - displayCount);
+                highlightedTime = candlesData[targetIndex].time; // ハイライト対象の時間を記憶
+                let newOffset = (candlesData.length - 1 - targetIndex) - Math.floor(displayCount * 0.3);
+                const maxOffset = Math.max(0, candlesData.length - displayCount);
                 if (newOffset < 0) newOffset = 0; if (newOffset > maxOffset) newOffset = maxOffset;
                 scrollOffset = newOffset; drawChart();
             }
@@ -440,10 +500,20 @@
             }
         }
 
+        // ==========================================
+        // シミュレーション (証拠金計算の追加)
+        // ==========================================
         function runSimulation() {
-            const pipMultiplier = instrument.includes('JPY') ? 1000 : 10000;
+            const isJPY = instrument.includes('JPY');
+            const pipMultiplier = isJPY ? 1000 : 10000;
+            const pipYenValue = isJPY ? 0.01 : 0.0001; // クロス円を想定した簡易レート
+            
             const spreadPips = parseFloat(document.getElementById('btSpread').value) || 0;
             const spreadValue = spreadPips / pipMultiplier; 
+            
+            let currentMargin = parseFloat(document.getElementById('btInitialMargin').value) || 100000;
+            const lotSetting = parseFloat(document.getElementById('btLot').value) || 0.01;
+            const units = lotSetting * 100000; // 1Lot=10万通貨
             
             const maxPos = parseInt(document.getElementById('btMaxPos').value);
             const e1Bid = document.getElementById('e1Bid').checked, e1BidSigma = parseFloat(document.getElementById('e1BidSigma').value) || 2.0;
@@ -459,8 +529,26 @@
             let posShort = [], posLong = [], totalPips = 0;
             const jstFormatter = new Intl.DateTimeFormat('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit', hour12: false });
 
+            // 決済処理用ヘルパー（残高計算を含む）
+            const processClose = (type, closePrice, targetPositions, pipsPerPos) => {
+                const count = targetPositions.length;
+                totalPips += pipsPerPos * count;
+                
+                // 損益(円)の計算: Pips × 0.01円 × units × ポジション数
+                const profitYen = pipsPerPos * pipYenValue * units * count;
+                currentMargin += profitYen;
+
+                txHistoryData.push({ 
+                    time: c.time, price: closePrice, type: type, 
+                    pips: pipsPerPos, count: count, profitYen: profitYen,
+                    balance: currentMargin, shortCount: type.includes('SHORT') ? 0 : posShort.length, longCount: type.includes('LONG') ? 0 : posLong.length 
+                });
+            };
+
+            let c; // ループ内で現在足を参照用
+            
             for (let i = 25; i < candlesData.length; i++) {
-                const c = candlesData[i];
+                c = candlesData[i];
                 const currentMid = c.c;
                 const currentAsk = currentMid + (spreadValue / 2);
                 const currentBid = currentMid - (spreadValue / 2);
@@ -471,30 +559,29 @@
 
                 let isTradingTime = (startMins <= endMins) ? (timeInMinutes >= startMins && timeInMinutes < endMins) : (timeInMinutes >= startMins || timeInMinutes < endMins);
 
+                // --- 時間外の強制決済 ---
                 if (!isTradingTime) {
                     if (posShort.length > 0) {
                         const avg = posShort.reduce((sum, p) => sum + p.price, 0) / posShort.length;
                         const pipsPerPos = ((avg - currentBid) * pipMultiplier) - spreadPips;
-                        totalPips += pipsPerPos * posShort.length;
-                        txHistoryData.push({ time: c.time, price: currentBid, type: 'FORCE_CLOSE_SHORT', pips: pipsPerPos, count: posShort.length });
+                        processClose('FORCE_CLOSE_SHORT', currentBid, posShort, pipsPerPos);
                         posShort = [];
                     }
                     if (posLong.length > 0) {
                         const avg = posLong.reduce((sum, p) => sum + p.price, 0) / posLong.length;
                         const pipsPerPos = ((currentAsk - avg) * pipMultiplier) - spreadPips;
-                        totalPips += pipsPerPos * posLong.length;
-                        txHistoryData.push({ time: c.time, price: currentAsk, type: 'FORCE_CLOSE_LONG', pips: pipsPerPos, count: posLong.length });
+                        processClose('FORCE_CLOSE_LONG', currentAsk, posLong, pipsPerPos);
                         posLong = [];
                     }
                     continue; 
                 }
 
+                // --- 決済判定 (TP/SL) ---
                 if (posShort.length > 0) {
                     const avg = posShort.reduce((sum, p) => sum + p.price, 0) / posShort.length;
                     const currentProfitPips = ((avg - currentBid) * pipMultiplier) - spreadPips; 
                     if ((useTp && currentProfitPips >= tpBid) || (useSl && currentProfitPips <= slBid)) {
-                        totalPips += currentProfitPips * posShort.length;
-                        txHistoryData.push({ time: c.time, price: currentBid, type: 'CLOSE_SHORT', pips: currentProfitPips, count: posShort.length });
+                        processClose('CLOSE_SHORT', currentBid, posShort, currentProfitPips);
                         posShort = [];
                     }
                 }
@@ -502,24 +589,24 @@
                     const avg = posLong.reduce((sum, p) => sum + p.price, 0) / posLong.length;
                     const currentProfitPips = ((currentAsk - avg) * pipMultiplier) - spreadPips; 
                     if ((useTp && currentProfitPips >= tpAsk) || (useSl && currentProfitPips <= slAsk)) {
-                        totalPips += currentProfitPips * posLong.length;
-                        txHistoryData.push({ time: c.time, price: currentAsk, type: 'CLOSE_LONG', pips: currentProfitPips, count: posLong.length });
+                        processClose('CLOSE_LONG', currentAsk, posLong, currentProfitPips);
                         posLong = [];
                     }
                 }
 
+                // --- エントリー＆ナンピン判定 ---
                 if (posShort.length < maxPos) {
                     if (posShort.length === 0) {
                         const upperBand = c.sma + (e1BidSigma * c.sd);
                         if (e1Bid && currentBid > upperBand) { 
                             posShort.push({ price: currentBid, time: c.time });
-                            txHistoryData.push({ time: c.time, price: currentBid, type: 'SHORT' });
+                            txHistoryData.push({ time: c.time, price: currentBid, type: 'SHORT', balance: currentMargin, shortCount: posShort.length, longCount: posLong.length });
                         }
                     } else {
                         const lastPrice = posShort[posShort.length - 1].price;
                         if ((currentBid - lastPrice) * pipMultiplier >= nBidPips) {
                             posShort.push({ price: currentBid, time: c.time });
-                            txHistoryData.push({ time: c.time, price: currentBid, type: 'SHORT' });
+                            txHistoryData.push({ time: c.time, price: currentBid, type: 'SHORT', balance: currentMargin, shortCount: posShort.length, longCount: posLong.length });
                         }
                     }
                 }
@@ -528,18 +615,18 @@
                         const lowerBand = c.sma - (e1AskSigma * c.sd);
                         if (e1Ask && currentAsk < lowerBand) { 
                             posLong.push({ price: currentAsk, time: c.time });
-                            txHistoryData.push({ time: c.time, price: currentAsk, type: 'LONG' });
+                            txHistoryData.push({ time: c.time, price: currentAsk, type: 'LONG', balance: currentMargin, shortCount: posShort.length, longCount: posLong.length });
                         }
                     } else {
                         const lastPrice = posLong[posLong.length - 1].price;
                         if ((lastPrice - currentAsk) * pipMultiplier >= nAskPips) {
                             posLong.push({ price: currentAsk, time: c.time });
-                            txHistoryData.push({ time: c.time, price: currentAsk, type: 'LONG' });
+                            txHistoryData.push({ time: c.time, price: currentAsk, type: 'LONG', balance: currentMargin, shortCount: posShort.length, longCount: posLong.length });
                         }
                     }
                 }
             }
-            return totalPips;
+            return { totalPips: totalPips, finalMargin: currentMargin };
         }
 
         function resizeCanvas() {
@@ -550,14 +637,15 @@
             if (!ctx) return;
             const w = canvas.width, h = canvas.height, chartW = w - yAxisWidth, chartH = h - xAxisHeight;
             ctx.clearRect(0, 0, w, h);
-            if (displayCandles.length === 0) {
+            
+            if (candlesData.length === 0) {
                 ctx.fillStyle = '#64748b'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
                 ctx.fillText('バックテストを実行してください', w / 2, h / 2); return;
             }
 
-            const startIndex = Math.max(0, displayCandles.length - displayCount - Math.floor(scrollOffset));
-            const endIndex = Math.min(displayCandles.length, startIndex + displayCount);
-            const dataToDraw = displayCandles.slice(startIndex, endIndex);
+            const startIndex = Math.max(0, candlesData.length - displayCount - Math.floor(scrollOffset));
+            const endIndex = Math.min(candlesData.length, startIndex + displayCount);
+            const dataToDraw = candlesData.slice(startIndex, endIndex);
             if(dataToDraw.length === 0) return;
 
             const drawBidSigma = parseFloat(document.getElementById('e1BidSigma').value) || 2.0;
@@ -578,8 +666,9 @@
             const finalRange = maxP - minP;
             const getY = (price) => chartH - ((price - minP) / finalRange) * chartH;
 
+            // ハイライト描画
             if (highlightedTime) {
-                const hIndex = dataToDraw.findIndex(c => highlightedTime >= c.startTime && highlightedTime <= c.endTime + 4999);
+                const hIndex = dataToDraw.findIndex(c => c.time === highlightedTime);
                 if (hIndex !== -1) {
                     const hx = hIndex * candleWidth + candleWidth / 2;
                     ctx.fillStyle = 'rgba(251, 191, 36, 0.15)'; 
@@ -589,6 +678,7 @@
                 }
             }
 
+            // バンド＆SMA描画
             ctx.lineWidth = 1;
             ctx.beginPath(); ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
             dataToDraw.forEach((c, i) => { if(c.sma && c.sd !== undefined) { const upper = c.sma + (drawBidSigma * c.sd); const x = i * candleWidth + candleWidth / 2; i === 0 ? ctx.moveTo(x, getY(upper)) : ctx.lineTo(x, getY(upper)); }}); ctx.stroke();
@@ -597,6 +687,7 @@
             ctx.beginPath(); ctx.strokeStyle = 'rgba(250, 204, 21, 0.8)';
             dataToDraw.forEach((c, i) => { if(c.sma) { const x = i * candleWidth + candleWidth / 2; i === 0 ? ctx.moveTo(x, getY(c.sma)) : ctx.lineTo(x, getY(c.sma)); }}); ctx.stroke();
 
+            // ローソク足描画
             dataToDraw.forEach((c, i) => {
                 const x = i * candleWidth, yO = getY(c.o), yC = getY(c.c), yH = getY(c.h), yL = getY(c.l);
                 const color = c.c >= c.o ? '#ef4444' : '#3b82f6';
@@ -606,22 +697,32 @@
                 ctx.fillRect(x + candleWidth * 0.1, bodyTop, candleWidth * 0.8, bodyHeight);
             });
 
+            // 履歴マークと価格テキスト描画
             txHistoryData.forEach(tx => {
-                const cIndex = dataToDraw.findIndex(c => tx.time >= c.startTime && tx.time <= c.endTime + 4999);
+                const cIndex = dataToDraw.findIndex(c => c.time === tx.time);
                 if (cIndex !== -1) {
                     const c = dataToDraw[cIndex]; const x = cIndex * candleWidth + candleWidth / 2;
+                    let markerY = 0;
                     ctx.beginPath();
-                    if (tx.type === 'LONG') { ctx.fillStyle = '#ef4444'; const y = getY(c.l) + 15; ctx.moveTo(x, y - 8); ctx.lineTo(x - 5, y + 2); ctx.lineTo(x + 5, y + 2); } 
-                    else if (tx.type === 'SHORT') { ctx.fillStyle = '#3b82f6'; const y = getY(c.h) - 15; ctx.moveTo(x, y + 8); ctx.lineTo(x - 5, y - 2); ctx.lineTo(x + 5, y - 2); } 
+                    if (tx.type === 'LONG') { ctx.fillStyle = '#ef4444'; markerY = getY(c.l) + 15; ctx.moveTo(x, markerY - 8); ctx.lineTo(x - 5, markerY + 2); ctx.lineTo(x + 5, markerY + 2); } 
+                    else if (tx.type === 'SHORT') { ctx.fillStyle = '#3b82f6'; markerY = getY(c.h) - 15; ctx.moveTo(x, markerY + 8); ctx.lineTo(x - 5, markerY - 2); ctx.lineTo(x + 5, markerY - 2); } 
                     else if (tx.type.includes('CLOSE')) {
                         if (tx.type.includes('FORCE')) ctx.fillStyle = '#f97316';
                         else ctx.fillStyle = tx.pips >= 0 ? '#10b981' : '#f59e0b'; 
-                        const y = getY(tx.price); ctx.arc(x, y, 4, 0, 2 * Math.PI);
+                        markerY = getY(tx.price); ctx.arc(x, markerY, 4, 0, 2 * Math.PI);
                     }
                     ctx.fill();
+
+                    // 【追加④】価格をマークの横に描画
+                    ctx.fillStyle = '#cbd5e1';
+                    ctx.font = '9px sans-serif';
+                    ctx.textAlign = 'left';
+                    // マークに被らないように少し右下にずらす
+                    ctx.fillText(tx.price.toFixed(3), x + 6, markerY + 3);
                 }
             });
 
+            // 軸の描画
             ctx.fillStyle = '#161b26'; ctx.fillRect(0, chartH, chartW, xAxisHeight);
             ctx.fillStyle = '#a0aec0'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
             const step = Math.max(1, Math.floor(60 / candleWidth));
@@ -641,7 +742,7 @@
         function setupTouchEvents() {
             canvas.addEventListener('touchstart', (e) => {
                 highlightedTime = null; 
-                document.getElementById('legendPanel').classList.add('hidden'); // タッチしたら凡例も消す
+                document.getElementById('legendPanel').classList.add('hidden'); 
 
                 if (e.touches.length === 1) { isDragging = true; lastTouchX = e.touches[0].clientX; }
                 else if (e.touches.length === 2) {
@@ -653,14 +754,14 @@
                 e.preventDefault();
                 if (e.touches.length === 1 && isDragging) {
                     const dx = e.touches[0].clientX - lastTouchX, candleWidth = (canvas.width - yAxisWidth) / displayCount;
-                    scrollOffset += dx / candleWidth; const maxOffset = Math.max(0, displayCandles.length - displayCount);
+                    scrollOffset += dx / candleWidth; const maxOffset = Math.max(0, candlesData.length - displayCount);
                     if (scrollOffset < 0) scrollOffset = 0; if (scrollOffset > maxOffset) scrollOffset = maxOffset;
                     lastTouchX = e.touches[0].clientX; drawChart();
                 } else if (e.touches.length === 2 && initialPinchDist) {
                     const dx = e.touches[0].clientX - e.touches[1].clientX, dy = e.touches[0].clientY - e.touches[1].clientY;
                     const ratio = Math.sqrt(dx * dx + dy * dy) / initialPinchDist;
                     displayCount = Math.max(20, Math.min(2000, Math.floor(initialDisplayCount / ratio)));
-                    const maxOffset = Math.max(0, displayCandles.length - displayCount);
+                    const maxOffset = Math.max(0, candlesData.length - displayCount);
                     if (scrollOffset > maxOffset) scrollOffset = maxOffset; drawChart();
                 }
             }, { passive: false });
