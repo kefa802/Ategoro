@@ -8,75 +8,60 @@
         body { margin: 0; padding: 0; font-family: -apple-system, sans-serif; background-color: #0b101e; color: #ffffff; overflow: hidden; }
         .container { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
         
-        /* === ログイン画面 === */
+        /* ログイン画面 */
         #loginArea { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100dvh; padding: 20px; }
         .login-box { background-color: #161b26; padding: 20px; border-radius: 8px; border: 1px solid #2d3748; width: 100%; max-width: 400px; box-sizing: border-box; }
         .login-box h2 { text-align: center; margin-top: 0; color: #cbd5e1; font-size: 18px; margin-bottom: 20px; }
         .input-group { margin-bottom: 15px; }
         .input-group label { display: block; margin-bottom: 5px; font-size: 13px; color: #a0aec0; }
         .input-group input[type="text"], .input-group input[type="password"] { width: 100%; padding: 12px; background: #2d3748; border: 1px solid #4a5568; color: white; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
-        
-        /* 起動モード選択ラジオボタン */
         .mode-select-container { display: flex; gap: 10px; margin-bottom: 20px; }
         .mode-radio { flex: 1; background: #2d3748; padding: 12px; text-align: center; border-radius: 4px; font-size: 14px; font-weight: bold; color: #94a3b8; cursor: pointer; border: 2px solid #4a5568; transition: all 0.2s; }
         .mode-radio:has(input:checked) { background: #1e3a8a; color: #ffffff; border-color: #3b82f6; }
         .mode-radio input { display: none; }
-
         .btn-login { width: 100%; padding: 14px; background: linear-gradient(180deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; }
 
-        /* === ヘッダー・チャート === */
+        /* ヘッダー・チャート */
         .header { display: flex; justify-content: space-between; padding: 8px 10px; background-color: #161b26; border-bottom: 1px solid #2d3748; font-size: 13px; flex-shrink: 0; }
         .header span { color: #a0aec0; }
         .header .val { color: #ffffff; font-weight: bold; font-size: 14px; margin-left: 4px; }
-        
         #chartWrapper { height: 38vh; min-height: 220px; width: 100%; border-bottom: 1px solid #2d3748; position: relative; background: #0b101e; flex-shrink: 0; }
-        
         #chartControls { position: absolute; top: 5px; left: 5px; z-index: 10; display: flex; gap: 5px; align-items: center; }
         #chartControls select { background: #1a202c; color: white; border: 1px solid #4a5568; padding: 4px 6px; border-radius: 4px; font-size: 12px; }
         .btn-legend { background: #1e293b; color: #cbd5e1; border: 1px solid #4a5568; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; }
-        
         #topRightControls { position: absolute; top: 5px; right: 5px; z-index: 10; display: flex; gap: 5px; align-items: center; }
-        .btn-top-run { background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.3); min-width: 70px; text-align: center; }
+        .btn-top-run { background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.3); min-width: 70px; }
         .btn-top-run.running { background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%); }
         .btn-top-settings { background: #1e293b; color: white; border: 1px solid #4a5568; padding: 5px 8px; border-radius: 4px; font-size: 14px; cursor: pointer; }
-
         .legend-panel { position: absolute; top: 35px; left: 5px; background: rgba(22, 27, 38, 0.9); border: 1px solid #4a5568; border-radius: 6px; padding: 10px; font-size: 12px; z-index: 20; backdrop-filter: blur(2px); }
         .legend-item { display: flex; align-items: center; margin-bottom: 6px; }
         .leg-icon { font-size: 14px; width: 16px; text-align: center; margin-right: 6px; }
-
         #marketClosedLabel { position: absolute; top: 35px; right: 5px; background: rgba(220, 38, 38, 0.9); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: none; }
-        
         canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 
-        /* === 設定別画面（モーダルオーバーレイ） === */
+        /* モーダル設定 */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(11, 16, 30, 0.98); z-index: 100; overflow-y: auto; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d3748; padding-bottom: 12px; margin-bottom: 15px; }
         .modal-title { font-size: 16px; font-weight: bold; color: #cbd5e1; }
         .btn-close-modal { background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; font-size: 13px; cursor: pointer; }
-
-        /* === 下部スクロールエリア === */
-        .bottom-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
         
-        .mode-tabs { display: flex; border-bottom: 1px solid #2d3748; flex-shrink: 0; }
-        .mode-tab { flex: 1; padding: 12px; text-align: center; background: #0b101e; color: #64748b; font-weight: bold; cursor: pointer; font-size: 14px; }
-        .mode-tab.active { background: #161b26; color: white; border-bottom: 2px solid #3b82f6; }
-
-        /* === バックテスト専用パネル === */
-        .bt-panel { padding: 15px; background-color: #161b26; font-size: 13px; flex-shrink: 0; border-bottom: 1px solid #2d3748; }
-        .bt-setting-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .bt-setting-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 13px; }
         .bt-setting-row input[type="date"], .bt-setting-row input[type="number"], .bt-setting-row input[type="time"] { background: #2d3748; color: white; border: 1px solid #4a5568; padding: 7px; border-radius: 4px; text-align: center; font-size: 13px; }
         .flex-row { display: flex; gap: 5px; align-items: center; }
-        .bt-grid { display: grid; grid-template-columns: 85px 1fr 1fr; gap: 8px; align-items: center; background: #1e293b; padding: 10px; border-radius: 6px; margin-bottom: 15px; }
+        .bt-grid { display: grid; grid-template-columns: 85px 1fr 1fr; gap: 8px; align-items: center; background: #1e293b; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; }
         .bt-grid-header { font-weight: bold; text-align: center; border-bottom: 1px solid #2d3748; padding-bottom: 4px; }
         .bt-grid .label-col { font-weight: bold; color: #cbd5e1; }
         .bt-grid .input-col { display: flex; align-items: center; justify-content: flex-start; gap: 4px; }
         .bt-grid input[type="number"] { width: 45px; background: #0b101e; color: white; border: 1px solid #4a5568; padding: 4px; border-radius: 4px; text-align: center; }
         .bt-grid input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
-        #testResult { text-align: center; font-weight: bold; font-size: 15px; margin-bottom: 10px; }
-        #testMarginResult { text-align: center; font-size: 13px; color: #cbd5e1; margin-bottom: 15px; }
 
-        /* === リアルトレード専用パネル === */
-        .trade-panel { display: flex; flex-direction: column; flex-shrink: 0; }
+        /* 下部エリア */
+        .bottom-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+        .mode-tabs { display: flex; border-bottom: 1px solid #2d3748; flex-shrink: 0; }
+        .mode-tab { flex: 1; padding: 12px; text-align: center; background: #0b101e; color: #64748b; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.2s; }
+        .mode-tab.active { background: #161b26; color: white; border-bottom: 2px solid #3b82f6; }
+        
+        /* リアルトレード用パネル */
         .pos-dashboard { display: flex; border-bottom: 1px solid #2d3748; background-color: #111622; }
         .pos-side { flex: 1; padding: 8px 12px; display: flex; flex-direction: column; }
         .pos-sell { border-right: 1px solid #2d3748; background: linear-gradient(to bottom, rgba(59, 130, 246, 0.05), transparent); }
@@ -108,14 +93,18 @@
         .btn-auto.stop { background: #ef4444; }
         .btn-auto:disabled { background: #475569; color: #94a3b8; cursor: not-allowed; opacity: 0.5; }
 
-        /* === 履歴・損益詳細パネル (共通) === */
-        .history-panel { flex: 1; padding: 15px; background-color: #0b101e; }
+        /* 履歴・共通 */
+        .bt-panel { padding: 15px; background-color: #161b26; font-size: 13px; flex-shrink: 0; }
+        #testResult { text-align: center; font-weight: bold; font-size: 15px; margin-bottom: 5px; }
+        #testMarginResult { text-align: center; font-size: 13px; color: #cbd5e1; margin-bottom: 15px; }
+        .history-panel { flex: 1; padding: 15px; background-color: #0b101e; border-top: 1px solid #2d3748; }
         .history-header { font-weight: bold; color: #a0aec0; margin-bottom: 10px; font-size: 14px; }
         .btn-toggle-pnl { width: 100%; padding: 10px; background: #1e293b; border: 1px solid #3b82f6; color: #60a5fa; border-radius: 4px; font-weight: bold; margin-bottom: 10px; cursor: pointer; }
         .daily-summary { margin-bottom: 15px; background: #161b26; border: 1px solid #2d3748; border-radius: 6px; padding: 10px; font-size: 13px; }
         .daily-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #2d3748; }
-        #historyList { color: #64748b; padding-bottom: 80px; } 
-        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; border-bottom: 1px solid #1a202c; font-size: 12px; cursor: pointer; }
+        #historyList { color: #64748b; padding-bottom: 80px; font-size: 12px; } 
+        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; border-bottom: 1px solid #1a202c; cursor: pointer; }
+        .history-item:active { background-color: #1e293b; border-radius: 4px; }
         .hist-info { display: flex; flex-direction: column; gap: 4px; }
         .hist-status { font-size: 10px; color: #94a3b8; }
         
@@ -129,6 +118,7 @@
 </head>
 <body>
 
+    <!-- ログイン画面 -->
     <div id="loginArea">
         <div class="login-box">
             <h2>OANDA トレード＆バックテスト</h2>
@@ -151,12 +141,15 @@
         </div>
     </div>
 
+    <!-- メインUI画面 -->
     <div id="mainUI" class="container hidden">
+        <!-- 共通ヘッダー -->
         <div class="header">
-            <div><span>総残高:</span><span id="balanceVal" class="val">--</span><span>円</span></div>
-            <div><span>総含み損益:</span><span id="plVal" class="val">--</span><span>円</span></div>
+            <div><span>残高:</span><span id="balanceVal" class="val">--</span><span>円</span></div>
+            <div><span>含み損益:</span><span id="plVal" class="val">--</span><span>円</span></div>
         </div>
 
+        <!-- 共通チャート -->
         <div id="chartWrapper">
             <div id="chartControls">
                 <select id="instrumentSelector">
@@ -174,12 +167,10 @@
                 </select>
                 <button id="btnLegend" class="btn-legend">[?]</button>
             </div>
-
             <div id="topRightControls">
                 <button id="btnTopRun" class="btn-top-run hidden">▶ 実行</button>
                 <button id="btnTopSettings" class="btn-top-settings">⚙️</button>
             </div>
-            
             <div id="legendPanel" class="legend-panel hidden">
                 <div class="legend-item"><span class="leg-icon text-red">▲</span> 新規 買(ASK) エントリー</div>
                 <div class="legend-item"><span class="leg-icon text-blue">▼</span> 新規 売(ASK) エントリー</div>
@@ -187,11 +178,11 @@
                 <div class="legend-item"><span class="leg-icon text-yellow">●</span> 決済 (損切 / マイナス)</div>
                 <div class="legend-item"><span class="leg-icon text-orange">●</span> 時間外強制決済</div>
             </div>
-
             <div id="marketClosedLabel">休場中</div>
             <canvas id="myCanvas"></canvas>
         </div>
 
+        <!-- ⚙️モーダル設定項目 -->
         <div id="modalSettings" class="modal-overlay hidden">
             <div class="modal-header">
                 <div class="modal-title">⚙️ 詳細設定 (共通・BT)</div>
@@ -200,16 +191,13 @@
             <div class="bt-setting-row">
                 <span>取引時間 (JST)</span>
                 <div class="flex-row">
-                    <input type="time" id="btStartTime" value="08:00">
-                    <span>~</span>
-                    <input type="time" id="btEndTime" value="20:00">
+                    <input type="time" id="btStartTime" value="08:00"><span>~</span><input type="time" id="btEndTime" value="20:00">
                 </div>
             </div>
             <div class="bt-setting-row">
                 <span>スプレッド</span>
                 <div class="flex-row">
-                    <input type="number" id="btSpread" min="0" step="1" value="8" style="width: 60px;">
-                    <span>pips</span>
+                    <input type="number" id="btSpread" min="0" step="1" value="8" style="width: 60px;"><span>pips</span>
                 </div>
             </div>
             <div class="bt-setting-row" style="border-top: 1px solid #2d3748; margin-top: 10px; padding-top: 10px;">
@@ -225,9 +213,7 @@
                 <input type="number" id="btMaxPos" min="1" value="8">
             </div>
             <div class="bt-grid">
-                <div></div>
-                <div class="bt-grid-header text-blue">売 (ASK)</div>
-                <div class="bt-grid-header text-red">買 (ASK)</div>
+                <div></div><div class="bt-grid-header text-blue">売 (ASK)</div><div class="bt-grid-header text-red">買 (ASK)</div>
                 <div class="label-col">第1ポジ<br><span style="font-size:10px; font-weight:normal;">(BB乖離)</span></div>
                 <div class="input-col"><input type="checkbox" id="e1Bid" checked><input type="number" id="e1BidSigma" value="2.0" step="0.1"> σ超</div>
                 <div class="input-col"><input type="checkbox" id="e1Ask" checked><input type="number" id="e1AskSigma" value="2.0" step="0.1"> σ下</div>
@@ -245,11 +231,13 @@
         </div>
 
         <div class="bottom-area">
+            <!-- タブ切り替え -->
             <div class="mode-tabs">
-                <div class="mode-tab" id="tabReal" onclick="switchMode('REAL')">リアルトレード</div>
-                <div class="mode-tab active" id="tabBacktest" onclick="switchMode('BACKTEST')">バックテスト</div>
+                <div class="mode-tab" id="tabReal">リアルトレード</div>
+                <div class="mode-tab" id="tabBacktest">バックテスト</div>
             </div>
 
+            <!-- バックテスト専用パネル -->
             <div class="bt-panel hidden" id="backtestDatePanel">
                 <div class="bt-setting-row">
                     <span>テスト期間</span>
@@ -261,6 +249,7 @@
                 </div>
             </div>
 
+            <!-- リアルトレード専用パネル -->
             <div class="trade-panel hidden" id="tradePanel">
                 <div class="pos-dashboard">
                     <div class="pos-side pos-sell">
@@ -298,20 +287,14 @@
                         </select>
                     </div>
                     <div class="trade-buttons">
-                        <button id="btnSell" class="btn-trade btn-sell-big">
-                            <span class="btn-label">売 | ASK</span>
-                            <span id="bidPrice" class="btn-price">---.---</span>
-                        </button>
-                        <button id="btnBuy" class="btn-trade btn-buy-big">
-                            <span class="btn-label">買 | ASK</span>
-                            <span id="askPrice" class="btn-price">---.---</span>
-                        </button>
+                        <button id="btnSell" class="btn-trade btn-sell-big"><span class="btn-label">売 | ASK</span><span id="bidPrice" class="btn-price">---.---</span></button>
+                        <button id="btnBuy" class="btn-trade btn-buy-big"><span class="btn-label">買 | ASK</span><span id="askPrice" class="btn-price">---.---</span></button>
                     </div>
                 </div>
                 <div class="auto-panel">
                     <div class="auto-header">
                         <span style="font-weight:bold; color:#cbd5e1;">🤖 実運用自動売買 (未実装)</span>
-                        <div>ロット: <input type="number" id="autoLot" min="0.01" value="0.01" style="width: 50px; text-align: center;"> <span style="font-size:10px; color:#a0aec0;">(1.0=10万)</span></div>
+                        <div>ロット: <input type="number" id="autoLot" min="0.01" value="0.01" style="width: 50px; text-align: center;"></div>
                     </div>
                     <div class="auto-controls">
                         <button id="btnAutoStart" class="btn-auto start">▶ スタート</button>
@@ -320,20 +303,24 @@
                 </div>
             </div>
 
+            <!-- 履歴・サマリーパネル -->
             <div class="history-panel">
                 <div id="testResult"></div>
                 <div id="testMarginResult"></div>
                 <div class="history-header" id="historyTitle">取引履歴</div>
                 <button id="btnTogglePnL" class="btn-toggle-pnl hidden">日別損益の詳細を見る ▼</button>
                 <div id="dailyPnlContainer" class="daily-summary hidden"></div>
-                <div id="historyList">データがありません。</div>
+                <div id="historyList">日付を指定して右上の「▶ 実行」を押してください。</div>
             </div>
         </div>
     </div>
 
     <script>
+        // グローバル変数
         const baseUrl = "https://api-fxtrade.oanda.com/v3";
         let accountId = "", apiToken = "", instrument = "USD_JPY";
+        let appMode = 'BACKTEST';
+        
         let candlesData = [], displayCandles = [], txHistoryData = []; 
         const canvas = document.getElementById('myCanvas');
         const ctx = canvas.getContext('2d');
@@ -343,9 +330,7 @@
         let isDragging = false, lastTouchX = 0, initialPinchDist = null, initialDisplayCount = 200;
         let highlightedTime = null; 
         
-        let appMode = 'BACKTEST';
         let isTestRunning = false, shouldStopTest = false;
-
         let priceInterval, accountInterval, posInterval;
         let currentLongUnits = 0, currentLongAvg = 0, currentShortUnits = 0, currentShortAvg = 0;
         let isAutoTrading = false;
@@ -353,54 +338,40 @@
         const tfGranularity = { "0": "S5", "1": "M1", "5": "M5", "10": "M10", "60": "H1", "240": "H4" };
         const tfIntervalMs = { "0": 5, "1": 60, "5": 300, "10": 600, "60": 3600, "240": 14400 };
 
+        // ページ読み込み完了時の初期化
         window.addEventListener('DOMContentLoaded', () => {
+            setupUIEvents();
+            checkAutoLogin();
+        });
+
+        function setupUIEvents() {
+            // モーダル開閉
             document.getElementById('btnTopSettings').addEventListener('click', () => document.getElementById('modalSettings').classList.remove('hidden'));
             document.getElementById('btnCloseModal').addEventListener('click', () => {
                 document.getElementById('modalSettings').classList.add('hidden');
                 if (appMode === 'REAL') drawChart(); 
             });
             document.getElementById('btnLegend').addEventListener('click', () => document.getElementById('legendPanel').classList.toggle('hidden'));
-
+            
+            // 損益サマリー開閉
             document.getElementById('btnTogglePnL').addEventListener('click', () => {
                 const container = document.getElementById('dailyPnlContainer');
                 const btn = document.getElementById('btnTogglePnL');
-                if (container.classList.contains('hidden')) {
-                    container.classList.remove('hidden'); btn.innerText = '日別損益を閉じる ▲';
-                } else {
-                    container.classList.add('hidden'); btn.innerText = '日別損益の詳細を見る ▼';
-                }
+                container.classList.toggle('hidden');
+                btn.innerText = container.classList.contains('hidden') ? '日別損益の詳細を見る ▼' : '日別損益を閉じる ▲';
             });
 
-            const savedId = localStorage.getItem('oanda_account_id');
-            const savedToken = localStorage.getItem('oanda_api_token');
-            if (savedId) document.getElementById('accountIdInput').value = savedId;
-            if (savedToken) document.getElementById('apiTokenInput').value = savedToken;
+            // タブ切り替えイベント
+            document.getElementById('tabReal').addEventListener('click', () => switchMode('REAL'));
+            document.getElementById('tabBacktest').addEventListener('click', () => switchMode('BACKTEST'));
 
-            document.getElementById('loginBtn').addEventListener('click', () => {
-                accountId = document.getElementById('accountIdInput').value.trim();
-                apiToken = document.getElementById('apiTokenInput').value.trim();
-                if (!accountId || !apiToken) return alert("口座IDとAPIトークンを入力してください");
-                
-                localStorage.setItem('oanda_account_id', accountId); 
-                localStorage.setItem('oanda_api_token', apiToken);
-                
-                const selectedMode = document.querySelector('input[name="startMode"]:checked').value;
-                
-                document.getElementById('loginArea').classList.add('hidden'); 
-                document.getElementById('mainUI').classList.remove('hidden');
-                
-                resizeCanvas(); 
-                window.addEventListener('resize', resizeCanvas); 
-                setupTouchEvents();
-                setupRealTradeEvents();
+            // ログイン実行
+            document.getElementById('loginBtn').addEventListener('click', performLogin);
 
-                switchMode(selectedMode);
-            });
-
+            // セレクタ変更
             document.getElementById('instrumentSelector').addEventListener('change', (e) => {
                 instrument = e.target.value; 
-                if (appMode === 'REAL') startRealTrade();
-                else clearDataAndRedraw("再実行してください。");
+                if (appMode === 'REAL') startRealTrade(); else clearDataAndRedraw("再実行してください。");
             });
 
             document.getElementById('tfSelector').addEventListener('change', () => {
@@ -411,9 +382,50 @@
                 }
             });
 
+            // バックテスト実行
             document.getElementById('btnTopRun').addEventListener('click', runBacktestFetch);
-        });
+            
+            // タッチとリサイズ
+            window.addEventListener('resize', resizeCanvas);
+            setupTouchEvents();
+            setupRealTradeEvents();
+        }
 
+        function checkAutoLogin() {
+            const savedId = localStorage.getItem('oanda_account_id');
+            const savedToken = localStorage.getItem('oanda_api_token');
+            if (savedId) document.getElementById('accountIdInput').value = savedId;
+            if (savedToken) document.getElementById('apiTokenInput').value = savedToken;
+            
+            // ログイン情報があれば自動で画面遷移 (ログイン画面をスキップ)
+            if (savedId && savedToken) {
+                performLogin(true); // 自動ログインフラグ
+            }
+        }
+
+        function performLogin(isAuto = false) {
+            accountId = document.getElementById('accountIdInput').value.trim();
+            apiToken = document.getElementById('apiTokenInput').value.trim();
+            
+            if (!accountId || !apiToken) {
+                if (!isAuto) alert("口座IDとAPIトークンを入力してください");
+                return;
+            }
+            
+            localStorage.setItem('oanda_account_id', accountId); 
+            localStorage.setItem('oanda_api_token', apiToken);
+            
+            // 選択されたモードの取得
+            const selectedMode = document.querySelector('input[name="startMode"]:checked').value;
+            
+            document.getElementById('loginArea').classList.add('hidden'); 
+            document.getElementById('mainUI').classList.remove('hidden');
+            resizeCanvas(); 
+            
+            switchMode(selectedMode);
+        }
+
+        // === 画面(モード)切り替えロジック ===
         function switchMode(mode) {
             appMode = mode;
             document.getElementById('tabReal').classList.toggle('active', mode === 'REAL');
@@ -427,18 +439,14 @@
                 document.getElementById('btnTopRun').classList.add('hidden');
                 document.getElementById('dailyPnlContainer').classList.add('hidden');
                 document.getElementById('btnTogglePnL').classList.add('hidden');
-                
                 document.getElementById('historyTitle').innerHTML = '直近の約定履歴 (リアル) <span style="font-size: 10px; font-weight: normal;">※タップでジャンプ</span>';
-                
                 startRealTrade();
             } else {
                 document.getElementById('tradePanel').classList.add('hidden');
                 document.getElementById('backtestDatePanel').classList.remove('hidden');
                 document.getElementById('btnTopRun').classList.remove('hidden');
-                
                 document.getElementById('historyTitle').innerHTML = '取引履歴 (バックテスト) <span style="font-size: 10px; font-weight: normal;">※タップでジャンプ</span>';
                 document.getElementById('historyList').innerText = '日付を指定して右上の「▶ 実行」を押してください。';
-                
                 stopRealTrade();
             }
         }
@@ -448,10 +456,11 @@
             scrollOffset = 0; highlightedTime = null;
             document.getElementById('testResult').innerText = '';
             document.getElementById('testMarginResult').innerText = '';
-            document.getElementById('historyList').innerText = msg;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            document.getElementById('historyList').innerHTML = `<div style="color:#64748b; padding:10px;">${msg}</div>`;
+            if(ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
+        // === OANDA API 共通 ===
         async function apiRequest(endpoint, method = 'GET', body = null) {
             const options = { method, headers: { 'Authorization': `Bearer ${apiToken}`, 'Accept-Datetime-Format': 'UNIX', 'Content-Type': 'application/json' } };
             if (body) options.body = JSON.stringify(body);
@@ -460,6 +469,9 @@
             return response.status === 404 ? null : await response.json();
         }
 
+        // ==========================================
+        // リアルトレードロジック
+        // ==========================================
         async function startRealTrade() {
             stopRealTrade();
             document.getElementById('historyList').innerText = '読込中...';
@@ -563,7 +575,7 @@
                     document.getElementById('shortPips').className = pips >= 0 ? 'val text-green' : 'val text-red';
                 }
                 if (currentLongUnits > 0 && currentLongAvg > 0) {
-                    const pips = (askPrice - currentLongAvg) * pipMultiplier;
+                    const pips = (bidPrice - currentLongAvg) * pipMultiplier;
                     document.getElementById('longPips').innerText = Math.trunc(pips);
                     document.getElementById('longPips').className = pips >= 0 ? 'val text-green' : 'val text-red';
                 }
@@ -593,23 +605,23 @@
                 let u = document.getElementById('lotSize').value; if (!confirm(`${instrument} を ${u}通貨 売(ASK) しますか？`)) return;
                 try { const res = await apiRequest(`/accounts/${accountId}/orders`, 'POST', { order: { units: "-" + u, instrument, timeInForce: "FOK", type: "MARKET", positionFill: "DEFAULT" } }); if(res) { fetchAccount(); fetchPosition(); fetchHistoryReal(); } } catch(e) { alert("注文エラー"); }
             });
-            
             document.getElementById('btnBuy').addEventListener('click', async () => {
                 let u = document.getElementById('lotSize').value; if (!confirm(`${instrument} を ${u}通貨 買(ASK) しますか？`)) return;
                 try { const res = await apiRequest(`/accounts/${accountId}/orders`, 'POST', { order: { units: u, instrument, timeInForce: "FOK", type: "MARKET", positionFill: "DEFAULT" } }); if(res) { fetchAccount(); fetchPosition(); fetchHistoryReal(); } } catch(e) { alert("注文エラー"); }
             });
-            
             document.getElementById('btnSideCloseLong').addEventListener('click', async () => {
                 if(!confirm(`買ポジションを全決済しますか？`)) return;
                 try { const res = await apiRequest(`/accounts/${accountId}/positions/${instrument}/close`, 'PUT', { longUnits: "ALL" }); if(res) { fetchAccount(); fetchPosition(); fetchHistoryReal(); } } catch (e) { alert("決済エラー"); }
             });
-            
             document.getElementById('btnSideCloseShort').addEventListener('click', async () => {
                 if(!confirm(`売ポジションを全決済しますか？`)) return;
                 try { const res = await apiRequest(`/accounts/${accountId}/positions/${instrument}/close`, 'PUT', { shortUnits: "ALL" }); if(res) { fetchAccount(); fetchPosition(); fetchHistoryReal(); } } catch (e) { alert("決済エラー"); }
             });
         }
 
+        // ==========================================
+        // バックテスト ロジック
+        // ==========================================
         async function runBacktestFetch() {
             const btn = document.getElementById('btnTopRun');
             if (isTestRunning) { shouldStopTest = true; btn.innerText = "停止中..."; return; }
@@ -662,7 +674,7 @@
                 calcIndicators(candlesData); 
                 const { totalPips, finalMargin } = runSimulation();
                 
-                updateDisplayCandles(); scrollOffset = 0; drawChart(); renderHistoryBT(); renderDailyPnL();
+                updateDisplayCandles(); scrollOffset = 0; drawChart(); renderHistory(); renderDailyPnL();
 
                 resDiv.style.color = totalPips >= 0 ? '#4ade80' : '#f87171';
                 resDiv.innerText = `結果: 合計 ${totalPips.toFixed(1)} Pips`;
@@ -746,38 +758,37 @@
             return { totalPips, finalMargin: currentMargin };
         }
 
-        function renderHistoryBT() {
-            const list = document.getElementById('historyList'); list.innerHTML = '';
-            if (txHistoryData.length === 0) { list.innerHTML = '<div style="color: #64748b; padding: 10px;">取引なし</div>'; return; }
-            [...txHistoryData].reverse().forEach(tx => {
-                const timeStr = new Date(tx.time).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo', month: '2-digit', day: '2-digit', hour: '2-digit', minute:'2-digit', second:'2-digit' });
-                let actionStr = '', pipsStr = '';
-                if (tx.type === 'LONG') actionStr = '<span class="text-red font-bold">新規 買(ASK)</span>';
-                else if (tx.type === 'SHORT') actionStr = '<span class="text-blue font-bold">新規 売(ASK)</span>';
-                else if (tx.type.includes('CLOSE')) {
-                    const isWin = tx.pips >= 0;
-                    actionStr = `<span class="${tx.type.includes('FORCE') ? 'text-orange' : 'text-gray'}">${tx.type.includes('FORCE') ? '時間強制' : '全決済'}</span>`;
-                    pipsStr = `<span class="${isWin ? 'text-green' : 'text-red'} font-bold">${tx.pips >= 0 ? '+' : ''}${tx.pips.toFixed(1)} pips</span>`;
+        // ==========================================
+        // チャート・インジケーター共通
+        // ==========================================
+        function calcIndicators(dataArray) {
+            const period = 25;
+            for (let i = 0; i < dataArray.length; i++) {
+                if (i >= period - 1) {
+                    let sum = 0;
+                    for (let j = 0; j < period; j++) sum += dataArray[i - j].c;
+                    dataArray[i].sma = sum / period;
+                    let varianceSum = 0;
+                    for (let j = 0; j < period; j++) varianceSum += Math.pow(dataArray[i - j].c - dataArray[i].sma, 2);
+                    dataArray[i].sd = Math.sqrt(varianceSum / period);
                 }
-                list.innerHTML += `<div class="history-item" onclick="jumpToTime(${tx.time})"><div class="hist-info"><div>${timeStr} ${actionStr}</div><div class="hist-status">残高: ¥${Math.floor(tx.balance).toLocaleString()} | 保有: 売${tx.shortCount} 買${tx.longCount}</div></div><div style="text-align: right;"><div style="font-weight: bold;">@ ${tx.price.toFixed(3)}</div><div>${pipsStr}</div></div></div>`;
-            });
+            }
         }
 
-        function renderDailyPnL() {
-            const container = document.getElementById('dailyPnlContainer'); const btn = document.getElementById('btnTogglePnL');
-            container.innerHTML = '<div style="font-weight:bold; border-bottom:1px solid #2d3748; padding-bottom:5px; margin-bottom:5px; color:#cbd5e1;">日別損益サマリー</div>';
-            const dailyData = {};
-            txHistoryData.forEach(tx => {
-                if (tx.type.includes('CLOSE')) {
-                    const dateStr = new Date(tx.time).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo', month: '2-digit', day: '2-digit' });
-                    if (!dailyData[dateStr]) dailyData[dateStr] = { pips: 0, trades: 0, profitYen: 0 };
-                    const count = tx.count || 1; dailyData[dateStr].pips += (tx.pips * count); dailyData[dateStr].trades += count; dailyData[dateStr].profitYen += (tx.profitYen || 0);
-                }
-            });
-            if (Object.keys(dailyData).length === 0) { btn.classList.add('hidden'); return; }
-            btn.classList.remove('hidden'); container.classList.remove('hidden');
-            for (const [date, data] of Object.entries(dailyData)) {
-                container.innerHTML += `<div class="daily-row"><span>${date}</span><span style="color:#a0aec0;">${data.trades} 決済</span><div style="text-align: right;"><div class="${data.pips >= 0 ? 'text-green' : 'text-red'} font-bold">${data.pips >= 0 ? '+' : ''}${data.pips.toFixed(1)} pips</div><div style="font-size: 10px; color: #94a3b8;">¥${Math.floor(data.profitYen).toLocaleString()}</div></div></div>`;
+        function jumpToTime(targetTime) {
+            if (displayCandles.length === 0) return;
+            const tfSeconds = tfIntervalMs[document.getElementById('tfSelector').value];
+            // リアルタイムとバックテストの差分を吸収するため、時間範囲か近似で探す
+            let targetIndex = displayCandles.findIndex(c => targetTime >= c.startTime && targetTime <= (c.endTime || c.time) + (tfSeconds * 1000));
+            if (targetIndex === -1) targetIndex = displayCandles.findIndex(c => Math.abs(c.time - targetTime) <= (tfSeconds * 1000));
+
+            if (targetIndex !== -1) { 
+                highlightedTime = displayCandles[targetIndex].time; 
+                scrollOffset = (displayCandles.length - 1 - targetIndex) - Math.floor(displayCount * 0.3); 
+                const maxOffset = Math.max(0, displayCandles.length - displayCount);
+                if (scrollOffset < 0) scrollOffset = 0; 
+                if (scrollOffset > maxOffset) scrollOffset = maxOffset;
+                drawChart(); 
             }
         }
 
@@ -797,12 +808,11 @@
                 if (getAsk(c.h) > maxP) maxP = getAsk(c.h); if (getAsk(c.l) < minP) minP = getAsk(c.l);
                 if (c.sma && c.sd !== undefined) { const u = getAsk(c.sma + (drawBidSigma * c.sd)), l = getAsk(c.sma - (drawAskSigma * c.sd)); if (u > maxP) maxP = u; if (l < minP) minP = l; }
             });
-            const midP = (maxP + minP) / 2, zoomedRange = (maxP - minP) * yScaleMultiplier || 0.001; 
-            maxP = midP + (zoomedRange / 2) * 1.1; minP = midP - (zoomedRange / 2) * 1.1;
+            const midP = (maxP + minP) / 2, zoomedRange = (maxP - minP) * yScaleMultiplier || 0.001; maxP = midP + (zoomedRange / 2) * 1.1; minP = midP - (zoomedRange / 2) * 1.1;
             const finalRange = maxP - minP, getY = (price) => chartH - ((price - minP) / finalRange) * chartH;
 
             if (highlightedTime) { 
-                const hIndex = dataToDraw.findIndex(c => highlightedTime >= c.startTime && highlightedTime <= c.endTime + 4999); 
+                const hIndex = dataToDraw.findIndex(c => c.time === highlightedTime); 
                 if (hIndex !== -1) { 
                     const hx = hIndex * candleWidth + candleWidth / 2; ctx.fillStyle = 'rgba(251, 191, 36, 0.15)'; ctx.fillRect(hIndex * candleWidth, 0, candleWidth, chartH); ctx.beginPath(); ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]); ctx.moveTo(hx, 0); ctx.lineTo(hx, chartH); ctx.stroke(); ctx.setLineDash([]); 
                 } 
@@ -819,7 +829,8 @@
             });
 
             txHistoryData.forEach(tx => {
-                const cIndex = dataToDraw.findIndex(c => tx.time >= c.startTime && tx.time <= c.endTime + 4999); 
+                const tfSeconds = tfIntervalMs[document.getElementById('tfSelector').value];
+                const cIndex = dataToDraw.findIndex(c => Math.abs(c.time - tx.time) <= (tfSeconds * 1000));
                 if (cIndex !== -1) {
                     const c = dataToDraw[cIndex]; const x = cIndex * candleWidth + candleWidth / 2; let markerY = 0; ctx.beginPath();
                     if (tx.type === 'LONG') { ctx.fillStyle = '#ef4444'; markerY = getY(getAsk(c.l)) + 15; ctx.moveTo(x, markerY - 8); ctx.lineTo(x - 5, markerY + 2); ctx.lineTo(x + 5, markerY + 2); } 
@@ -833,6 +844,46 @@
             const step = Math.max(1, Math.floor(60 / candleWidth)); for (let i = 0; i < dataToDraw.length; i += step) { ctx.fillText(`${String(new Date(dataToDraw[i].time).getHours()).padStart(2, '0')}:${String(new Date(dataToDraw[i].time).getMinutes()).padStart(2, '0')}`, i * candleWidth + candleWidth / 2, h - 4); }
             ctx.fillStyle = '#161b26'; ctx.fillRect(chartW, 0, yAxisWidth, h); ctx.beginPath(); ctx.strokeStyle = '#2d3748'; ctx.moveTo(chartW, 0); ctx.lineTo(chartW, h); ctx.stroke();
             ctx.fillStyle = '#a0aec0'; ctx.textAlign = 'left'; ctx.font = 'bold 12px sans-serif'; for (let i = 1; i <= 5; i++) { const yPos = (chartH / 6) * i; ctx.fillText((maxP - ((maxP - minP) * (yPos / chartH))).toFixed(3), chartW + 5, yPos + 4); }
+        }
+
+        // ==========================================
+        // 履歴・UI描画系
+        // ==========================================
+        function renderHistory() {
+            const list = document.getElementById('historyList'); list.innerHTML = '';
+            if (txHistoryData.length === 0) { list.innerHTML = '<div style="color: #64748b; padding: 10px;">取引なし</div>'; return; }
+            [...txHistoryData].reverse().forEach(tx => {
+                const timeStr = new Date(tx.time).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo', month: '2-digit', day: '2-digit', hour: '2-digit', minute:'2-digit', second:'2-digit' });
+                let actionStr = '', pipsStr = '';
+                if (tx.type === 'LONG') actionStr = '<span class="text-red font-bold">新規 買(ASK)</span>';
+                else if (tx.type === 'SHORT') actionStr = '<span class="text-blue font-bold">新規 売(ASK)</span>';
+                else if (tx.type.includes('CLOSE')) {
+                    const isWin = tx.pips >= 0;
+                    actionStr = `<span class="${tx.type.includes('FORCE') ? 'text-orange' : 'text-gray'}">${tx.type.includes('FORCE') ? '時間強制' : '全決済'}</span>`;
+                    pipsStr = `<span class="${isWin ? 'text-green' : 'text-red'} font-bold">${tx.pips >= 0 ? '+' : ''}${tx.pips.toFixed(1)} pips</span>`;
+                }
+                const balStr = tx.balance ? `残高: ¥${Math.floor(tx.balance).toLocaleString()} | ` : '';
+                const posStr = `保有: 売${tx.shortCount || 0} 買${tx.longCount || 0}`;
+                list.innerHTML += `<div class="history-item" onclick="jumpToTime(${tx.time})"><div class="hist-info"><div>${timeStr} ${actionStr}</div><div class="hist-status">${balStr}${posStr}</div></div><div style="text-align: right;"><div style="font-weight: bold;">@ ${tx.price.toFixed(3)}</div><div>${pipsStr}</div></div></div>`;
+            });
+        }
+
+        function renderDailyPnL() {
+            const container = document.getElementById('dailyPnlContainer'); const btn = document.getElementById('btnTogglePnL');
+            container.innerHTML = '<div style="font-weight:bold; border-bottom:1px solid #2d3748; padding-bottom:5px; margin-bottom:5px; color:#cbd5e1;">日別損益サマリー</div>';
+            const dailyData = {};
+            txHistoryData.forEach(tx => {
+                if (tx.type.includes('CLOSE')) {
+                    const dateStr = new Date(tx.time).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo', month: '2-digit', day: '2-digit' });
+                    if (!dailyData[dateStr]) dailyData[dateStr] = { pips: 0, trades: 0, profitYen: 0 };
+                    const count = tx.count || 1; dailyData[dateStr].pips += (tx.pips * count); dailyData[dateStr].trades += count; dailyData[dateStr].profitYen += (tx.profitYen || 0);
+                }
+            });
+            if (Object.keys(dailyData).length === 0) { btn.classList.add('hidden'); return; }
+            btn.classList.remove('hidden'); container.classList.remove('hidden');
+            for (const [date, data] of Object.entries(dailyData)) {
+                container.innerHTML += `<div class="daily-row"><span>${date}</span><span style="color:#a0aec0;">${data.trades} 決済</span><div style="text-align: right;"><div class="${data.pips >= 0 ? 'text-green' : 'text-red'} font-bold">${data.pips >= 0 ? '+' : ''}${data.pips.toFixed(1)} pips</div><div style="font-size: 10px; color: #94a3b8;">¥${Math.floor(data.profitYen).toLocaleString()}</div></div></div>`;
+            }
         }
 
         function setupTouchEvents() {
