@@ -8,7 +8,6 @@
         body { margin: 0; padding: 0; font-family: -apple-system, sans-serif; background-color: #0b101e; color: #ffffff; overflow: hidden; }
         .container { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
         
-        /* === ログイン画面 === */
         #loginArea { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100dvh; padding: 20px; }
         .login-box { background-color: #161b26; padding: 20px; border-radius: 8px; border: 1px solid #2d3748; width: 100%; max-width: 400px; box-sizing: border-box; }
         .login-box h2 { text-align: center; margin-top: 0; color: #cbd5e1; font-size: 18px; margin-bottom: 20px; }
@@ -17,14 +16,20 @@
         .input-group input[type="text"], .input-group input[type="password"] { width: 100%; padding: 12px; background: #2d3748; border: 1px solid #4a5568; color: white; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
         .btn-login { width: 100%; padding: 14px; background: linear-gradient(180deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; }
 
-        /* === メインUIスタイル === */
         .header { display: flex; justify-content: space-between; padding: 8px 12px; background-color: #161b26; border-bottom: 1px solid #2d3748; font-size: 13px; flex-shrink: 0; }
         .header span { font-weight: bold; color: #a0aec0; }
         .header .val { color: #ffffff; font-size: 14px; font-weight: bold; }
 
         #chartWrapper { height: 32vh; min-height: 180px; width: 100%; border-bottom: 1px solid #2d3748; position: relative; background: #0b101e; flex-shrink: 0; }
+        
         #chartControls { position: absolute; top: 5px; left: 5px; z-index: 10; display: flex; gap: 5px; }
         #chartControls select { background: #1a202c; color: white; border: 1px solid #4a5568; padding: 4px; border-radius: 4px; font-size: 12px; }
+        .btn-legend { background: #1e293b; color: #cbd5e1; border: 1px solid #4a5568; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; }
+
+        .legend-panel { position: absolute; top: 35px; left: 5px; background: rgba(22, 27, 38, 0.9); border: 1px solid #4a5568; border-radius: 6px; padding: 10px; font-size: 12px; z-index: 20; backdrop-filter: blur(2px); }
+        .legend-item { display: flex; align-items: center; margin-bottom: 6px; }
+        .leg-icon { font-size: 14px; width: 16px; text-align: center; margin-right: 6px; }
+
         #marketClosedLabel { position: absolute; top: 5px; right: 5px; background: rgba(220, 38, 38, 0.9); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: none; }
         canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 
@@ -107,7 +112,22 @@
                     <option value="EUR_JPY">EUR/JPY</option>
                     <option value="GBP_JPY">GBP/JPY</option>
                 </select>
+                <select id="tfSelector">
+                    <option value="0" selected>5秒足</option>
+                    <option value="1">1分足</option>
+                    <option value="5">5分足</option>
+                    <option value="10">10分足</option>
+                    <option value="60">1時間足</option>
+                    <option value="240">4時間足</option>
+                </select>
+                <button id="btnLegend" class="btn-legend">[?]</button>
             </div>
+            
+            <div id="legendPanel" class="legend-panel hidden">
+                <div class="legend-item"><span class="leg-icon text-red">▲</span> 新規 買(ASK) エントリー</div>
+                <div class="legend-item"><span class="leg-icon text-blue">▼</span> 新規 売(ASK) エントリー</div>
+            </div>
+
             <div id="marketClosedLabel">休場中</div>
             <canvas id="myCanvas"></canvas>
         </div>
@@ -194,10 +214,15 @@
         let displayCount = 200, scrollOffset = 0, yScaleMultiplier = 1.0;
         const yAxisWidth = 65, xAxisHeight = 20;
         let isDragging = false, lastTouchX = 0, initialPinchDist = null, initialDisplayCount = 200;
+        let highlightedTime = null; 
 
         let currentLongUnits = 0, currentLongAvg = 0, currentShortUnits = 0, currentShortAvg = 0;
         let isAutoTrading = false;
         let priceInterval, accountInterval, posInterval;
+
+        const tfGranularity = { "0": "S5", "1": "M1", "5": "M5", "10": "M10", "60": "H1", "240": "H4" };
+
+        document.getElementById('btnLegend').addEventListener('click', () => document.getElementById('legendPanel').classList.toggle('hidden'));
 
         window.onload = () => {
             if (localStorage.getItem('oanda_account_id')) document.getElementById('accountIdInput').value = localStorage.getItem('oanda_account_id');
@@ -217,6 +242,10 @@
 
         document.getElementById('instrumentSelector').addEventListener('change', (e) => {
             instrument = e.target.value; candlesData = []; txHistoryData = []; initApp();
+        });
+
+        document.getElementById('tfSelector').addEventListener('change', () => {
+            candlesData = []; scrollOffset = 0; highlightedTime = null; fetchHistoricalCandles();
         });
 
         async function apiRequest(endpoint, method = 'GET', body = null) {
@@ -274,7 +303,7 @@
                 (data.transactions || []).forEach(t => {
                     if(t.instrument === instrument) {
                         const time = new Date(parseFloat(t.time) * 1000).toLocaleTimeString(); const units = parseInt(t.units);
-                        list.innerHTML += `<div class="history-item"><span>${time}</span><span class="${units > 0 ? 'text-red' : 'text-blue'}">${units > 0 ? '買' : '売'} ${Math.abs(units)}</span><span>@ ${parseFloat(t.price).toFixed(3)}</span></div>`;
+                        list.innerHTML += `<div class="history-item"><span>${time}</span><span class="${units > 0 ? 'text-red' : 'text-blue'}">${units > 0 ? '買' : '売'} ${Math.abs(units)}</span><span style="font-weight:bold;">@ ${parseFloat(t.price).toFixed(3)}</span></div>`;
                     }
                 });
             } catch (e) {}
@@ -282,8 +311,12 @@
 
         async function fetchHistoricalCandles() {
             try {
-                const res = await apiRequest(`/instruments/${instrument}/candles?granularity=S5&count=1000`); if(!res || !res.candles) return;
-                candlesData = res.candles.filter(c => c.complete).map(c => ({ time: parseFloat(c.time) * 1000, o: parseFloat(c.mid.o), h: parseFloat(c.mid.h), l: parseFloat(c.mid.l), c: parseFloat(c.mid.c) }));
+                const tfVal = document.getElementById('tfSelector').value;
+                const granularity = tfGranularity[tfVal];
+                // 実取引のチャートはOANDAから直接ASK(買値)のローソク足を取得して描画する
+                const res = await apiRequest(`/instruments/${instrument}/candles?granularity=${granularity}&count=1000&price=A`); 
+                if(!res || !res.candles) return;
+                candlesData = res.candles.filter(c => c.complete).map(c => ({ time: parseFloat(c.time) * 1000, o: parseFloat(c.ask.o), h: parseFloat(c.ask.h), l: parseFloat(c.ask.l), c: parseFloat(c.ask.c) }));
                 calcIndicators(); drawChart();
             } catch (e) {}
         }
@@ -295,7 +328,7 @@
                 if (priceData.status !== 'tradeable') { document.getElementById('marketClosedLabel').style.display = 'block'; return; }
                 else { document.getElementById('marketClosedLabel').style.display = 'none'; }
 
-                const askPrice = parseFloat(priceData.prices[0].asks[0].price || priceData.asks[0].price);
+                const askPrice = parseFloat(priceData.asks[0].price);
                 document.getElementById('bidPrice').innerText = askPrice.toFixed(3);
                 document.getElementById('askPrice').innerText = askPrice.toFixed(3);
 
@@ -313,8 +346,15 @@
 
                 if (candlesData.length > 0) {
                     const last = candlesData[candlesData.length - 1]; const now = Date.now();
-                    if (now - last.time >= 5000) { candlesData.push({ time: now, o: askPrice, h: askPrice, l: askPrice, c: askPrice }); if (candlesData.length > 2000) candlesData.shift(); }
-                    else { last.c = askPrice; last.h = Math.max(last.h, askPrice); last.l = Math.min(last.l, askPrice); }
+                    const tfVal = document.getElementById('tfSelector').value;
+                    const intervalMs = tfVal === "0" ? 5000 : parseInt(tfVal) * 60000;
+
+                    if (now - last.time >= intervalMs) { 
+                        candlesData.push({ time: now, o: askPrice, h: askPrice, l: askPrice, c: askPrice }); 
+                        if (candlesData.length > 2000) candlesData.shift(); 
+                    } else { 
+                        last.c = askPrice; last.h = Math.max(last.h, askPrice); last.l = Math.min(last.l, askPrice); 
+                    }
                 }
                 if (scrollOffset === 0) { calcIndicators(); drawChart(); }
             } catch (e) {}
@@ -378,7 +418,7 @@
         }
 
         function setupTouchEvents() {
-            canvas.addEventListener('touchstart', (e) => { if (e.touches.length === 1) { isDragging = true; lastTouchX = e.touches[0].clientX; } else if (e.touches.length === 2) { isDragging = false; initialPinchDist = Math.sqrt(Math.pow(e.touches[0].clientX - e.touches[1].clientX, 2) + Math.pow(e.touches[0].clientY - e.touches[1].clientY, 2)); initialDisplayCount = displayCount; } }, { passive: false });
+            canvas.addEventListener('touchstart', (e) => { highlightedTime = null; document.getElementById('legendPanel').classList.add('hidden'); if (e.touches.length === 1) { isDragging = true; lastTouchX = e.touches[0].clientX; } else if (e.touches.length === 2) { isDragging = false; initialPinchDist = Math.sqrt(Math.pow(e.touches[0].clientX - e.touches[1].clientX, 2) + Math.pow(e.touches[0].clientY - e.touches[1].clientY, 2)); initialDisplayCount = displayCount; } }, { passive: false });
             canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if (e.touches.length === 1 && isDragging) { const dx = e.touches[0].clientX - lastTouchX, candleWidth = (canvas.width - yAxisWidth) / displayCount; scrollOffset = Math.max(0, Math.min(candlesData.length - displayCount, scrollOffset + dx / candleWidth)); lastTouchX = e.touches[0].clientX; drawChart(); } else if (e.touches.length === 2 && initialPinchDist) { const currentDist = Math.sqrt(Math.pow(e.touches[0].clientX - e.touches[1].clientX, 2) + Math.pow(e.touches[0].clientY - e.touches[1].clientY, 2)); displayCount = Math.max(20, Math.min(2000, Math.floor(initialDisplayCount / (currentDist / initialPinchDist)))); scrollOffset = Math.min(Math.max(0, candlesData.length - displayCount), scrollOffset); drawChart(); } }, { passive: false });
             canvas.addEventListener('touchend', () => { isDragging = false; initialPinchDist = null; });
         }
