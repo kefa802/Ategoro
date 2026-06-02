@@ -8,7 +8,7 @@
         body { margin: 0; padding: 0; font-family: -apple-system, sans-serif; background-color: #0b101e; color: #ffffff; overflow: hidden; }
         .container { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
         
-        /* ログイン画面 */
+        /* === ログイン画面 === */
         #loginArea { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100dvh; padding: 20px; }
         .login-box { background-color: #161b26; padding: 20px; border-radius: 8px; border: 1px solid #2d3748; width: 100%; max-width: 400px; box-sizing: border-box; }
         .login-box h2 { text-align: center; margin-top: 0; color: #cbd5e1; font-size: 18px; margin-bottom: 20px; }
@@ -21,7 +21,7 @@
         .mode-radio input { display: none; }
         .btn-login { width: 100%; padding: 14px; background: linear-gradient(180deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; }
 
-        /* ヘッダー・チャート */
+        /* === ヘッダー・チャート === */
         .header { display: flex; justify-content: space-between; padding: 8px 10px; background-color: #161b26; border-bottom: 1px solid #2d3748; font-size: 13px; flex-shrink: 0; }
         .header span { color: #a0aec0; }
         .header .val { color: #ffffff; font-weight: bold; font-size: 14px; margin-left: 4px; }
@@ -39,7 +39,7 @@
         #marketClosedLabel { position: absolute; top: 35px; right: 5px; background: rgba(220, 38, 38, 0.9); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: none; }
         canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 
-        /* モーダル設定 */
+        /* === 設定モーダル === */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(11, 16, 30, 0.98); z-index: 100; overflow-y: auto; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d3748; padding-bottom: 12px; margin-bottom: 15px; }
         .modal-title { font-size: 16px; font-weight: bold; color: #cbd5e1; }
@@ -54,7 +54,7 @@
         .bt-grid input[type="number"] { width: 45px; background: #0b101e; color: white; border: 1px solid #4a5568; padding: 4px; border-radius: 4px; text-align: center; }
         .bt-grid input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
 
-        /* 下部エリア */
+        /* === 下部エリア === */
         .bottom-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
         .mode-tabs { display: flex; border-bottom: 1px solid #2d3748; flex-shrink: 0; }
         .mode-tab { flex: 1; padding: 12px; text-align: center; background: #0b101e; color: #64748b; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.2s; }
@@ -93,7 +93,7 @@
         .btn-auto.stop { background: #ef4444; }
         .btn-auto:disabled { background: #475569; color: #94a3b8; cursor: not-allowed; opacity: 0.5; }
 
-        /* 履歴・共通 */
+        /* === 履歴・共通 === */
         #testResult { text-align: center; font-weight: bold; font-size: 15px; margin-bottom: 5px; }
         #testMarginResult { text-align: center; font-size: 13px; color: #cbd5e1; margin-bottom: 15px; }
         .history-panel { flex: 1; padding: 15px; background-color: #0b101e; border-top: 1px solid #2d3748; }
@@ -117,7 +117,6 @@
 </head>
 <body>
 
-    <!-- ログイン画面 -->
     <div id="loginArea">
         <div class="login-box">
             <h2>OANDA トレード＆バックテスト</h2>
@@ -140,7 +139,6 @@
         </div>
     </div>
 
-    <!-- メインUI画面 -->
     <div id="mainUI" class="container hidden">
         <div class="header">
             <div><span>残高:</span><span id="balanceVal" class="val">--</span><span>円</span></div>
@@ -183,7 +181,6 @@
             <canvas id="myCanvas"></canvas>
         </div>
 
-        <!-- ⚙️モーダル設定項目 -->
         <div id="modalSettings" class="modal-overlay hidden">
             <div class="modal-header">
                 <div class="modal-title">⚙️ 詳細設定 (共通・BT)</div>
@@ -232,13 +229,11 @@
         </div>
 
         <div class="bottom-area">
-            <!-- タブ切り替え -->
             <div class="mode-tabs">
                 <div class="mode-tab" id="tabReal">リアルトレード</div>
                 <div class="mode-tab active" id="tabBacktest">バックテスト</div>
             </div>
 
-            <!-- バックテスト専用パネル -->
             <div class="bt-panel hidden" id="backtestDatePanel">
                 <div class="bt-setting-row">
                     <span>テスト期間</span>
@@ -250,7 +245,6 @@
                 </div>
             </div>
 
-            <!-- リアルトレード専用パネル -->
             <div class="trade-panel hidden" id="tradePanel">
                 <div class="pos-dashboard">
                     <div class="pos-side pos-sell">
@@ -304,14 +298,13 @@
                 </div>
             </div>
 
-            <!-- 履歴・サマリーパネル -->
             <div class="history-panel">
                 <div id="testResult"></div>
                 <div id="testMarginResult"></div>
                 <div class="history-header" id="historyTitle">取引履歴</div>
                 <button id="btnTogglePnL" class="btn-toggle-pnl hidden">日別損益の詳細を見る ▼</button>
                 <div id="dailyPnlContainer" class="daily-summary hidden"></div>
-                <div id="historyList">データがありません。</div>
+                <div id="historyList">日付を指定して右上の「▶ 実行」を押してください。</div>
             </div>
         </div>
     </div>
@@ -322,6 +315,7 @@
         let accountId = "", apiToken = "", instrument = "USD_JPY";
         let appMode = 'BACKTEST';
         let candlesData = [], displayCandles = [], txHistoryData = []; 
+        let lastTransactionID = 0; // OANDA API用 トランザクションID管理
         const canvas = document.getElementById('myCanvas');
         const ctx = canvas.getContext('2d');
         let displayCount = 200, scrollOffset = 0, yScaleMultiplier = 1.0;
@@ -428,7 +422,6 @@
             if (savedId) document.getElementById('accountIdInput').value = savedId;
             if (savedToken) document.getElementById('apiTokenInput').value = savedToken;
 
-            // ログイン実行処理
             const performLogin = (isAuto = false) => {
                 accountId = document.getElementById('accountIdInput').value.trim();
                 apiToken = document.getElementById('apiTokenInput').value.trim();
@@ -453,11 +446,7 @@
                 switchMode(selectedMode);
             };
 
-            // 自動ログイン判定
-            if (savedId && savedToken) {
-                performLogin(true);
-            }
-
+            if (savedId && savedToken) performLogin(true);
             document.getElementById('loginBtn').addEventListener('click', () => performLogin(false));
 
             document.getElementById('tabReal').addEventListener('click', () => switchMode('REAL'));
@@ -507,7 +496,7 @@
 
         function clearDataAndRedraw(msg) {
             candlesData = []; displayCandles = []; txHistoryData = []; 
-            scrollOffset = 0; highlightedTime = null;
+            scrollOffset = 0; highlightedTime = null; lastTransactionID = 0;
             document.getElementById('testResult').innerText = '';
             document.getElementById('testMarginResult').innerText = '';
             document.getElementById('historyList').innerHTML = `<div style="color:#64748b; padding:10px;">${msg}</div>`;
@@ -529,7 +518,10 @@
         async function startRealTrade() {
             stopRealTrade();
             document.getElementById('historyList').innerText = 'データ取得中...';
-            await fetchAccount(); await fetchPosition(); await fetchHistoryReal(); await fetchHistoricalCandlesReal();
+            await fetchAccount(); 
+            await fetchPosition(); 
+            await fetchHistoryReal(); 
+            await fetchHistoricalCandlesReal();
             priceInterval = setInterval(fetchPricingAndUpdateChartReal, 1000); 
             accountInterval = setInterval(fetchAccount, 5000); 
             posInterval = setInterval(fetchPosition, 3000);
@@ -546,6 +538,7 @@
         async function fetchAccount() {
             try {
                 const data = await apiRequest(`/accounts/${accountId}/summary`); if(!data) return;
+                lastTransactionID = parseInt(data.account.lastTransactionID) || 0; 
                 document.getElementById('balanceVal').innerText = Math.floor(parseFloat(data.account.balance)).toLocaleString();
                 const pl = Math.floor(parseFloat(data.account.unrealizedPL));
                 document.getElementById('plVal').innerText = pl.toLocaleString();
@@ -576,16 +569,28 @@
             } catch (e) {}
         }
 
+        // 【重要修正】フィルター無しで3000件取得し、JS側で抽出する完全な安全策
         async function fetchHistoryReal() {
+            if (!lastTransactionID) return; 
             try {
-                const data = await apiRequest(`/accounts/${accountId}/transactions?type=ORDER_FILL&count=500`); 
-                if(!data) return;
+                const isJPY = instrument.includes('JPY');
+                let allTransactions = [];
+                
+                // 直近3000件を3回に分けて取得 (1000件ずつ)
+                for (let i = 0; i < 3; i++) {
+                    const toId = lastTransactionID - (i * 1000);
+                    const fromId = Math.max(1, toId - 999);
+                    if (toId < 1) break;
+                    
+                    const data = await apiRequest(`/accounts/${accountId}/transactions/idrange?from=${fromId}&to=${toId}`);
+                    if (data && data.transactions) {
+                        allTransactions = allTransactions.concat(data.transactions);
+                    }
+                }
                 
                 txHistoryData = []; 
-                const isJPY = instrument.includes('JPY');
-                
-                (data.transactions || []).forEach(t => {
-                    if (t.instrument === instrument) {
+                allTransactions.forEach(t => {
+                    if (t.type === 'ORDER_FILL' && t.instrument === instrument) {
                         const units = parseInt(t.units);
                         const isClose = t.tradesClosed && t.tradesClosed.length > 0;
                         const pl = parseFloat(t.pl) || 0;
@@ -603,19 +608,27 @@
                             type = units > 0 ? 'LONG' : 'SHORT';
                         }
                         
-                        txHistoryData.push({ 
-                            time: parseFloat(t.time) * 1000, 
-                            type: type, 
-                            price: parseFloat(t.price),
-                            pips: pips,
-                            profitYen: pl,
-                            balance: balance,
-                            count: 1
-                        });
+                        // 重複チェックして追加
+                        if (!txHistoryData.find(tx => tx.time === parseFloat(t.time) * 1000)) {
+                            txHistoryData.push({ 
+                                time: parseFloat(t.time) * 1000, 
+                                type: type, 
+                                price: parseFloat(t.price),
+                                pips: pips,
+                                profitYen: pl,
+                                balance: balance,
+                                count: 1
+                            });
+                        }
                     }
                 });
+                
+                // 時系列でソート（古い順）
+                txHistoryData.sort((a, b) => a.time - b.time);
+                
                 renderHistory(); 
-            } catch (e) { console.error(e); }
+                renderDailyPnL();
+            } catch (e) { console.error("fetchHistoryReal Error:", e); }
         }
 
         async function fetchHistoricalCandlesReal() {
@@ -639,7 +652,7 @@
                 displayCandles = [...candlesData]; 
                 window.calcIndicators(displayCandles); 
                 drawChart();
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("fetchHistoricalCandlesReal Error:", e); }
         }
 
         async function fetchPricingAndUpdateChartReal() {
@@ -691,19 +704,31 @@
             
             document.getElementById('btnSell').addEventListener('click', async () => {
                 let u = document.getElementById('lotSize').value; if (!confirm(`${instrument} を ${u}通貨 売(ASK) しますか？`)) return;
-                try { const res = await apiRequest(`/accounts/${accountId}/orders`, 'POST', { order: { units: "-" + u, instrument, timeInForce: "FOK", type: "MARKET", positionFill: "DEFAULT" } }); if(res) { fetchAccount(); fetchPosition(); fetchHistoryReal(); } } catch(e) { alert("注文エラー"); }
+                try { 
+                    const res = await apiRequest(`/accounts/${accountId}/orders`, 'POST', { order: { units: "-" + u, instrument, timeInForce: "FOK", type: "MARKET", positionFill: "DEFAULT" } }); 
+                    if(res) { await fetchAccount(); await fetchPosition(); await fetchHistoryReal(); drawChart(); } 
+                } catch(e) { alert("注文エラー"); }
             });
             document.getElementById('btnBuy').addEventListener('click', async () => {
                 let u = document.getElementById('lotSize').value; if (!confirm(`${instrument} を ${u}通貨 買(ASK) しますか？`)) return;
-                try { const res = await apiRequest(`/accounts/${accountId}/orders`, 'POST', { order: { units: u, instrument, timeInForce: "FOK", type: "MARKET", positionFill: "DEFAULT" } }); if(res) { fetchAccount(); fetchPosition(); fetchHistoryReal(); } } catch(e) { alert("注文エラー"); }
+                try { 
+                    const res = await apiRequest(`/accounts/${accountId}/orders`, 'POST', { order: { units: u, instrument, timeInForce: "FOK", type: "MARKET", positionFill: "DEFAULT" } }); 
+                    if(res) { await fetchAccount(); await fetchPosition(); await fetchHistoryReal(); drawChart(); } 
+                } catch(e) { alert("注文エラー"); }
             });
             document.getElementById('btnSideCloseLong').addEventListener('click', async () => {
                 if(!confirm(`買ポジションを全決済しますか？`)) return;
-                try { const res = await apiRequest(`/accounts/${accountId}/positions/${instrument}/close`, 'PUT', { longUnits: "ALL" }); if(res) { fetchAccount(); fetchPosition(); fetchHistoryReal(); } } catch (e) { alert("決済エラー"); }
+                try { 
+                    const res = await apiRequest(`/accounts/${accountId}/positions/${instrument}/close`, 'PUT', { longUnits: "ALL" }); 
+                    if(res) { await fetchAccount(); await fetchPosition(); await fetchHistoryReal(); drawChart(); } 
+                } catch (e) { alert("決済エラー"); }
             });
             document.getElementById('btnSideCloseShort').addEventListener('click', async () => {
                 if(!confirm(`売ポジションを全決済しますか？`)) return;
-                try { const res = await apiRequest(`/accounts/${accountId}/positions/${instrument}/close`, 'PUT', { shortUnits: "ALL" }); if(res) { fetchAccount(); fetchPosition(); fetchHistoryReal(); } } catch (e) { alert("決済エラー"); }
+                try { 
+                    const res = await apiRequest(`/accounts/${accountId}/positions/${instrument}/close`, 'PUT', { shortUnits: "ALL" }); 
+                    if(res) { await fetchAccount(); await fetchPosition(); await fetchHistoryReal(); drawChart(); } 
+                } catch (e) { alert("決済エラー"); }
             });
         }
 
@@ -831,7 +856,6 @@
                     continue;
                 }
                 
-                // 決済判定
                 if (posShort.length > 0) { 
                     const avg = posShort.reduce((s, p) => s + p.price, 0) / posShort.length;
                     const maxProfitPips = ((avg - askL) * pipMultiplier) - spreadPips; 
@@ -861,7 +885,6 @@
                     } 
                 }
 
-                // エントリー判定
                 if (posShort.length < maxPos) {
                     if (posShort.length === 0) { 
                         const upperBand = askSma + (e1BidSigma * c.sd);
@@ -907,7 +930,6 @@
             const tfMs = tfIntervalMs[document.getElementById('tfSelector').value] * 1000;
             const lastTime = displayCandles[displayCandles.length - 1].time + tfMs;
             
-            // チャートの表示可能範囲内かチェック
             if (targetTime < firstTime || targetTime > lastTime) {
                 alert("指定された約定日時は、現在読み込んでいるチャートの範囲外です。\n（例：5秒足などの短い時間足では、直近1000本までしか遡れません）\n時間足を「1時間足」などに大きくしてからお試しください！");
                 return;
