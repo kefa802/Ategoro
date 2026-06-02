@@ -8,6 +8,7 @@
         body { margin: 0; padding: 0; font-family: -apple-system, sans-serif; background-color: #0b101e; color: #ffffff; overflow: hidden; }
         .container { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
         
+        /* ログイン画面 */
         #loginArea { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100dvh; padding: 20px; }
         .login-box { background-color: #161b26; padding: 20px; border-radius: 8px; border: 1px solid #2d3748; width: 100%; max-width: 400px; box-sizing: border-box; }
         .login-box h2 { text-align: center; margin-top: 0; color: #cbd5e1; font-size: 18px; margin-bottom: 20px; }
@@ -20,6 +21,7 @@
         .mode-radio input { display: none; }
         .btn-login { width: 100%; padding: 14px; background: linear-gradient(180deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; }
 
+        /* ヘッダー・チャート */
         .header { display: flex; justify-content: space-between; padding: 8px 10px; background-color: #161b26; border-bottom: 1px solid #2d3748; font-size: 13px; flex-shrink: 0; }
         .header span { color: #a0aec0; }
         .header .val { color: #ffffff; font-weight: bold; font-size: 14px; margin-left: 4px; }
@@ -31,12 +33,15 @@
         .btn-top-run { background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.3); min-width: 70px; text-align: center; }
         .btn-top-run.running { background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%); }
         .btn-top-settings { background: #1e293b; color: white; border: 1px solid #4a5568; padding: 5px 8px; border-radius: 4px; font-size: 14px; cursor: pointer; }
+        
         .legend-panel { position: absolute; top: 35px; left: 5px; background: rgba(22, 27, 38, 0.9); border: 1px solid #4a5568; border-radius: 6px; padding: 10px; font-size: 12px; z-index: 20; backdrop-filter: blur(2px); }
         .legend-item { display: flex; align-items: center; margin-bottom: 6px; }
-        .leg-icon { font-size: 14px; width: 16px; text-align: center; margin-right: 6px; }
+        .leg-icon { font-size: 14px; width: 16px; text-align: center; margin-right: 6px; font-weight: bold; }
+        
         #marketClosedLabel { position: absolute; top: 35px; right: 5px; background: rgba(220, 38, 38, 0.9); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: none; }
         canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 
+        /* モーダル設定 */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(11, 16, 30, 0.98); z-index: 100; overflow-y: auto; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d3748; padding-bottom: 12px; margin-bottom: 15px; }
         .modal-title { font-size: 16px; font-weight: bold; color: #cbd5e1; }
@@ -51,6 +56,7 @@
         .bt-grid input[type="number"] { width: 45px; background: #0b101e; color: white; border: 1px solid #4a5568; padding: 4px; border-radius: 4px; text-align: center; }
         .bt-grid input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
 
+        /* 下部エリア */
         .bottom-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
         .mode-tabs { display: flex; border-bottom: 1px solid #2d3748; flex-shrink: 0; }
         .mode-tab { flex: 1; padding: 12px; text-align: center; background: #0b101e; color: #64748b; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.2s; }
@@ -89,6 +95,7 @@
         .btn-auto.stop { background: #ef4444; }
         .btn-auto:disabled { background: #475569; color: #94a3b8; cursor: not-allowed; opacity: 0.5; }
 
+        /* 履歴・共通 */
         #testResult { text-align: center; font-weight: bold; font-size: 15px; margin-bottom: 5px; }
         #testMarginResult { text-align: center; font-size: 13px; color: #cbd5e1; margin-bottom: 15px; }
         .history-panel { flex: 1; padding: 15px; background-color: #0b101e; border-top: 1px solid #2d3748; }
@@ -169,6 +176,7 @@
                 <div class="legend-item"><span class="leg-icon text-green">●</span> 決済 (利確 / プラス)</div>
                 <div class="legend-item"><span class="leg-icon text-yellow">●</span> 決済 (損切 / マイナス)</div>
                 <div class="legend-item"><span class="leg-icon text-orange">●</span> 時間外強制決済</div>
+                <div class="legend-item"><span class="leg-icon" style="color:#a855f7;">―</span> 証拠金(残高)の推移</div>
             </div>
 
             <div id="marketClosedLabel">休場中</div>
@@ -304,10 +312,11 @@
     </div>
 
     <script>
+        // === グローバル変数 ===
         const baseUrl = "https://api-fxtrade.oanda.com/v3";
         let accountId = "", apiToken = "", instrument = "USD_JPY";
         let appMode = 'BACKTEST';
-        let displayCandles = [], txHistoryData = []; 
+        let candlesData = [], displayCandles = [], txHistoryData = []; 
         const canvas = document.getElementById('myCanvas');
         const ctx = canvas.getContext('2d');
         let displayCount = 200, scrollOffset = 0, yScaleMultiplier = 1.0;
@@ -323,7 +332,7 @@
         const tfGranularity = { "0": "S5", "1": "M1", "5": "M5", "10": "M10", "60": "H1", "240": "H4" };
         const tfIntervalMs = { "0": 5, "1": 60, "5": 300, "10": 600, "60": 3600, "240": 14400 };
 
-        // === 1. インジケーター計算 ===
+        // === インジケーター計算 ===
         window.calcIndicators = function(dataArray) {
             const period = 25;
             for (let i = 0; i < dataArray.length; i++) {
@@ -338,7 +347,7 @@
             }
         }
 
-        // === 2. 設定の保存・読込処理 ===
+        // === 設定の保存・読込処理 ===
         function saveSettings() {
             const settings = {
                 btStartTime: document.getElementById('btStartTime').value,
@@ -390,7 +399,7 @@
             }
         }
 
-        // === 3. 初期化とイベント登録 ===
+        // === 初期化とイベント登録 ===
         window.addEventListener('DOMContentLoaded', () => {
             loadSettings();
 
@@ -417,18 +426,24 @@
             const performLogin = (isAuto = false) => {
                 accountId = document.getElementById('accountIdInput').value.trim();
                 apiToken = document.getElementById('apiTokenInput').value.trim();
+                
                 if (!accountId || !apiToken) {
                     if (!isAuto) alert("口座IDとAPIトークンを入力してください");
                     return;
                 }
+                
                 localStorage.setItem('oanda_account_id', accountId); 
                 localStorage.setItem('oanda_api_token', apiToken);
+                
                 const selectedMode = document.querySelector('input[name="startMode"]:checked').value;
                 document.getElementById('loginArea').classList.add('hidden'); 
                 document.getElementById('mainUI').classList.remove('hidden');
                 
-                resizeCanvas(); window.addEventListener('resize', resizeCanvas); 
-                setupTouchEvents(); setupRealTradeEvents(); 
+                resizeCanvas(); 
+                window.addEventListener('resize', resizeCanvas); 
+                setupTouchEvents();
+                setupRealTradeEvents(); 
+                
                 switchMode(selectedMode);
             };
 
@@ -451,7 +466,6 @@
             document.getElementById('btnTopRun').addEventListener('click', runBacktestFetch);
         });
 
-        // === 4. モード切替ロジック ===
         function switchMode(mode) {
             appMode = mode;
             document.getElementById('tabReal').classList.toggle('active', mode === 'REAL');
@@ -478,8 +492,10 @@
         }
 
         function clearDataAndRedraw(msg) {
-            displayCandles = []; txHistoryData = []; scrollOffset = 0; highlightedTime = null;
-            document.getElementById('testResult').innerText = ''; document.getElementById('testMarginResult').innerText = '';
+            candlesData = []; displayCandles = []; txHistoryData = []; 
+            scrollOffset = 0; highlightedTime = null;
+            document.getElementById('testResult').innerText = '';
+            document.getElementById('testMarginResult').innerText = '';
             document.getElementById('historyList').innerHTML = `<div style="color:#64748b; padding:10px;">${msg}</div>`;
             if(ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
@@ -493,7 +509,7 @@
         }
 
         // ==========================================
-        // 5. リアルトレードロジック
+        // リアルトレードロジック
         // ==========================================
         async function startRealTrade() {
             stopRealTrade();
@@ -508,7 +524,8 @@
             if(priceInterval) clearInterval(priceInterval); 
             if(accountInterval) clearInterval(accountInterval); 
             if(posInterval) clearInterval(posInterval);
-            document.getElementById('balanceVal').innerText = '--'; document.getElementById('plVal').innerText = '--';
+            document.getElementById('balanceVal').innerText = '--';
+            document.getElementById('plVal').innerText = '--';
         }
 
         async function fetchAccount() {
@@ -524,17 +541,22 @@
         async function fetchPosition() {
             try {
                 const data = await apiRequest(`/accounts/${accountId}/positions/${instrument}`);
-                currentLongUnits = 0; currentLongAvg = 0; currentShortUnits = 0; currentShortAvg = 0; let longPL = 0, shortPL = 0;
+                currentLongUnits = 0; currentLongAvg = 0; currentShortUnits = 0; currentShortAvg = 0;
+                let longPL = 0, shortPL = 0;
                 if (data && data.position) {
                     currentLongUnits = parseInt(data.position.long.units) || 0; currentLongAvg = parseFloat(data.position.long.averagePrice) || 0; longPL = parseFloat(data.position.long.unrealizedPL) || 0;
                     currentShortUnits = Math.abs(parseInt(data.position.short.units) || 0); currentShortAvg = parseFloat(data.position.short.averagePrice) || 0; shortPL = parseFloat(data.position.short.unrealizedPL) || 0;
                 }
-                document.getElementById('longUnits').innerText = currentLongUnits.toLocaleString(); document.getElementById('longAvg').innerText = currentLongUnits > 0 ? currentLongAvg.toFixed(3) : "---.---";
-                document.getElementById('longPL').innerText = Math.floor(longPL).toLocaleString(); document.getElementById('longPL').className = longPL >= 0 ? 'val text-green' : 'val text-red';
+                document.getElementById('longUnits').innerText = currentLongUnits.toLocaleString();
+                document.getElementById('longAvg').innerText = currentLongUnits > 0 ? currentLongAvg.toFixed(3) : "---.---";
+                document.getElementById('longPL').innerText = Math.floor(longPL).toLocaleString();
+                document.getElementById('longPL').className = longPL >= 0 ? 'val text-green' : 'val text-red';
                 document.getElementById('btnSideCloseLong').disabled = (currentLongUnits === 0);
 
-                document.getElementById('shortUnits').innerText = currentShortUnits.toLocaleString(); document.getElementById('shortAvg').innerText = currentShortUnits > 0 ? currentShortAvg.toFixed(3) : "---.---";
-                document.getElementById('shortPL').innerText = Math.floor(shortPL).toLocaleString(); document.getElementById('shortPL').className = shortPL >= 0 ? 'val text-green' : 'val text-red';
+                document.getElementById('shortUnits').innerText = currentShortUnits.toLocaleString();
+                document.getElementById('shortAvg').innerText = currentShortUnits > 0 ? currentShortAvg.toFixed(3) : "---.---";
+                document.getElementById('shortPL').innerText = Math.floor(shortPL).toLocaleString();
+                document.getElementById('shortPL').className = shortPL >= 0 ? 'val text-green' : 'val text-red';
                 document.getElementById('btnSideCloseShort').disabled = (currentShortUnits === 0);
             } catch (e) {}
         }
@@ -543,21 +565,35 @@
             try {
                 const data = await apiRequest(`/accounts/${accountId}/transactions?count=50`); 
                 if(!data) return;
-                txHistoryData = []; const isJPY = instrument.includes('JPY');
+                
+                txHistoryData = []; 
+                const isJPY = instrument.includes('JPY');
                 
                 (data.transactions || []).forEach(t => {
                     if (t.type === 'ORDER_FILL' && t.instrument === instrument) {
-                        const units = parseInt(t.units); const isClose = t.tradesClosed && t.tradesClosed.length > 0;
-                        const pl = parseFloat(t.pl) || 0; const balance = parseFloat(t.accountBalance) || 0;
+                        const units = parseInt(t.units);
+                        const isClose = t.tradesClosed && t.tradesClosed.length > 0;
+                        const pl = parseFloat(t.pl) || 0;
+                        const balance = parseFloat(t.accountBalance) || 0;
                         let type = '', pips = 0;
+                        
                         if (isClose) {
                             type = units > 0 ? 'CLOSE_SHORT' : 'CLOSE_LONG';
-                            const pipVal = isJPY ? (Math.abs(units) * 0.01) : (Math.abs(units) * 0.0001);
+                            const closedUnits = Math.abs(units);
+                            const pipVal = isJPY ? (closedUnits * 0.01) : (closedUnits * 0.0001);
                             pips = pipVal !== 0 ? (pl / pipVal) : 0;
-                        } else { type = units > 0 ? 'LONG' : 'SHORT'; }
+                        } else {
+                            type = units > 0 ? 'LONG' : 'SHORT';
+                        }
                         
                         txHistoryData.push({ 
-                            time: parseFloat(t.time) * 1000, type: type, price: parseFloat(t.price), pips: pips, profitYen: pl, balance: balance, count: 1
+                            time: parseFloat(t.time) * 1000, 
+                            type: type, 
+                            price: parseFloat(t.price),
+                            pips: pips,
+                            profitYen: pl,
+                            balance: balance,
+                            count: 1
                         });
                     }
                 });
@@ -590,22 +626,28 @@
                 if (priceData.status !== 'tradeable') { document.getElementById('marketClosedLabel').style.display = 'block'; return; }
                 else { document.getElementById('marketClosedLabel').style.display = 'none'; }
 
-                const askPrice = parseFloat(priceData.asks[0].price); const bidPrice = parseFloat(priceData.bids[0].price);
-                document.getElementById('bidPrice').innerText = askPrice.toFixed(3); document.getElementById('askPrice').innerText = askPrice.toFixed(3);
+                const askPrice = parseFloat(priceData.asks[0].price);
+                const bidPrice = parseFloat(priceData.bids[0].price);
+                
+                document.getElementById('bidPrice').innerText = askPrice.toFixed(3);
+                document.getElementById('askPrice').innerText = askPrice.toFixed(3);
 
                 const pipMultiplier = instrument.includes('JPY') ? 1000 : 10000;
                 if (currentShortUnits > 0 && currentShortAvg > 0) {
                     const pips = (currentShortAvg - askPrice) * pipMultiplier;
-                    document.getElementById('shortPips').innerText = Math.trunc(pips); document.getElementById('shortPips').className = pips >= 0 ? 'val text-green' : 'val text-red';
+                    document.getElementById('shortPips').innerText = Math.trunc(pips);
+                    document.getElementById('shortPips').className = pips >= 0 ? 'val text-green' : 'val text-red';
                 }
                 if (currentLongUnits > 0 && currentLongAvg > 0) {
                     const pips = (askPrice - currentLongAvg) * pipMultiplier;
-                    document.getElementById('longPips').innerText = Math.trunc(pips); document.getElementById('longPips').className = pips >= 0 ? 'val text-green' : 'val text-red';
+                    document.getElementById('longPips').innerText = Math.trunc(pips);
+                    document.getElementById('longPips').className = pips >= 0 ? 'val text-green' : 'val text-red';
                 }
 
                 if (displayCandles.length > 0) {
                     const last = displayCandles[displayCandles.length - 1]; const now = Date.now();
-                    const intervalMs = tfIntervalMs[document.getElementById('tfSelector').value] * 1000;
+                    const tfVal = document.getElementById('tfSelector').value;
+                    const intervalMs = tfIntervalMs[tfVal] * 1000;
 
                     if (now > last.endTime) { 
                         const newC = { time: now, o: askPrice, h: askPrice, l: askPrice, c: askPrice, startTime: now, endTime: now + intervalMs - 1 };
@@ -642,7 +684,7 @@
         }
 
         // ==========================================
-        // 6. バックテスト ロジック
+        // バックテスト ロジック
         // ==========================================
         async function runBacktestFetch() {
             const btn = document.getElementById('btnTopRun');
@@ -675,7 +717,8 @@
                     const progressDate = new Date(currentFrom * 1000).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' });
                     histList.innerHTML = `データ取得中... (${progressDate})`;
                     
-                    const data = await apiRequest(`/instruments/${instrument}/candles?granularity=${granularity}&count=5000&from=${currentFrom}`);
+                    // バックテストも、選択した時間足のASK(買値)で直接データを取得する
+                    const data = await apiRequest(`/instruments/${instrument}/candles?granularity=${granularity}&count=5000&price=A&from=${currentFrom}`);
                     if (!data || !data.candles || data.candles.length === 0) break;
                     
                     const rawCandles = data.candles.filter(c => c.complete);
@@ -690,10 +733,16 @@
 
                 if (allCandles.length === 0) throw new Error("データがありません。");
                 
-                // 【重要修正】バックテスト時は取得した足そのものを直接 displayCandles に入れる (再集約を廃止)
-                displayCandles = allCandles.map(c => ({
-                    time: parseFloat(c.time) * 1000, o: parseFloat(c.mid.o), h: parseFloat(c.mid.h), l: parseFloat(c.mid.l), c: parseFloat(c.mid.c)
-                }));
+                // 再集約バグを完全に排除し、取得した時間足をそのまま使用
+                displayCandles = allCandles.map(c => {
+                    const tMs = parseFloat(c.time) * 1000;
+                    return {
+                        time: tMs, 
+                        o: parseFloat(c.ask.o), h: parseFloat(c.ask.h), l: parseFloat(c.ask.l), c: parseFloat(c.ask.c),
+                        startTime: tMs, 
+                        endTime: tMs + (intervalSeconds * 1000) - 1
+                    }
+                });
 
                 window.calcIndicators(displayCandles); 
                 const { totalPips, finalMargin } = runSimulation();
@@ -710,9 +759,6 @@
             finally { isTestRunning = false; shouldStopTest = false; btn.classList.remove('running'); btn.innerText = "▶ 実行"; }
         }
 
-        // ==========================================
-        // 7. シミュレーション本体 (ヒゲ先判定に修正)
-        // ==========================================
         function runSimulation() {
             const isJPY = instrument.includes('JPY'); const pipMultiplier = isJPY ? 1000 : 10000; const pipYenValue = isJPY ? 0.01 : 0.0001;
             const spreadPips = parseFloat(document.getElementById('btSpread').value) || 0; const spreadValue = spreadPips / pipMultiplier;
@@ -739,11 +785,11 @@
             for (let i = 25; i < displayCandles.length; i++) {
                 const c = displayCandles[i]; 
                 
-                // 【重要修正】終値ではなく、高値(H)と安値(L)を使ってヒゲで判定する
-                const askC = c.c + (spreadValue / 2);
-                const askH = c.h + (spreadValue / 2);
-                const askL = c.l + (spreadValue / 2);
-                const askSma = c.sma + (spreadValue / 2);
+                // すでにデータはASKで取得しているのでそのまま利用
+                const askC = c.c;
+                const askH = c.h;
+                const askL = c.l;
+                const askSma = c.sma;
 
                 const [jH, jM] = jstFormatter.format(new Date(c.time)).split(':').map(Number); const timeInMinutes = jH * 60 + jM;
                 let isTradingTime = (startMins <= endMins) ? (timeInMinutes >= startMins && timeInMinutes < endMins) : (timeInMinutes >= startMins || timeInMinutes < endMins);
@@ -790,7 +836,7 @@
                     } 
                 }
 
-                // エントリー判定 (ヒゲ先も考慮)
+                // エントリー判定 (ヒゲ先考慮)
                 if (posShort.length < maxPos) {
                     if (posShort.length === 0) { 
                         const upperBand = askSma + (e1BidSigma * c.sd);
@@ -826,24 +872,42 @@
         }
 
         // ==========================================
-        // 8. 共通UI描画処理
+        // UI描画共通処理
         // ==========================================
         function renderHistory() {
             const list = document.getElementById('historyList'); list.innerHTML = '';
             if (txHistoryData.length === 0) { list.innerHTML = '<div style="color: #64748b; padding: 10px;">取引なし</div>'; return; }
             [...txHistoryData].reverse().forEach(tx => {
                 const timeStr = new Date(tx.time).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo', month: '2-digit', day: '2-digit', hour: '2-digit', minute:'2-digit', second:'2-digit' });
-                let actionStr = '', pipsStr = '';
+                let actionStr = '', pipsStr = '', yenStr = '';
                 if (tx.type === 'LONG') actionStr = '<span class="text-red font-bold">新規 買(ASK)</span>';
                 else if (tx.type === 'SHORT') actionStr = '<span class="text-blue font-bold">新規 売(ASK)</span>';
                 else if (tx.type.includes('CLOSE')) {
                     const isWin = tx.pips >= 0;
                     actionStr = `<span class="${tx.type.includes('FORCE') ? 'text-orange' : 'text-gray'}">${tx.type.includes('FORCE') ? '時間強制' : '決済'}</span>`;
                     pipsStr = `<span class="${isWin ? 'text-green' : 'text-red'} font-bold">${tx.pips >= 0 ? '+' : ''}${tx.pips.toFixed(1)} pips</span>`;
+                    
+                    // 【追加1】円の利益額表示
+                    if(tx.profitYen !== undefined) {
+                        const yColor = tx.profitYen >= 0 ? 'text-green' : 'text-red';
+                        yenStr = `<div class="${yColor}" style="font-size: 10px;">${tx.profitYen >= 0 ? '+' : ''}¥${Math.floor(tx.profitYen).toLocaleString()}</div>`;
+                    }
                 }
                 const balanceStr = tx.balance ? `残高: ¥${Math.floor(tx.balance).toLocaleString()}` : '';
                 const posStr = (tx.shortCount !== undefined && tx.longCount !== undefined) ? ` | 保有: 売${tx.shortCount} 買${tx.longCount}` : '';
-                list.innerHTML += `<div class="history-item" onclick="jumpToTime(${tx.time})"><div class="hist-info"><div>${timeStr} ${actionStr}</div><div class="hist-status">${balanceStr}${posStr}</div></div><div style="text-align: right;"><div style="font-weight: bold;">@ ${tx.price.toFixed(3)}</div><div>${pipsStr}</div></div></div>`;
+                
+                list.innerHTML += `
+                <div class="history-item" onclick="jumpToTime(${tx.time})">
+                    <div class="hist-info">
+                        <div>${timeStr} ${actionStr}</div>
+                        <div class="hist-status">${balanceStr}${posStr}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: bold;">@ ${tx.price.toFixed(3)}</div>
+                        <div>${pipsStr}</div>
+                        ${yenStr}
+                    </div>
+                </div>`;
             });
         }
 
@@ -861,14 +925,14 @@
             if (Object.keys(dailyData).length === 0) { btn.classList.add('hidden'); return; }
             btn.classList.remove('hidden'); container.classList.remove('hidden');
             for (const [date, data] of Object.entries(dailyData)) {
-                container.innerHTML += `<div class="daily-row"><span>${date}</span><span style="color:#a0aec0;">${data.trades} 決済</span><div style="text-align: right;"><div class="${data.pips >= 0 ? 'text-green' : 'text-red'} font-bold">${data.pips >= 0 ? '+' : ''}${data.pips.toFixed(1)} pips</div><div style="font-size: 10px; color: #94a3b8;">¥${Math.floor(data.profitYen).toLocaleString()}</div></div></div>`;
+                container.innerHTML += `<div class="daily-row"><span>${date}</span><span style="color:#a0aec0;">${data.trades} 決済</span><div style="text-align: right;"><div class="${data.pips >= 0 ? 'text-green' : 'text-red'} font-bold">${data.pips >= 0 ? '+' : ''}${data.pips.toFixed(1)} pips</div><div style="font-size: 10px; color: #94a3b8;">${data.profitYen >= 0 ? '+' : ''}¥${Math.floor(data.profitYen).toLocaleString()}</div></div></div>`;
             }
         }
 
         function jumpToTime(targetTime) {
             if (displayCandles.length === 0) return;
             const tfSeconds = tfIntervalMs[document.getElementById('tfSelector').value];
-            let targetIndex = displayCandles.findIndex(c => targetTime >= c.time && targetTime <= c.time + (tfSeconds * 1000));
+            let targetIndex = displayCandles.findIndex(c => targetTime >= c.startTime && targetTime <= (c.endTime || c.time) + (tfSeconds * 1000));
             if (targetIndex === -1) targetIndex = displayCandles.findIndex(c => Math.abs(c.time - targetTime) <= (tfSeconds * 1000));
 
             if (targetIndex !== -1) { 
@@ -887,82 +951,89 @@
             
             const startIndex = Math.max(0, displayCandles.length - displayCount - Math.floor(scrollOffset)), endIndex = Math.min(displayCandles.length, startIndex + displayCount), dataToDraw = displayCandles.slice(startIndex, endIndex); if(dataToDraw.length === 0) return;
             
-            const spreadValue = (parseFloat(document.getElementById('btSpread').value) || 0) / (instrument.includes('JPY') ? 1000 : 10000);
-            const drawBidSigma = parseFloat(document.getElementById('e1BidSigma').value) || 2.0;
-            const drawAskSigma = parseFloat(document.getElementById('e1AskSigma').value) || 2.0;
-            const candleWidth = chartW / dataToDraw.length;
+            const drawBidSigma = parseFloat(document.getElementById('e1BidSigma').value) || 2.0, drawAskSigma = parseFloat(document.getElementById('e1AskSigma').value) || 2.0, candleWidth = chartW / dataToDraw.length;
             
-            const getAsk = (val) => appMode === 'BACKTEST' ? val + (spreadValue / 2) : val;
+            // 【追加2】証拠金の推移を計算
+            const balances = [];
+            let currentBal = parseFloat(document.getElementById('btInitialMargin').value) || 100000;
+            
+            // 表示範囲より前の最新の残高を取得
+            const firstTime = dataToDraw[0].time;
+            const pastTxs = txHistoryData.filter(tx => tx.time <= firstTime && tx.type.includes('CLOSE'));
+            if (pastTxs.length > 0) currentBal = pastTxs[pastTxs.length - 1].balance;
 
+            let minBal = currentBal, maxBal = currentBal;
+            dataToDraw.forEach(c => {
+                const txs = txHistoryData.filter(tx => tx.time >= c.startTime && tx.time <= (c.endTime || c.time + 4999) && tx.type.includes('CLOSE'));
+                if (txs.length > 0) currentBal = txs[txs.length - 1].balance;
+                balances.push(currentBal);
+                if (currentBal < minBal) minBal = currentBal;
+                if (currentBal > maxBal) maxBal = currentBal;
+            });
+
+            // ローソク足の最大最小 (表示価格域)
             let minP = Infinity, maxP = -Infinity;
             dataToDraw.forEach(c => {
-                if (getAsk(c.h) > maxP) maxP = getAsk(c.h); 
-                if (getAsk(c.l) < minP) minP = getAsk(c.l);
-                if (c.sma !== undefined && c.sd !== undefined) { 
-                    const u = getAsk(c.sma + (drawBidSigma * c.sd)), l = getAsk(c.sma - (drawAskSigma * c.sd)); 
-                    if (u > maxP) maxP = u; if (l < minP) minP = l; 
-                }
+                if (c.h > maxP) maxP = c.h; if (c.l < minP) minP = c.l;
+                if (c.sma !== undefined && c.sd !== undefined) { const u = c.sma + (drawBidSigma * c.sd), l = c.sma - (drawAskSigma * c.sd); if (u > maxP) maxP = u; if (l < minP) minP = l; }
             });
-            const midP = (maxP + minP) / 2;
-            const zoomedRange = (maxP - minP) * yScaleMultiplier || 0.001; 
-            maxP = midP + (zoomedRange / 2) * 1.1; 
-            minP = midP - (zoomedRange / 2) * 1.1;
+            const midP = (maxP + minP) / 2, zoomedRange = (maxP - minP) * yScaleMultiplier || 0.001; 
+            maxP = midP + (zoomedRange / 2) * 1.1; minP = midP - (zoomedRange / 2) * 1.1;
             const finalRange = maxP - minP, getY = (price) => chartH - ((price - minP) / finalRange) * chartH;
 
+            // ハイライト
             if (highlightedTime) { 
-                const hIndex = dataToDraw.findIndex(c => highlightedTime >= c.time && highlightedTime <= c.time + 4999); 
+                const hIndex = dataToDraw.findIndex(c => c.time === highlightedTime); 
                 if (hIndex !== -1) { 
-                    const hx = hIndex * candleWidth + candleWidth / 2; 
-                    ctx.fillStyle = 'rgba(251, 191, 36, 0.15)'; 
-                    ctx.fillRect(hIndex * candleWidth, 0, candleWidth, chartH); 
-                    ctx.beginPath(); ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]); 
-                    ctx.moveTo(hx, 0); ctx.lineTo(hx, chartH); ctx.stroke(); ctx.setLineDash([]); 
+                    const hx = hIndex * candleWidth + candleWidth / 2; ctx.fillStyle = 'rgba(251, 191, 36, 0.15)'; ctx.fillRect(hIndex * candleWidth, 0, candleWidth, chartH); ctx.beginPath(); ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]); ctx.moveTo(hx, 0); ctx.lineTo(hx, chartH); ctx.stroke(); ctx.setLineDash([]); 
                 } 
             }
 
+            // 【追加2】証拠金推移ライン（紫）
+            if (maxBal > minBal || maxBal > 0) {
+                const balRange = (maxBal - minBal) || currentBal * 0.1;
+                const balMinY = minBal - balRange * 0.1;
+                const balMaxY = maxBal + balRange * 0.1;
+                const balFinalRange = balMaxY - balMinY;
+
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(168, 85, 247, 0.7)'; // 紫色
+                ctx.lineWidth = 1.5;
+                balances.forEach((b, i) => {
+                    const x = i * candleWidth + candleWidth / 2;
+                    const y = chartH - ((b - balMinY) / balFinalRange) * chartH; 
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+                ctx.stroke();
+
+                // 左側に証拠金目盛りを描画
+                ctx.fillStyle = 'rgba(168, 85, 247, 0.8)';
+                ctx.textAlign = 'left';
+                ctx.font = 'bold 10px sans-serif';
+                for (let i = 1; i <= 5; i++) {
+                    const yPos = (chartH / 6) * i;
+                    const bVal = balMaxY - ((balMaxY - balMinY) * (yPos / chartH));
+                    ctx.fillText(`¥${Math.floor(bVal).toLocaleString()}`, 5, yPos + 4);
+                }
+            }
+
+            // バンド＆SMA
             ctx.lineWidth = 1;
-            
-            ctx.beginPath(); ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)'; 
-            let firstU = true;
-            dataToDraw.forEach((c, i) => { 
-                if(c.sma !== undefined && c.sd !== undefined) { 
-                    const x = i * candleWidth + candleWidth / 2; 
-                    if (firstU) { ctx.moveTo(x, getY(getAsk(c.sma + (drawBidSigma * c.sd)))); firstU = false; }
-                    else { ctx.lineTo(x, getY(getAsk(c.sma + (drawBidSigma * c.sd)))); }
-                }
-            }); 
-            ctx.stroke();
+            ctx.beginPath(); ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)'; let firstU = true;
+            dataToDraw.forEach((c, i) => { if(c.sma !== undefined && c.sd !== undefined) { const x = i * candleWidth + candleWidth / 2; if (firstU) { ctx.moveTo(x, getY(c.sma + (drawBidSigma * c.sd))); firstU = false; } else { ctx.lineTo(x, getY(c.sma + (drawBidSigma * c.sd))); } } }); ctx.stroke();
+            ctx.beginPath(); ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)'; let firstL = true;
+            dataToDraw.forEach((c, i) => { if(c.sma !== undefined && c.sd !== undefined) { const x = i * candleWidth + candleWidth / 2; if (firstL) { ctx.moveTo(x, getY(c.sma - (drawAskSigma * c.sd))); firstL = false; } else { ctx.lineTo(x, getY(c.sma - (drawAskSigma * c.sd))); } } }); ctx.stroke();
+            ctx.beginPath(); ctx.strokeStyle = 'rgba(250, 204, 21, 0.8)'; let firstS = true;
+            dataToDraw.forEach((c, i) => { if(c.sma !== undefined) { const x = i * candleWidth + candleWidth / 2; if (firstS) { ctx.moveTo(x, getY(c.sma)); firstS = false; } else { ctx.lineTo(x, getY(c.sma)); } } }); ctx.stroke();
 
-            ctx.beginPath(); ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)'; 
-            let firstL = true;
-            dataToDraw.forEach((c, i) => { 
-                if(c.sma !== undefined && c.sd !== undefined) { 
-                    const x = i * candleWidth + candleWidth / 2; 
-                    if (firstL) { ctx.moveTo(x, getY(getAsk(c.sma - (drawAskSigma * c.sd)))); firstL = false; }
-                    else { ctx.lineTo(x, getY(getAsk(c.sma - (drawAskSigma * c.sd)))); }
-                }
-            }); 
-            ctx.stroke();
-
-            ctx.beginPath(); ctx.strokeStyle = 'rgba(250, 204, 21, 0.8)'; 
-            let firstS = true;
-            dataToDraw.forEach((c, i) => { 
-                if(c.sma !== undefined) { 
-                    const x = i * candleWidth + candleWidth / 2; 
-                    if (firstS) { ctx.moveTo(x, getY(getAsk(c.sma))); firstS = false; }
-                    else { ctx.lineTo(x, getY(getAsk(c.sma))); }
-                }
-            }); 
-            ctx.stroke();
-
+            // ローソク足
             dataToDraw.forEach((c, i) => {
-                const x = i * candleWidth, yO = getY(getAsk(c.o)), yC = getY(getAsk(c.c)), yH = getY(getAsk(c.h)), yL = getY(getAsk(c.l)); 
-                const color = c.c >= c.o ? '#ef4444' : '#3b82f6';
-                ctx.strokeStyle = color; ctx.fillStyle = color; 
-                ctx.beginPath(); ctx.moveTo(x + candleWidth / 2, yH); ctx.lineTo(x + candleWidth / 2, yL); ctx.stroke(); 
-                ctx.fillRect(x + candleWidth * 0.1, Math.min(yO, yC), candleWidth * 0.8, Math.max(1, Math.abs(yO - yC)));
+                const x = i * candleWidth, yO = getY(c.o), yC = getY(c.c), yH = getY(c.h), yL = getY(c.l); const color = c.c >= c.o ? '#ef4444' : '#3b82f6';
+                ctx.strokeStyle = color; ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(x + candleWidth / 2, yH); ctx.lineTo(x + candleWidth / 2, yL); ctx.stroke(); ctx.fillRect(x + candleWidth * 0.1, Math.min(yO, yC), candleWidth * 0.8, Math.max(1, Math.abs(yO - yC)));
             });
 
+            // チャート上のマークと価格
             txHistoryData.forEach(tx => {
                 const tfSeconds = tfIntervalMs[document.getElementById('tfSelector').value];
                 const cIndex = dataToDraw.findIndex(c => Math.abs(c.time - tx.time) <= (tfSeconds * 1000));
@@ -975,6 +1046,7 @@
                 }
             });
 
+            // 軸の描画
             ctx.fillStyle = '#161b26'; ctx.fillRect(0, chartH, chartW, xAxisHeight); 
             ctx.fillStyle = '#a0aec0'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
             const step = Math.max(1, Math.floor(60 / candleWidth)); 
