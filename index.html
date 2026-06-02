@@ -310,7 +310,6 @@
     </div>
 
     <script>
-        // === グローバル変数 ===
         const baseUrl = "https://api-fxtrade.oanda.com/v3";
         let accountId = "", apiToken = "", instrument = "USD_JPY";
         let appMode = 'BACKTEST';
@@ -330,7 +329,7 @@
         const tfGranularity = { "0": "S5", "1": "M1", "5": "M5", "10": "M10", "60": "H1", "240": "H4" };
         const tfIntervalMs = { "0": 5, "1": 60, "5": 300, "10": 600, "60": 3600, "240": 14400 };
 
-        // === インジケーター計算 ===
+        // === 1. インジケーター計算 ===
         window.calcIndicators = function(dataArray) {
             const period = 25;
             for (let i = 0; i < dataArray.length; i++) {
@@ -345,7 +344,7 @@
             }
         }
 
-        // === 設定の保存・読込処理 ===
+        // === 2. 設定の保存・読込処理 ===
         function saveSettings() {
             const settings = {
                 btStartTime: document.getElementById('btStartTime').value,
@@ -458,7 +457,6 @@
             document.getElementById('btnTopRun').addEventListener('click', runBacktestFetch);
         });
 
-        // === モード切替ロジック ===
         function switchMode(mode) {
             appMode = mode;
             document.getElementById('tabReal').classList.toggle('active', mode === 'REAL');
@@ -484,7 +482,6 @@
             }
         }
 
-        // 超高速HTML生成のためのクリア
         function clearDataAndRedraw(msg) {
             candlesData = []; displayCandles = []; txHistoryData = []; 
             scrollOffset = 0; highlightedTime = null;
@@ -557,7 +554,8 @@
 
         async function fetchHistoryReal() {
             try {
-                const data = await apiRequest(`/accounts/${accountId}/transactions?type=ORDER_FILL&count=50`); 
+                // 【重要】リアルトレードの確実な履歴取得のため500件、ORDER_FILLに限定
+                const data = await apiRequest(`/accounts/${accountId}/transactions?type=ORDER_FILL&count=500`); 
                 if(!data) return;
                 
                 txHistoryData = []; 
@@ -721,7 +719,7 @@
                     const progressDate = new Date(currentFrom * 1000).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' });
                     histList.innerHTML = `データ取得中... (${progressDate})`;
                     
-                    // ブラウザをフリーズさせず描画を優先させるためのおまじない
+                    // 【重要】ブラウザフリーズ防止用のウェイト
                     await new Promise(r => setTimeout(r, 0));
                     
                     const data = await apiRequest(`/instruments/${instrument}/candles?granularity=${granularity}&count=5000&price=A&from=${currentFrom}`);
@@ -791,7 +789,6 @@
             for (let i = 25; i < displayCandles.length; i++) {
                 const c = displayCandles[i]; 
                 
-                // 【重要修正】終値ではなく高値(h)と安値(l)で判定し、ヒゲ先でのタッチを逃さない
                 const askC = c.c;
                 const askH = c.h;
                 const askL = c.l;
@@ -812,11 +809,11 @@
                     continue;
                 }
                 
-                // 決済判定 (ヒゲ先も考慮して確実に判定)
+                // 決済判定
                 if (posShort.length > 0) { 
                     const avg = posShort.reduce((s, p) => s + p.price, 0) / posShort.length;
-                    const maxProfitPips = ((avg - askL) * pipMultiplier) - spreadPips; // 下ヒゲで利確
-                    const minProfitPips = ((avg - askH) * pipMultiplier) - spreadPips; // 上ヒゲで損切
+                    const maxProfitPips = ((avg - askL) * pipMultiplier) - spreadPips; 
+                    const minProfitPips = ((avg - askH) * pipMultiplier) - spreadPips; 
 
                     if (useSl && minProfitPips <= slBid) { 
                         const closePrice = avg - ((slBid + spreadPips) / pipMultiplier);
@@ -829,8 +826,8 @@
                 }
                 if (posLong.length > 0) { 
                     const avg = posLong.reduce((s, p) => s + p.price, 0) / posLong.length;
-                    const maxProfitPips = ((askH - avg) * pipMultiplier) - spreadPips; // 上ヒゲで利確
-                    const minProfitPips = ((askL - avg) * pipMultiplier) - spreadPips; // 下ヒゲで損切
+                    const maxProfitPips = ((askH - avg) * pipMultiplier) - spreadPips; 
+                    const minProfitPips = ((askL - avg) * pipMultiplier) - spreadPips;
 
                     if (useSl && minProfitPips <= slAsk) { 
                         const closePrice = avg + ((slAsk + spreadPips) / pipMultiplier);
@@ -842,7 +839,7 @@
                     } 
                 }
 
-                // エントリー判定 (ヒゲ先考慮)
+                // エントリー判定
                 if (posShort.length < maxPos) {
                     if (posShort.length === 0) { 
                         const upperBand = askSma + (e1BidSigma * c.sd);
@@ -878,7 +875,7 @@
         }
 
         // ==========================================
-        // UI描画共通処理（超高速化版）
+        // UI描画共通処理 (高速化版)
         // ==========================================
         function renderHistory() {
             const list = document.getElementById('historyList'); 
@@ -941,8 +938,7 @@
         function jumpToTime(targetTime) {
             if (displayCandles.length === 0) return;
             const tfSeconds = tfIntervalMs[document.getElementById('tfSelector').value];
-            let targetIndex = displayCandles.findIndex(c => targetTime >= c.startTime && targetTime <= (c.endTime || c.time) + (tfSeconds * 1000));
-            if (targetIndex === -1) targetIndex = displayCandles.findIndex(c => Math.abs(c.time - targetTime) <= (tfSeconds * 1000));
+            let targetIndex = displayCandles.findIndex(c => targetTime >= c.startTime && targetTime < c.startTime + (tfSeconds * 1000));
 
             if (targetIndex !== -1) { 
                 highlightedTime = displayCandles[targetIndex].time; 
@@ -960,8 +956,19 @@
             
             const startIndex = Math.max(0, displayCandles.length - displayCount - Math.floor(scrollOffset)), endIndex = Math.min(displayCandles.length, startIndex + displayCount), dataToDraw = displayCandles.slice(startIndex, endIndex); if(dataToDraw.length === 0) return;
             
+            const spreadValue = (parseFloat(document.getElementById('btSpread').value) || 0) / (instrument.includes('JPY') ? 1000 : 10000);
             const drawBidSigma = parseFloat(document.getElementById('e1BidSigma').value) || 2.0, drawAskSigma = parseFloat(document.getElementById('e1AskSigma').value) || 2.0, candleWidth = chartW / dataToDraw.length;
             
+            const getAsk = (val) => appMode === 'BACKTEST' ? val + (spreadValue / 2) : val;
+
+            let minP = Infinity, maxP = -Infinity;
+            dataToDraw.forEach(c => {
+                if (getAsk(c.h) > maxP) maxP = getAsk(c.h); if (getAsk(c.l) < minP) minP = getAsk(c.l);
+                if (c.sma !== undefined && c.sd !== undefined) { const u = getAsk(c.sma + (drawBidSigma * c.sd)), l = getAsk(c.sma - (drawAskSigma * c.sd)); if (u > maxP) maxP = u; if (l < minP) minP = l; }
+            });
+            const midP = (maxP + minP) / 2, zoomedRange = (maxP - minP) * yScaleMultiplier || 0.001; maxP = midP + (zoomedRange / 2) * 1.1; minP = midP - (zoomedRange / 2) * 1.1;
+            const finalRange = maxP - minP, getY = (price) => chartH - ((price - minP) / finalRange) * chartH;
+
             // 証拠金推移ライン
             const balances = [];
             let currentBal = parseFloat(document.getElementById('btInitialMargin').value) || 100000;
@@ -977,14 +984,6 @@
                 if (currentBal < minBal) minBal = currentBal;
                 if (currentBal > maxBal) maxBal = currentBal;
             });
-
-            let minP = Infinity, maxP = -Infinity;
-            dataToDraw.forEach(c => {
-                if (c.h > maxP) maxP = c.h; if (c.l < minP) minP = c.l;
-                if (c.sma !== undefined && c.sd !== undefined) { const u = c.sma + (drawBidSigma * c.sd), l = c.sma - (drawAskSigma * c.sd); if (u > maxP) maxP = u; if (l < minP) minP = l; }
-            });
-            const midP = (maxP + minP) / 2, zoomedRange = (maxP - minP) * yScaleMultiplier || 0.001; maxP = midP + (zoomedRange / 2) * 1.1; minP = midP - (zoomedRange / 2) * 1.1;
-            const finalRange = maxP - minP, getY = (price) => chartH - ((price - minP) / finalRange) * chartH;
 
             if (highlightedTime) { 
                 const hIndex = dataToDraw.findIndex(c => highlightedTime >= c.startTime && highlightedTime <= (c.endTime || c.time + 4999)); 
@@ -1022,20 +1021,21 @@
 
             ctx.lineWidth = 1;
             ctx.beginPath(); ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)'; let firstU = true;
-            dataToDraw.forEach((c, i) => { if(c.sma !== undefined && c.sd !== undefined) { const x = i * candleWidth + candleWidth / 2; if (firstU) { ctx.moveTo(x, getY(c.sma + (drawBidSigma * c.sd))); firstU = false; } else { ctx.lineTo(x, getY(c.sma + (drawBidSigma * c.sd))); } } }); ctx.stroke();
+            dataToDraw.forEach((c, i) => { if(c.sma !== undefined && c.sd !== undefined) { const x = i * candleWidth + candleWidth / 2; if (firstU) { ctx.moveTo(x, getY(getAsk(c.sma + (drawBidSigma * c.sd)))); firstU = false; } else { ctx.lineTo(x, getY(getAsk(c.sma + (drawBidSigma * c.sd)))); } } }); ctx.stroke();
             ctx.beginPath(); ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)'; let firstL = true;
-            dataToDraw.forEach((c, i) => { if(c.sma !== undefined && c.sd !== undefined) { const x = i * candleWidth + candleWidth / 2; if (firstL) { ctx.moveTo(x, getY(c.sma - (drawAskSigma * c.sd))); firstL = false; } else { ctx.lineTo(x, getY(c.sma - (drawAskSigma * c.sd))); } } }); ctx.stroke();
+            dataToDraw.forEach((c, i) => { if(c.sma !== undefined && c.sd !== undefined) { const x = i * candleWidth + candleWidth / 2; if (firstL) { ctx.moveTo(x, getY(getAsk(c.sma - (drawAskSigma * c.sd)))); firstL = false; } else { ctx.lineTo(x, getY(getAsk(c.sma - (drawAskSigma * c.sd)))); } } }); ctx.stroke();
             ctx.beginPath(); ctx.strokeStyle = 'rgba(250, 204, 21, 0.8)'; let firstS = true;
-            dataToDraw.forEach((c, i) => { if(c.sma !== undefined) { const x = i * candleWidth + candleWidth / 2; if (firstS) { ctx.moveTo(x, getY(c.sma)); firstS = false; } else { ctx.lineTo(x, getY(c.sma)); } } }); ctx.stroke();
+            dataToDraw.forEach((c, i) => { if(c.sma !== undefined) { const x = i * candleWidth + candleWidth / 2; if (firstS) { ctx.moveTo(x, getY(getAsk(c.sma))); firstS = false; } else { ctx.lineTo(x, getY(getAsk(c.sma))); } } }); ctx.stroke();
 
             dataToDraw.forEach((c, i) => {
-                const x = i * candleWidth, yO = getY(c.o), yC = getY(c.c), yH = getY(c.h), yL = getY(c.l); const color = c.c >= c.o ? '#ef4444' : '#3b82f6';
+                const x = i * candleWidth, yO = getY(getAsk(c.o)), yC = getY(getAsk(c.c)), yH = getY(getAsk(c.h)), yL = getY(getAsk(c.l)); const color = c.c >= c.o ? '#ef4444' : '#3b82f6';
                 ctx.strokeStyle = color; ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(x + candleWidth / 2, yH); ctx.lineTo(x + candleWidth / 2, yL); ctx.stroke(); ctx.fillRect(x + candleWidth * 0.1, Math.min(yO, yC), candleWidth * 0.8, Math.max(1, Math.abs(yO - yC)));
             });
 
             txHistoryData.forEach(tx => {
                 const tfSeconds = tfIntervalMs[document.getElementById('tfSelector').value];
-                const cIndex = dataToDraw.findIndex(c => Math.abs(c.time - tx.time) <= (tfSeconds * 1000));
+                const intervalMs = tfSeconds * 1000;
+                const cIndex = dataToDraw.findIndex(c => tx.time >= c.startTime && tx.time < c.startTime + intervalMs);
                 if (cIndex !== -1) {
                     const c = dataToDraw[cIndex]; const x = cIndex * candleWidth + candleWidth / 2; let markerY = 0; ctx.beginPath();
                     if (tx.type === 'LONG') { ctx.fillStyle = '#ef4444'; markerY = getY(tx.price) + 15; ctx.moveTo(x, markerY - 8); ctx.lineTo(x - 5, markerY + 2); ctx.lineTo(x + 5, markerY + 2); } 
