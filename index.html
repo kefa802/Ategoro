@@ -8,7 +8,6 @@
         body { margin: 0; padding: 0; font-family: -apple-system, sans-serif; background-color: #0b101e; color: #ffffff; overflow: hidden; }
         .container { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
         
-        /* ログイン画面 */
         #loginArea { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100dvh; padding: 20px; }
         .login-box { background-color: #161b26; padding: 20px; border-radius: 8px; border: 1px solid #2d3748; width: 100%; max-width: 400px; box-sizing: border-box; }
         .login-box h2 { text-align: center; margin-top: 0; color: #cbd5e1; font-size: 18px; margin-bottom: 20px; }
@@ -21,7 +20,6 @@
         .mode-radio input { display: none; }
         .btn-login { width: 100%; padding: 14px; background: linear-gradient(180deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; }
 
-        /* ヘッダー・チャート */
         .header { display: flex; justify-content: space-between; padding: 8px 10px; background-color: #161b26; border-bottom: 1px solid #2d3748; font-size: 13px; flex-shrink: 0; }
         .header span { color: #a0aec0; }
         .header .val { color: #ffffff; font-weight: bold; font-size: 14px; margin-left: 4px; }
@@ -39,7 +37,6 @@
         #marketClosedLabel { position: absolute; top: 35px; right: 5px; background: rgba(220, 38, 38, 0.9); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: none; }
         canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 
-        /* モーダル設定 */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(11, 16, 30, 0.98); z-index: 100; overflow-y: auto; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d3748; padding-bottom: 12px; margin-bottom: 15px; }
         .modal-title { font-size: 16px; font-weight: bold; color: #cbd5e1; }
@@ -54,16 +51,13 @@
         .bt-grid input[type="number"] { width: 45px; background: #0b101e; color: white; border: 1px solid #4a5568; padding: 4px; border-radius: 4px; text-align: center; }
         .bt-grid input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
 
-        /* 下部エリア */
         .bottom-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
         .mode-tabs { display: flex; border-bottom: 1px solid #2d3748; flex-shrink: 0; }
         .mode-tab { flex: 1; padding: 12px; text-align: center; background: #0b101e; color: #64748b; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.2s; }
         .mode-tab.active { background: #161b26; color: white; border-bottom: 2px solid #3b82f6; }
         
-        /* バックテスト専用パネル */
         .bt-panel { padding: 15px; background-color: #161b26; font-size: 13px; flex-shrink: 0; border-bottom: 1px solid #2d3748; }
         
-        /* リアルトレード専用パネル */
         .pos-dashboard { display: flex; border-bottom: 1px solid #2d3748; background-color: #111622; }
         .pos-side { flex: 1; padding: 8px 12px; display: flex; flex-direction: column; }
         .pos-sell { border-right: 1px solid #2d3748; background: linear-gradient(to bottom, rgba(59, 130, 246, 0.05), transparent); }
@@ -95,7 +89,6 @@
         .btn-auto.stop { background: #ef4444; }
         .btn-auto:disabled { background: #475569; color: #94a3b8; cursor: not-allowed; opacity: 0.5; }
 
-        /* 履歴・共通 */
         #testResult { text-align: center; font-weight: bold; font-size: 15px; margin-bottom: 5px; }
         #testMarginResult { text-align: center; font-size: 13px; color: #cbd5e1; margin-bottom: 15px; }
         .history-panel { flex: 1; padding: 15px; background-color: #0b101e; border-top: 1px solid #2d3748; }
@@ -311,11 +304,10 @@
     </div>
 
     <script>
-        // === グローバル変数 ===
         const baseUrl = "https://api-fxtrade.oanda.com/v3";
         let accountId = "", apiToken = "", instrument = "USD_JPY";
         let appMode = 'BACKTEST';
-        let candlesData = [], displayCandles = [], txHistoryData = []; 
+        let displayCandles = [], txHistoryData = []; 
         const canvas = document.getElementById('myCanvas');
         const ctx = canvas.getContext('2d');
         let displayCount = 200, scrollOffset = 0, yScaleMultiplier = 1.0;
@@ -331,8 +323,8 @@
         const tfGranularity = { "0": "S5", "1": "M1", "5": "M5", "10": "M10", "60": "H1", "240": "H4" };
         const tfIntervalMs = { "0": 5, "1": 60, "5": 300, "10": 600, "60": 3600, "240": 14400 };
 
-        // === 1. インジケーター計算（抜け落ちを復元） ===
-        function calcIndicators(dataArray) {
+        // === 1. インジケーター計算 ===
+        window.calcIndicators = function(dataArray) {
             const period = 25;
             for (let i = 0; i < dataArray.length; i++) {
                 if (i >= period - 1) {
@@ -345,8 +337,6 @@
                 }
             }
         }
-        // 外部から確実に呼べるようにグローバルに登録
-        window.calcIndicators = calcIndicators;
 
         // === 2. 設定の保存・読込処理 ===
         function saveSettings() {
@@ -424,19 +414,15 @@
             if (savedId) document.getElementById('accountIdInput').value = savedId;
             if (savedToken) document.getElementById('apiTokenInput').value = savedToken;
 
-            // ログイン実行処理
             const performLogin = (isAuto = false) => {
                 accountId = document.getElementById('accountIdInput').value.trim();
                 apiToken = document.getElementById('apiTokenInput').value.trim();
-                
                 if (!accountId || !apiToken) {
                     if (!isAuto) alert("口座IDとAPIトークンを入力してください");
                     return;
                 }
-                
                 localStorage.setItem('oanda_account_id', accountId); 
                 localStorage.setItem('oanda_api_token', apiToken);
-                
                 const selectedMode = document.querySelector('input[name="startMode"]:checked').value;
                 document.getElementById('loginArea').classList.add('hidden'); 
                 document.getElementById('mainUI').classList.remove('hidden');
@@ -447,7 +433,6 @@
             };
 
             if (savedId && savedToken) performLogin(true);
-
             document.getElementById('loginBtn').addEventListener('click', () => performLogin(false));
 
             document.getElementById('tabReal').addEventListener('click', () => switchMode('REAL'));
@@ -460,10 +445,7 @@
 
             document.getElementById('tfSelector').addEventListener('change', () => {
                 if (appMode === 'REAL') startRealTrade();
-                else {
-                    if (candlesData.length > 0) { updateDisplayCandles(); scrollOffset = 0; highlightedTime = null; drawChart(); }
-                    else clearDataAndRedraw("再実行してください。");
-                }
+                else clearDataAndRedraw("再実行してください。");
             });
 
             document.getElementById('btnTopRun').addEventListener('click', runBacktestFetch);
@@ -496,13 +478,12 @@
         }
 
         function clearDataAndRedraw(msg) {
-            candlesData = []; displayCandles = []; txHistoryData = []; scrollOffset = 0; highlightedTime = null;
+            displayCandles = []; txHistoryData = []; scrollOffset = 0; highlightedTime = null;
             document.getElementById('testResult').innerText = ''; document.getElementById('testMarginResult').innerText = '';
             document.getElementById('historyList').innerHTML = `<div style="color:#64748b; padding:10px;">${msg}</div>`;
             if(ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
-        // === 5. OANDA API 共通処理 ===
         async function apiRequest(endpoint, method = 'GET', body = null) {
             const options = { method, headers: { 'Authorization': `Bearer ${apiToken}`, 'Accept-Datetime-Format': 'UNIX', 'Content-Type': 'application/json' } };
             if (body) options.body = JSON.stringify(body);
@@ -512,7 +493,7 @@
         }
 
         // ==========================================
-        // 6. リアルトレードロジック (完全復元)
+        // 5. リアルトレードロジック
         // ==========================================
         async function startRealTrade() {
             stopRealTrade();
@@ -527,8 +508,7 @@
             if(priceInterval) clearInterval(priceInterval); 
             if(accountInterval) clearInterval(accountInterval); 
             if(posInterval) clearInterval(posInterval);
-            document.getElementById('balanceVal').innerText = '--';
-            document.getElementById('plVal').innerText = '--';
+            document.getElementById('balanceVal').innerText = '--'; document.getElementById('plVal').innerText = '--';
         }
 
         async function fetchAccount() {
@@ -544,22 +524,17 @@
         async function fetchPosition() {
             try {
                 const data = await apiRequest(`/accounts/${accountId}/positions/${instrument}`);
-                currentLongUnits = 0; currentLongAvg = 0; currentShortUnits = 0; currentShortAvg = 0;
-                let longPL = 0, shortPL = 0;
+                currentLongUnits = 0; currentLongAvg = 0; currentShortUnits = 0; currentShortAvg = 0; let longPL = 0, shortPL = 0;
                 if (data && data.position) {
                     currentLongUnits = parseInt(data.position.long.units) || 0; currentLongAvg = parseFloat(data.position.long.averagePrice) || 0; longPL = parseFloat(data.position.long.unrealizedPL) || 0;
                     currentShortUnits = Math.abs(parseInt(data.position.short.units) || 0); currentShortAvg = parseFloat(data.position.short.averagePrice) || 0; shortPL = parseFloat(data.position.short.unrealizedPL) || 0;
                 }
-                document.getElementById('longUnits').innerText = currentLongUnits.toLocaleString();
-                document.getElementById('longAvg').innerText = currentLongUnits > 0 ? currentLongAvg.toFixed(3) : "---.---";
-                document.getElementById('longPL').innerText = Math.floor(longPL).toLocaleString();
-                document.getElementById('longPL').className = longPL >= 0 ? 'val text-green' : 'val text-red';
+                document.getElementById('longUnits').innerText = currentLongUnits.toLocaleString(); document.getElementById('longAvg').innerText = currentLongUnits > 0 ? currentLongAvg.toFixed(3) : "---.---";
+                document.getElementById('longPL').innerText = Math.floor(longPL).toLocaleString(); document.getElementById('longPL').className = longPL >= 0 ? 'val text-green' : 'val text-red';
                 document.getElementById('btnSideCloseLong').disabled = (currentLongUnits === 0);
 
-                document.getElementById('shortUnits').innerText = currentShortUnits.toLocaleString();
-                document.getElementById('shortAvg').innerText = currentShortUnits > 0 ? currentShortAvg.toFixed(3) : "---.---";
-                document.getElementById('shortPL').innerText = Math.floor(shortPL).toLocaleString();
-                document.getElementById('shortPL').className = shortPL >= 0 ? 'val text-green' : 'val text-red';
+                document.getElementById('shortUnits').innerText = currentShortUnits.toLocaleString(); document.getElementById('shortAvg').innerText = currentShortUnits > 0 ? currentShortAvg.toFixed(3) : "---.---";
+                document.getElementById('shortPL').innerText = Math.floor(shortPL).toLocaleString(); document.getElementById('shortPL').className = shortPL >= 0 ? 'val text-green' : 'val text-red';
                 document.getElementById('btnSideCloseShort').disabled = (currentShortUnits === 0);
             } catch (e) {}
         }
@@ -568,35 +543,21 @@
             try {
                 const data = await apiRequest(`/accounts/${accountId}/transactions?count=50`); 
                 if(!data) return;
-                
-                txHistoryData = []; 
-                const isJPY = instrument.includes('JPY');
+                txHistoryData = []; const isJPY = instrument.includes('JPY');
                 
                 (data.transactions || []).forEach(t => {
                     if (t.type === 'ORDER_FILL' && t.instrument === instrument) {
-                        const units = parseInt(t.units);
-                        const isClose = t.tradesClosed && t.tradesClosed.length > 0;
-                        const pl = parseFloat(t.pl) || 0;
-                        const balance = parseFloat(t.accountBalance) || 0;
+                        const units = parseInt(t.units); const isClose = t.tradesClosed && t.tradesClosed.length > 0;
+                        const pl = parseFloat(t.pl) || 0; const balance = parseFloat(t.accountBalance) || 0;
                         let type = '', pips = 0;
-                        
                         if (isClose) {
                             type = units > 0 ? 'CLOSE_SHORT' : 'CLOSE_LONG';
-                            const closedUnits = Math.abs(units);
-                            const pipVal = isJPY ? (closedUnits * 0.01) : (closedUnits * 0.0001);
+                            const pipVal = isJPY ? (Math.abs(units) * 0.01) : (Math.abs(units) * 0.0001);
                             pips = pipVal !== 0 ? (pl / pipVal) : 0;
-                        } else {
-                            type = units > 0 ? 'LONG' : 'SHORT';
-                        }
+                        } else { type = units > 0 ? 'LONG' : 'SHORT'; }
                         
                         txHistoryData.push({ 
-                            time: parseFloat(t.time) * 1000, 
-                            type: type, 
-                            price: parseFloat(t.price),
-                            pips: pips,
-                            profitYen: pl,
-                            balance: balance,
-                            count: 1
+                            time: parseFloat(t.time) * 1000, type: type, price: parseFloat(t.price), pips: pips, profitYen: pl, balance: balance, count: 1
                         });
                     }
                 });
@@ -613,11 +574,10 @@
                 const res = await apiRequest(`/instruments/${instrument}/candles?granularity=${granularity}&count=1000&price=A`); 
                 if(!res || !res.candles) return;
                 
-                candlesData = res.candles.filter(c => c.complete).map(c => {
+                displayCandles = res.candles.filter(c => c.complete).map(c => {
                     const tMs = parseFloat(c.time) * 1000;
                     return { time: tMs, o: parseFloat(c.ask.o), h: parseFloat(c.ask.h), l: parseFloat(c.ask.l), c: parseFloat(c.ask.c), startTime: tMs, endTime: tMs + intervalMs - 1 };
                 });
-                displayCandles = [...candlesData]; 
                 window.calcIndicators(displayCandles); 
                 drawChart();
             } catch (e) { console.error(e); }
@@ -630,33 +590,27 @@
                 if (priceData.status !== 'tradeable') { document.getElementById('marketClosedLabel').style.display = 'block'; return; }
                 else { document.getElementById('marketClosedLabel').style.display = 'none'; }
 
-                const askPrice = parseFloat(priceData.asks[0].price);
-                const bidPrice = parseFloat(priceData.bids[0].price);
-                
-                document.getElementById('bidPrice').innerText = askPrice.toFixed(3);
-                document.getElementById('askPrice').innerText = askPrice.toFixed(3);
+                const askPrice = parseFloat(priceData.asks[0].price); const bidPrice = parseFloat(priceData.bids[0].price);
+                document.getElementById('bidPrice').innerText = askPrice.toFixed(3); document.getElementById('askPrice').innerText = askPrice.toFixed(3);
 
                 const pipMultiplier = instrument.includes('JPY') ? 1000 : 10000;
                 if (currentShortUnits > 0 && currentShortAvg > 0) {
                     const pips = (currentShortAvg - askPrice) * pipMultiplier;
-                    document.getElementById('shortPips').innerText = Math.trunc(pips);
-                    document.getElementById('shortPips').className = pips >= 0 ? 'val text-green' : 'val text-red';
+                    document.getElementById('shortPips').innerText = Math.trunc(pips); document.getElementById('shortPips').className = pips >= 0 ? 'val text-green' : 'val text-red';
                 }
                 if (currentLongUnits > 0 && currentLongAvg > 0) {
                     const pips = (askPrice - currentLongAvg) * pipMultiplier;
-                    document.getElementById('longPips').innerText = Math.trunc(pips);
-                    document.getElementById('longPips').className = pips >= 0 ? 'val text-green' : 'val text-red';
+                    document.getElementById('longPips').innerText = Math.trunc(pips); document.getElementById('longPips').className = pips >= 0 ? 'val text-green' : 'val text-red';
                 }
 
                 if (displayCandles.length > 0) {
                     const last = displayCandles[displayCandles.length - 1]; const now = Date.now();
-                    const tfVal = document.getElementById('tfSelector').value;
-                    const intervalMs = tfIntervalMs[tfVal] * 1000;
+                    const intervalMs = tfIntervalMs[document.getElementById('tfSelector').value] * 1000;
 
                     if (now > last.endTime) { 
                         const newC = { time: now, o: askPrice, h: askPrice, l: askPrice, c: askPrice, startTime: now, endTime: now + intervalMs - 1 };
-                        displayCandles.push(newC); candlesData.push(newC);
-                        if (displayCandles.length > 2000) { displayCandles.shift(); candlesData.shift(); }
+                        displayCandles.push(newC);
+                        if (displayCandles.length > 2000) displayCandles.shift();
                     } else { 
                         last.c = askPrice; last.h = Math.max(last.h, askPrice); last.l = Math.min(last.l, askPrice); last.endTime = now;
                     }
@@ -688,7 +642,7 @@
         }
 
         // ==========================================
-        // 7. バックテスト ロジック
+        // 6. バックテスト ロジック
         // ==========================================
         async function runBacktestFetch() {
             const btn = document.getElementById('btnTopRun');
@@ -708,7 +662,7 @@
             
             resDiv.innerText = ""; resMarginDiv.innerText = ""; histList.innerHTML = "データ取得中..."; 
             pnlBtn.classList.add('hidden'); document.getElementById('dailyPnlContainer').classList.add('hidden');
-            txHistoryData = []; candlesData = []; displayCandles = []; highlightedTime = null;
+            txHistoryData = []; displayCandles = []; highlightedTime = null;
 
             try {
                 const tfVal = document.getElementById('tfSelector').value;
@@ -735,14 +689,16 @@
                 }
 
                 if (allCandles.length === 0) throw new Error("データがありません。");
-                candlesData = allCandles.map(c => ({
+                
+                // 【重要修正】バックテスト時は取得した足そのものを直接 displayCandles に入れる (再集約を廃止)
+                displayCandles = allCandles.map(c => ({
                     time: parseFloat(c.time) * 1000, o: parseFloat(c.mid.o), h: parseFloat(c.mid.h), l: parseFloat(c.mid.l), c: parseFloat(c.mid.c)
                 }));
 
-                window.calcIndicators(candlesData); 
+                window.calcIndicators(displayCandles); 
                 const { totalPips, finalMargin } = runSimulation();
                 
-                updateDisplayCandles(); scrollOffset = 0; drawChart(); renderHistory(); renderDailyPnL();
+                scrollOffset = 0; drawChart(); renderHistory(); renderDailyPnL();
 
                 resDiv.style.color = totalPips >= 0 ? '#4ade80' : '#f87171';
                 resDiv.innerText = `結果: 合計 ${totalPips.toFixed(1)} Pips`;
@@ -754,29 +710,9 @@
             finally { isTestRunning = false; shouldStopTest = false; btn.classList.remove('running'); btn.innerText = "▶ 実行"; }
         }
 
-        function updateDisplayCandles() {
-            const tfMinutes = parseInt(document.getElementById('tfSelector').value);
-            if (tfMinutes === 0 || candlesData.length === 0) {
-                displayCandles = candlesData.map(c => ({...c, startTime: c.time, endTime: c.time}));
-            } else {
-                const intervalMs = tfMinutes * 60 * 1000, offsetMs = 9 * 60 * 60 * 1000; 
-                let aggregated = [], currentCandle = null;
-                for (let i = 0; i < candlesData.length; i++) {
-                    const c = candlesData[i], periodStart = Math.floor((c.time + offsetMs) / intervalMs) * intervalMs - offsetMs;
-                    if (!currentCandle || currentCandle.time !== periodStart) {
-                        if (currentCandle) aggregated.push(currentCandle);
-                        currentCandle = { time: periodStart, o: c.o, h: c.h, l: c.l, c: c.c, startTime: c.time, endTime: c.time };
-                    } else {
-                        currentCandle.h = Math.max(currentCandle.h, c.h); currentCandle.l = Math.min(currentCandle.l, c.l);
-                        currentCandle.c = c.c; currentCandle.endTime = c.time;
-                    }
-                }
-                if (currentCandle) aggregated.push(currentCandle);
-                displayCandles = aggregated;
-            }
-            window.calcIndicators(displayCandles); 
-        }
-
+        // ==========================================
+        // 7. シミュレーション本体 (ヒゲ先判定に修正)
+        // ==========================================
         function runSimulation() {
             const isJPY = instrument.includes('JPY'); const pipMultiplier = isJPY ? 1000 : 10000; const pipYenValue = isJPY ? 0.01 : 0.0001;
             const spreadPips = parseFloat(document.getElementById('btSpread').value) || 0; const spreadValue = spreadPips / pipMultiplier;
@@ -796,12 +732,14 @@
 
             const processClose = (type, closePrice, targetPositions, pipsPerPos, time) => {
                 const count = targetPositions.length; totalPips += pipsPerPos * count;
-                const profitYen = (pipsPerPos / pipMultiplier) * units * count; currentMargin += profitYen;
+                const profitYen = pipsPerPos * pipYenValue * units * count; currentMargin += profitYen;
                 txHistoryData.push({ time: time, price: closePrice, type: type, pips: pipsPerPos, count: count, profitYen: profitYen, balance: currentMargin, shortCount: type.includes('SHORT') ? 0 : posShort.length, longCount: type.includes('LONG') ? 0 : posLong.length });
             };
 
-            for (let i = 25; i < candlesData.length; i++) {
-                const c = candlesData[i]; 
+            for (let i = 25; i < displayCandles.length; i++) {
+                const c = displayCandles[i]; 
+                
+                // 【重要修正】終値ではなく、高値(H)と安値(L)を使ってヒゲで判定する
                 const askC = c.c + (spreadValue / 2);
                 const askH = c.h + (spreadValue / 2);
                 const askL = c.l + (spreadValue / 2);
@@ -822,11 +760,11 @@
                     continue;
                 }
                 
-                // 決済判定 (ヒゲ先も考慮)
+                // 決済判定 (ヒゲ先も考慮して確実に判定)
                 if (posShort.length > 0) { 
                     const avg = posShort.reduce((s, p) => s + p.price, 0) / posShort.length;
-                    const maxProfitPips = ((avg - askL) * pipMultiplier) - spreadPips; 
-                    const minProfitPips = ((avg - askH) * pipMultiplier) - spreadPips; 
+                    const maxProfitPips = ((avg - askL) * pipMultiplier) - spreadPips; // 下落で利益
+                    const minProfitPips = ((avg - askH) * pipMultiplier) - spreadPips; // 上昇で損失
 
                     if (useSl && minProfitPips <= slBid) { 
                         const closePrice = avg - ((slBid + spreadPips) / pipMultiplier);
@@ -852,7 +790,7 @@
                     } 
                 }
 
-                // エントリー判定 (ヒゲ先考慮)
+                // エントリー判定 (ヒゲ先も考慮)
                 if (posShort.length < maxPos) {
                     if (posShort.length === 0) { 
                         const upperBand = askSma + (e1BidSigma * c.sd);
@@ -888,7 +826,7 @@
         }
 
         // ==========================================
-        // 8. 共通UI描画 (履歴・チャート)
+        // 8. 共通UI描画処理
         // ==========================================
         function renderHistory() {
             const list = document.getElementById('historyList'); list.innerHTML = '';
@@ -930,7 +868,7 @@
         function jumpToTime(targetTime) {
             if (displayCandles.length === 0) return;
             const tfSeconds = tfIntervalMs[document.getElementById('tfSelector').value];
-            let targetIndex = displayCandles.findIndex(c => targetTime >= c.startTime && targetTime <= (c.endTime || c.time) + (tfSeconds * 1000));
+            let targetIndex = displayCandles.findIndex(c => targetTime >= c.time && targetTime <= c.time + (tfSeconds * 1000));
             if (targetIndex === -1) targetIndex = displayCandles.findIndex(c => Math.abs(c.time - targetTime) <= (tfSeconds * 1000));
 
             if (targetIndex !== -1) { 
@@ -950,35 +888,79 @@
             const startIndex = Math.max(0, displayCandles.length - displayCount - Math.floor(scrollOffset)), endIndex = Math.min(displayCandles.length, startIndex + displayCount), dataToDraw = displayCandles.slice(startIndex, endIndex); if(dataToDraw.length === 0) return;
             
             const spreadValue = (parseFloat(document.getElementById('btSpread').value) || 0) / (instrument.includes('JPY') ? 1000 : 10000);
-            const drawBidSigma = parseFloat(document.getElementById('e1BidSigma').value) || 2.0, drawAskSigma = parseFloat(document.getElementById('e1AskSigma').value) || 2.0, candleWidth = chartW / dataToDraw.length;
+            const drawBidSigma = parseFloat(document.getElementById('e1BidSigma').value) || 2.0;
+            const drawAskSigma = parseFloat(document.getElementById('e1AskSigma').value) || 2.0;
+            const candleWidth = chartW / dataToDraw.length;
+            
             const getAsk = (val) => appMode === 'BACKTEST' ? val + (spreadValue / 2) : val;
 
             let minP = Infinity, maxP = -Infinity;
             dataToDraw.forEach(c => {
-                if (getAsk(c.h) > maxP) maxP = getAsk(c.h); if (getAsk(c.l) < minP) minP = getAsk(c.l);
-                if (c.sma !== undefined && c.sd !== undefined) { const u = getAsk(c.sma + (drawBidSigma * c.sd)), l = getAsk(c.sma - (drawAskSigma * c.sd)); if (u > maxP) maxP = u; if (l < minP) minP = l; }
+                if (getAsk(c.h) > maxP) maxP = getAsk(c.h); 
+                if (getAsk(c.l) < minP) minP = getAsk(c.l);
+                if (c.sma !== undefined && c.sd !== undefined) { 
+                    const u = getAsk(c.sma + (drawBidSigma * c.sd)), l = getAsk(c.sma - (drawAskSigma * c.sd)); 
+                    if (u > maxP) maxP = u; if (l < minP) minP = l; 
+                }
             });
-            const midP = (maxP + minP) / 2, zoomedRange = (maxP - minP) * yScaleMultiplier || 0.001; maxP = midP + (zoomedRange / 2) * 1.1; minP = midP - (zoomedRange / 2) * 1.1;
+            const midP = (maxP + minP) / 2;
+            const zoomedRange = (maxP - minP) * yScaleMultiplier || 0.001; 
+            maxP = midP + (zoomedRange / 2) * 1.1; 
+            minP = midP - (zoomedRange / 2) * 1.1;
             const finalRange = maxP - minP, getY = (price) => chartH - ((price - minP) / finalRange) * chartH;
 
             if (highlightedTime) { 
-                const hIndex = dataToDraw.findIndex(c => highlightedTime >= c.startTime && highlightedTime <= (c.endTime || c.time + 4999)); 
+                const hIndex = dataToDraw.findIndex(c => highlightedTime >= c.time && highlightedTime <= c.time + 4999); 
                 if (hIndex !== -1) { 
-                    const hx = hIndex * candleWidth + candleWidth / 2; ctx.fillStyle = 'rgba(251, 191, 36, 0.15)'; ctx.fillRect(hIndex * candleWidth, 0, candleWidth, chartH); ctx.beginPath(); ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]); ctx.moveTo(hx, 0); ctx.lineTo(hx, chartH); ctx.stroke(); ctx.setLineDash([]); 
+                    const hx = hIndex * candleWidth + candleWidth / 2; 
+                    ctx.fillStyle = 'rgba(251, 191, 36, 0.15)'; 
+                    ctx.fillRect(hIndex * candleWidth, 0, candleWidth, chartH); 
+                    ctx.beginPath(); ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]); 
+                    ctx.moveTo(hx, 0); ctx.lineTo(hx, chartH); ctx.stroke(); ctx.setLineDash([]); 
                 } 
             }
 
             ctx.lineWidth = 1;
-            ctx.beginPath(); ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)'; let firstU = true;
-            dataToDraw.forEach((c, i) => { if(c.sma !== undefined && c.sd !== undefined) { const x = i * candleWidth + candleWidth / 2; if (firstU) { ctx.moveTo(x, getY(getAsk(c.sma + (drawBidSigma * c.sd)))); firstU = false; } else { ctx.lineTo(x, getY(getAsk(c.sma + (drawBidSigma * c.sd)))); } } }); ctx.stroke();
-            ctx.beginPath(); ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)'; let firstL = true;
-            dataToDraw.forEach((c, i) => { if(c.sma !== undefined && c.sd !== undefined) { const x = i * candleWidth + candleWidth / 2; if (firstL) { ctx.moveTo(x, getY(getAsk(c.sma - (drawAskSigma * c.sd)))); firstL = false; } else { ctx.lineTo(x, getY(getAsk(c.sma - (drawAskSigma * c.sd)))); } } }); ctx.stroke();
-            ctx.beginPath(); ctx.strokeStyle = 'rgba(250, 204, 21, 0.8)'; let firstS = true;
-            dataToDraw.forEach((c, i) => { if(c.sma !== undefined) { const x = i * candleWidth + candleWidth / 2; if (firstS) { ctx.moveTo(x, getY(getAsk(c.sma))); firstS = false; } else { ctx.lineTo(x, getY(getAsk(c.sma))); } } }); ctx.stroke();
+            
+            ctx.beginPath(); ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)'; 
+            let firstU = true;
+            dataToDraw.forEach((c, i) => { 
+                if(c.sma !== undefined && c.sd !== undefined) { 
+                    const x = i * candleWidth + candleWidth / 2; 
+                    if (firstU) { ctx.moveTo(x, getY(getAsk(c.sma + (drawBidSigma * c.sd)))); firstU = false; }
+                    else { ctx.lineTo(x, getY(getAsk(c.sma + (drawBidSigma * c.sd)))); }
+                }
+            }); 
+            ctx.stroke();
+
+            ctx.beginPath(); ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)'; 
+            let firstL = true;
+            dataToDraw.forEach((c, i) => { 
+                if(c.sma !== undefined && c.sd !== undefined) { 
+                    const x = i * candleWidth + candleWidth / 2; 
+                    if (firstL) { ctx.moveTo(x, getY(getAsk(c.sma - (drawAskSigma * c.sd)))); firstL = false; }
+                    else { ctx.lineTo(x, getY(getAsk(c.sma - (drawAskSigma * c.sd)))); }
+                }
+            }); 
+            ctx.stroke();
+
+            ctx.beginPath(); ctx.strokeStyle = 'rgba(250, 204, 21, 0.8)'; 
+            let firstS = true;
+            dataToDraw.forEach((c, i) => { 
+                if(c.sma !== undefined) { 
+                    const x = i * candleWidth + candleWidth / 2; 
+                    if (firstS) { ctx.moveTo(x, getY(getAsk(c.sma))); firstS = false; }
+                    else { ctx.lineTo(x, getY(getAsk(c.sma))); }
+                }
+            }); 
+            ctx.stroke();
 
             dataToDraw.forEach((c, i) => {
-                const x = i * candleWidth, yO = getY(getAsk(c.o)), yC = getY(getAsk(c.c)), yH = getY(getAsk(c.h)), yL = getY(getAsk(c.l)); const color = c.c >= c.o ? '#ef4444' : '#3b82f6';
-                ctx.strokeStyle = color; ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(x + candleWidth / 2, yH); ctx.lineTo(x + candleWidth / 2, yL); ctx.stroke(); ctx.fillRect(x + candleWidth * 0.1, Math.min(yO, yC), candleWidth * 0.8, Math.max(1, Math.abs(yO - yC)));
+                const x = i * candleWidth, yO = getY(getAsk(c.o)), yC = getY(getAsk(c.c)), yH = getY(getAsk(c.h)), yL = getY(getAsk(c.l)); 
+                const color = c.c >= c.o ? '#ef4444' : '#3b82f6';
+                ctx.strokeStyle = color; ctx.fillStyle = color; 
+                ctx.beginPath(); ctx.moveTo(x + candleWidth / 2, yH); ctx.lineTo(x + candleWidth / 2, yL); ctx.stroke(); 
+                ctx.fillRect(x + candleWidth * 0.1, Math.min(yO, yC), candleWidth * 0.8, Math.max(1, Math.abs(yO - yC)));
             });
 
             txHistoryData.forEach(tx => {
@@ -986,17 +968,28 @@
                 const cIndex = dataToDraw.findIndex(c => Math.abs(c.time - tx.time) <= (tfSeconds * 1000));
                 if (cIndex !== -1) {
                     const c = dataToDraw[cIndex]; const x = cIndex * candleWidth + candleWidth / 2; let markerY = 0; ctx.beginPath();
-                    if (tx.type === 'LONG') { ctx.fillStyle = '#ef4444'; markerY = getY(c.l) + 15; ctx.moveTo(x, markerY - 8); ctx.lineTo(x - 5, markerY + 2); ctx.lineTo(x + 5, markerY + 2); } 
-                    else if (tx.type === 'SHORT') { ctx.fillStyle = '#3b82f6'; markerY = getY(c.h) - 15; ctx.moveTo(x, markerY + 8); ctx.lineTo(x - 5, markerY - 2); ctx.lineTo(x + 5, markerY - 2); } 
+                    if (tx.type === 'LONG') { ctx.fillStyle = '#ef4444'; markerY = getY(tx.price) + 15; ctx.moveTo(x, markerY - 8); ctx.lineTo(x - 5, markerY + 2); ctx.lineTo(x + 5, markerY + 2); } 
+                    else if (tx.type === 'SHORT') { ctx.fillStyle = '#3b82f6'; markerY = getY(tx.price) - 15; ctx.moveTo(x, markerY + 8); ctx.lineTo(x - 5, markerY - 2); ctx.lineTo(x + 5, markerY - 2); } 
                     else if (tx.type.includes('CLOSE')) { ctx.fillStyle = tx.type.includes('FORCE') ? '#f97316' : (tx.pips >= 0 ? '#10b981' : '#f59e0b'); markerY = getY(tx.price); ctx.arc(x, markerY, 4, 0, 2 * Math.PI); }
                     ctx.fill(); ctx.fillStyle = '#cbd5e1'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'left'; ctx.fillText(tx.price.toFixed(3), x + 8, markerY + 4);
                 }
             });
 
-            ctx.fillStyle = '#161b26'; ctx.fillRect(0, chartH, chartW, xAxisHeight); ctx.fillStyle = '#a0aec0'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
-            const step = Math.max(1, Math.floor(60 / candleWidth)); for (let i = 0; i < dataToDraw.length; i += step) { ctx.fillText(`${String(new Date(dataToDraw[i].time).getHours()).padStart(2, '0')}:${String(new Date(dataToDraw[i].time).getMinutes()).padStart(2, '0')}`, i * candleWidth + candleWidth / 2, h - 4); }
-            ctx.fillStyle = '#161b26'; ctx.fillRect(chartW, 0, yAxisWidth, h); ctx.beginPath(); ctx.strokeStyle = '#2d3748'; ctx.moveTo(chartW, 0); ctx.lineTo(chartW, h); ctx.stroke();
-            ctx.fillStyle = '#a0aec0'; ctx.textAlign = 'left'; ctx.font = 'bold 12px sans-serif'; for (let i = 1; i <= 5; i++) { const yPos = (chartH / 6) * i; ctx.fillText((maxP - ((maxP - minP) * (yPos / chartH))).toFixed(3), chartW + 5, yPos + 4); }
+            ctx.fillStyle = '#161b26'; ctx.fillRect(0, chartH, chartW, xAxisHeight); 
+            ctx.fillStyle = '#a0aec0'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+            const step = Math.max(1, Math.floor(60 / candleWidth)); 
+            for (let i = 0; i < dataToDraw.length; i += step) { 
+                const d = new Date(dataToDraw[i].time); 
+                ctx.fillText(`${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`, i * candleWidth + candleWidth / 2, h - 4); 
+            }
+            
+            ctx.fillStyle = '#161b26'; ctx.fillRect(chartW, 0, yAxisWidth, h); 
+            ctx.beginPath(); ctx.strokeStyle = '#2d3748'; ctx.moveTo(chartW, 0); ctx.lineTo(chartW, h); ctx.stroke();
+            ctx.fillStyle = '#a0aec0'; ctx.textAlign = 'left'; ctx.font = 'bold 12px sans-serif'; 
+            for (let i = 1; i <= 5; i++) { 
+                const yPos = (chartH / 6) * i; 
+                ctx.fillText((maxP - ((maxP - minP) * (yPos / chartH))).toFixed(3), chartW + 5, yPos + 4); 
+            }
         }
 
         function setupTouchEvents() {
@@ -1004,7 +997,15 @@
             canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if (e.touches.length === 1 && isDragging) { const dx = e.touches[0].clientX - lastTouchX, candleWidth = (canvas.width - yAxisWidth) / displayCount; scrollOffset = Math.max(0, Math.min(displayCandles.length - displayCount, scrollOffset + dx / candleWidth)); lastTouchX = e.touches[0].clientX; drawChart(); } else if (e.touches.length === 2 && initialPinchDist) { const currentDist = Math.sqrt(Math.pow(e.touches[0].clientX - e.touches[1].clientX, 2) + Math.pow(e.touches[0].clientY - e.touches[1].clientY, 2)); displayCount = Math.max(20, Math.min(2000, Math.floor(initialDisplayCount / (currentDist / initialPinchDist)))); scrollOffset = Math.min(Math.max(0, displayCandles.length - displayCount), scrollOffset); drawChart(); } }, { passive: false });
             canvas.addEventListener('touchend', () => { isDragging = false; initialPinchDist = null; });
         }
-        function resizeCanvas() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; drawChart(); }
+        
+        function resizeCanvas() { 
+            const parent = canvas.parentElement;
+            if(parent && parent.clientWidth > 0 && parent.clientHeight > 0) {
+                canvas.width = parent.clientWidth; 
+                canvas.height = parent.clientHeight; 
+                drawChart(); 
+            }
+        }
     </script>
 </body>
 </html>
