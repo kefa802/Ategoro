@@ -310,10 +310,12 @@
     </div>
 
     <script>
+        // === グローバル変数 ===
         const baseUrl = "https://api-fxtrade.oanda.com/v3";
         let accountId = "", apiToken = "", instrument = "USD_JPY";
         let appMode = 'BACKTEST';
         let candlesData = [], displayCandles = [], txHistoryData = []; 
+        let lastTransactionID = 0; // OANDA API用 トランザクションID管理
         const canvas = document.getElementById('myCanvas');
         const ctx = canvas.getContext('2d');
         let displayCount = 200, scrollOffset = 0, yScaleMultiplier = 1.0;
@@ -396,7 +398,7 @@
             }
         }
 
-        // === 初期化とイベント登録 ===
+        // === 3. 初期化とイベント登録 ===
         window.addEventListener('DOMContentLoaded', () => {
             loadSettings();
 
@@ -423,22 +425,29 @@
             const performLogin = (isAuto = false) => {
                 accountId = document.getElementById('accountIdInput').value.trim();
                 apiToken = document.getElementById('apiTokenInput').value.trim();
+                
                 if (!accountId || !apiToken) {
                     if (!isAuto) alert("口座IDとAPIトークンを入力してください");
                     return;
                 }
+                
                 localStorage.setItem('oanda_account_id', accountId); 
                 localStorage.setItem('oanda_api_token', apiToken);
+                
                 const selectedMode = document.querySelector('input[name="startMode"]:checked').value;
                 document.getElementById('loginArea').classList.add('hidden'); 
                 document.getElementById('mainUI').classList.remove('hidden');
                 
-                resizeCanvas(); window.addEventListener('resize', resizeCanvas); 
-                setupTouchEvents(); setupRealTradeEvents(); 
+                resizeCanvas(); 
+                window.addEventListener('resize', resizeCanvas); 
+                setupTouchEvents();
+                setupRealTradeEvents(); 
+                
                 switchMode(selectedMode);
             };
 
             if (savedId && savedToken) performLogin(true);
+
             document.getElementById('loginBtn').addEventListener('click', () => performLogin(false));
 
             document.getElementById('tabReal').addEventListener('click', () => switchMode('REAL'));
@@ -451,12 +460,16 @@
 
             document.getElementById('tfSelector').addEventListener('change', () => {
                 if (appMode === 'REAL') startRealTrade();
-                else clearDataAndRedraw("再実行してください。");
+                else {
+                    if (candlesData.length > 0) { updateDisplayCandles(); scrollOffset = 0; highlightedTime = null; drawChart(); }
+                    else clearDataAndRedraw("再実行してください。");
+                }
             });
 
             document.getElementById('btnTopRun').addEventListener('click', runBacktestFetch);
         });
 
+        // === 4. モード切替ロジック ===
         function switchMode(mode) {
             appMode = mode;
             document.getElementById('tabReal').classList.toggle('active', mode === 'REAL');
@@ -484,13 +497,14 @@
 
         function clearDataAndRedraw(msg) {
             candlesData = []; displayCandles = []; txHistoryData = []; 
-            scrollOffset = 0; highlightedTime = null;
+            scrollOffset = 0; highlightedTime = null; lastTransactionID = 0;
             document.getElementById('testResult').innerText = '';
             document.getElementById('testMarginResult').innerText = '';
             document.getElementById('historyList').innerHTML = `<div style="color:#64748b; padding:10px;">${msg}</div>`;
             if(ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
+        // === 5. OANDA API 共通処理 ===
         async function apiRequest(endpoint, method = 'GET', body = null) {
             const options = { method, headers: { 'Authorization': `Bearer ${apiToken}`, 'Accept-Datetime-Format': 'UNIX', 'Content-Type': 'application/json' } };
             if (body) options.body = JSON.stringify(body);
@@ -500,12 +514,15 @@
         }
 
         // ==========================================
-        // リアルトレードロジック
+        // 6. リアルトレードロジック
         // ==========================================
         async function startRealTrade() {
             stopRealTrade();
             document.getElementById('historyList').innerText = 'データ取得中...';
-            await fetchAccount(); await fetchPosition(); await fetchHistoryReal(); await fetchHistoricalCandlesReal();
+            await fetchAccount(); 
+            await fetchPosition(); 
+            await fetchHistoryReal(); 
+            await fetchHistoricalCandlesReal();
             priceInterval = setInterval(fetchPricingAndUpdateChartReal, 1000); 
             accountInterval = setInterval(fetchAccount, 5000); 
             posInterval = setInterval(fetchPosition, 3000);
@@ -522,6 +539,7 @@
         async function fetchAccount() {
             try {
                 const data = await apiRequest(`/accounts/${accountId}/summary`); if(!data) return;
+                lastTransactionID = parseInt(data.account.lastTransactionID) || 0; // OANDAからIDを記録
                 document.getElementById('balanceVal').innerText = Math.floor(parseFloat(data.account.balance)).toLocaleString();
                 const pl = Math.floor(parseFloat(data.account.unrealizedPL));
                 document.getElementById('plVal').innerText = pl.toLocaleString();
@@ -553,16 +571,21 @@
         }
 
         async function fetchHistoryReal() {
+            if (!lastTransactionID) return; // IDがない場合はスルー
             try {
-                // 【重要】リアルトレードの確実な履歴取得のため500件、ORDER_FILLに限定
-                const data = await apiRequest(`/accounts/${accountId}/transactions?type=ORDER_FILL&count=500`); 
-                if(!data) return;
+                // 【重要修正】ORDER_FILLだけを、現在のIDから最大1000件さかのぼって確実に取り出す
+                const fromId = Math.max(1, lastTransactionID - 999);
+                const data = await apiRequest(`/accounts/${accountId}/transactions/idrange?from=${fromId}&to=${lastTransactionID}&type=ORDER_FILL`); 
+                if(!data || !data.transactions) {
+                    document.getElementById('historyList').innerHTML = '<div style="color: #64748b; padding: 10px;">取引なし</div>';
+                    return;
+                }
                 
                 txHistoryData = []; 
                 const isJPY = instrument.includes('JPY');
                 
-                (data.transactions || []).forEach(t => {
-                    if (t.instrument === instrument) {
+                data.transactions.forEach(t => {
+                    if (t.instrument === instrument && t.type === 'ORDER_FILL') {
                         const units = parseInt(t.units);
                         const isClose = t.tradesClosed && t.tradesClosed.length > 0;
                         const pl = parseFloat(t.pl) || 0;
@@ -592,7 +615,8 @@
                     }
                 });
                 renderHistory(); 
-            } catch (e) { console.error(e); }
+                renderDailyPnL();
+            } catch (e) { console.error("fetchHistoryReal Error:", e); }
         }
 
         async function fetchHistoricalCandlesReal() {
@@ -616,7 +640,7 @@
                 displayCandles = [...candlesData]; 
                 window.calcIndicators(displayCandles); 
                 drawChart();
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("fetchHistoricalCandlesReal Error:", e); }
         }
 
         async function fetchPricingAndUpdateChartReal() {
@@ -662,30 +686,43 @@
             } catch (e) {}
         }
 
+        // --- 手動注文系（非同期による完全連動化） ---
         function setupRealTradeEvents() {
             document.getElementById('btnAutoStart').addEventListener('click', () => { isAutoTrading = true; document.getElementById('btnAutoStart').disabled = true; document.getElementById('btnAutoStop').disabled = false; document.getElementById('btnAutoStart').innerText = "稼働中..."; });
             document.getElementById('btnAutoStop').addEventListener('click', () => { isAutoTrading = false; document.getElementById('btnAutoStart').disabled = false; document.getElementById('btnAutoStop').disabled = true; document.getElementById('btnAutoStart').innerText = "▶ スタート"; });
             
             document.getElementById('btnSell').addEventListener('click', async () => {
                 let u = document.getElementById('lotSize').value; if (!confirm(`${instrument} を ${u}通貨 売(ASK) しますか？`)) return;
-                try { const res = await apiRequest(`/accounts/${accountId}/orders`, 'POST', { order: { units: "-" + u, instrument, timeInForce: "FOK", type: "MARKET", positionFill: "DEFAULT" } }); if(res) { fetchAccount(); fetchPosition(); fetchHistoryReal(); } } catch(e) { alert("注文エラー"); }
+                try { 
+                    const res = await apiRequest(`/accounts/${accountId}/orders`, 'POST', { order: { units: "-" + u, instrument, timeInForce: "FOK", type: "MARKET", positionFill: "DEFAULT" } }); 
+                    if(res) { await fetchAccount(); await fetchPosition(); await fetchHistoryReal(); drawChart(); } 
+                } catch(e) { alert("注文エラー"); }
             });
             document.getElementById('btnBuy').addEventListener('click', async () => {
                 let u = document.getElementById('lotSize').value; if (!confirm(`${instrument} を ${u}通貨 買(ASK) しますか？`)) return;
-                try { const res = await apiRequest(`/accounts/${accountId}/orders`, 'POST', { order: { units: u, instrument, timeInForce: "FOK", type: "MARKET", positionFill: "DEFAULT" } }); if(res) { fetchAccount(); fetchPosition(); fetchHistoryReal(); } } catch(e) { alert("注文エラー"); }
+                try { 
+                    const res = await apiRequest(`/accounts/${accountId}/orders`, 'POST', { order: { units: u, instrument, timeInForce: "FOK", type: "MARKET", positionFill: "DEFAULT" } }); 
+                    if(res) { await fetchAccount(); await fetchPosition(); await fetchHistoryReal(); drawChart(); } 
+                } catch(e) { alert("注文エラー"); }
             });
             document.getElementById('btnSideCloseLong').addEventListener('click', async () => {
                 if(!confirm(`買ポジションを全決済しますか？`)) return;
-                try { const res = await apiRequest(`/accounts/${accountId}/positions/${instrument}/close`, 'PUT', { longUnits: "ALL" }); if(res) { fetchAccount(); fetchPosition(); fetchHistoryReal(); } } catch (e) { alert("決済エラー"); }
+                try { 
+                    const res = await apiRequest(`/accounts/${accountId}/positions/${instrument}/close`, 'PUT', { longUnits: "ALL" }); 
+                    if(res) { await fetchAccount(); await fetchPosition(); await fetchHistoryReal(); drawChart(); } 
+                } catch (e) { alert("決済エラー"); }
             });
             document.getElementById('btnSideCloseShort').addEventListener('click', async () => {
                 if(!confirm(`売ポジションを全決済しますか？`)) return;
-                try { const res = await apiRequest(`/accounts/${accountId}/positions/${instrument}/close`, 'PUT', { shortUnits: "ALL" }); if(res) { fetchAccount(); fetchPosition(); fetchHistoryReal(); } } catch (e) { alert("決済エラー"); }
+                try { 
+                    const res = await apiRequest(`/accounts/${accountId}/positions/${instrument}/close`, 'PUT', { shortUnits: "ALL" }); 
+                    if(res) { await fetchAccount(); await fetchPosition(); await fetchHistoryReal(); drawChart(); } 
+                } catch (e) { alert("決済エラー"); }
             });
         }
 
         // ==========================================
-        // バックテスト ロジック
+        // 7. バックテスト ロジック
         // ==========================================
         async function runBacktestFetch() {
             const btn = document.getElementById('btnTopRun');
@@ -719,7 +756,6 @@
                     const progressDate = new Date(currentFrom * 1000).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' });
                     histList.innerHTML = `データ取得中... (${progressDate})`;
                     
-                    // 【重要】ブラウザフリーズ防止用のウェイト
                     await new Promise(r => setTimeout(r, 0));
                     
                     const data = await apiRequest(`/instruments/${instrument}/candles?granularity=${granularity}&count=5000&price=A&from=${currentFrom}`);
@@ -875,7 +911,7 @@
         }
 
         // ==========================================
-        // UI描画共通処理 (高速化版)
+        // 8. 共通UI描画 (高速化版)
         // ==========================================
         function renderHistory() {
             const list = document.getElementById('historyList'); 
@@ -938,7 +974,8 @@
         function jumpToTime(targetTime) {
             if (displayCandles.length === 0) return;
             const tfSeconds = tfIntervalMs[document.getElementById('tfSelector').value];
-            let targetIndex = displayCandles.findIndex(c => targetTime >= c.startTime && targetTime < c.startTime + (tfSeconds * 1000));
+            let targetIndex = displayCandles.findIndex(c => targetTime >= c.startTime && targetTime <= (c.endTime || c.time) + (tfSeconds * 1000));
+            if (targetIndex === -1) targetIndex = displayCandles.findIndex(c => Math.abs(c.time - targetTime) <= (tfSeconds * 1000));
 
             if (targetIndex !== -1) { 
                 highlightedTime = displayCandles[targetIndex].time; 
@@ -1034,8 +1071,7 @@
 
             txHistoryData.forEach(tx => {
                 const tfSeconds = tfIntervalMs[document.getElementById('tfSelector').value];
-                const intervalMs = tfSeconds * 1000;
-                const cIndex = dataToDraw.findIndex(c => tx.time >= c.startTime && tx.time < c.startTime + intervalMs);
+                const cIndex = dataToDraw.findIndex(c => Math.abs(c.time - tx.time) <= (tfSeconds * 1000));
                 if (cIndex !== -1) {
                     const c = dataToDraw[cIndex]; const x = cIndex * candleWidth + candleWidth / 2; let markerY = 0; ctx.beginPath();
                     if (tx.type === 'LONG') { ctx.fillStyle = '#ef4444'; markerY = getY(tx.price) + 15; ctx.moveTo(x, markerY - 8); ctx.lineTo(x - 5, markerY + 2); ctx.lineTo(x + 5, markerY + 2); } 
