@@ -119,7 +119,6 @@
 </head>
 <body>
 
-    <!-- ログイン画面 -->
     <div id="loginArea">
         <div class="login-box">
             <h2>OANDA トレード＆バックテスト</h2>
@@ -142,7 +141,6 @@
         </div>
     </div>
 
-    <!-- メインUI画面 -->
     <div id="mainUI" class="container hidden">
         <div class="header">
             <div><span>残高:</span><span id="balanceVal" class="val">--</span><span>円</span></div>
@@ -184,7 +182,6 @@
             <canvas id="myCanvas"></canvas>
         </div>
 
-        <!-- ⚙️モーダル設定項目 -->
         <div id="modalSettings" class="modal-overlay hidden">
             <div class="modal-header">
                 <div class="modal-title">⚙️ 詳細設定 (共通・BT)</div>
@@ -233,13 +230,11 @@
         </div>
 
         <div class="bottom-area">
-            <!-- タブ切り替え -->
             <div class="mode-tabs">
                 <div class="mode-tab" id="tabReal">リアルトレード</div>
                 <div class="mode-tab active" id="tabBacktest">バックテスト</div>
             </div>
 
-            <!-- バックテスト専用パネル -->
             <div class="bt-panel hidden" id="backtestDatePanel">
                 <div class="bt-setting-row">
                     <span>テスト期間</span>
@@ -251,7 +246,6 @@
                 </div>
             </div>
 
-            <!-- リアルトレード専用パネル -->
             <div class="trade-panel hidden" id="tradePanel">
                 <div class="pos-dashboard">
                     <div class="pos-side pos-sell">
@@ -305,14 +299,13 @@
                 </div>
             </div>
 
-            <!-- 履歴・サマリー -->
             <div class="history-panel">
                 <div id="testResult"></div>
                 <div id="testMarginResult"></div>
                 <div class="history-header" id="historyTitle">取引履歴</div>
                 <button id="btnTogglePnL" class="btn-toggle-pnl hidden">日別損益の詳細を見る ▼</button>
                 <div id="dailyPnlContainer" class="daily-summary hidden"></div>
-                <div id="historyList">日付を指定して右上の「▶ 実行」を押してください。</div>
+                <div id="historyList">データがありません。</div>
             </div>
         </div>
     </div>
@@ -322,9 +315,11 @@
         const baseUrl = "https://api-fxtrade.oanda.com/v3";
         let accountId = "", apiToken = "", instrument = "USD_JPY";
         let appMode = 'BACKTEST';
+        
         let candlesData = [], displayCandles = [], txHistoryData = []; 
         const canvas = document.getElementById('myCanvas');
         const ctx = canvas.getContext('2d');
+        
         let displayCount = 200, scrollOffset = 0, yScaleMultiplier = 1.0;
         const yAxisWidth = 65, xAxisHeight = 20;
         let isDragging = false, lastTouchX = 0, initialPinchDist = null, initialDisplayCount = 200;
@@ -337,6 +332,60 @@
 
         const tfGranularity = { "0": "S5", "1": "M1", "5": "M5", "10": "M10", "60": "H1", "240": "H4" };
         const tfIntervalMs = { "0": 5, "1": 60, "5": 300, "10": 600, "60": 3600, "240": 14400 };
+
+        // === 設定の保存・読み込み処理 (追加) ===
+        function saveSettings() {
+            const settings = {
+                btStartTime: document.getElementById('btStartTime').value,
+                btEndTime: document.getElementById('btEndTime').value,
+                btSpread: document.getElementById('btSpread').value,
+                btInitialMargin: document.getElementById('btInitialMargin').value,
+                btLot: document.getElementById('btLot').value,
+                btMaxPos: document.getElementById('btMaxPos').value,
+                e1Bid: document.getElementById('e1Bid').checked,
+                e1BidSigma: document.getElementById('e1BidSigma').value,
+                e1Ask: document.getElementById('e1Ask').checked,
+                e1AskSigma: document.getElementById('e1AskSigma').value,
+                nBidPips: document.getElementById('nBidPips').value,
+                nAskPips: document.getElementById('nAskPips').value,
+                useTp: document.getElementById('useTp').checked,
+                tpBid: document.getElementById('tpBid').value,
+                tpAsk: document.getElementById('tpAsk').value,
+                useSl: document.getElementById('useSl').checked,
+                slBid: document.getElementById('slBid').value,
+                slAsk: document.getElementById('slAsk').value
+            };
+            localStorage.setItem('oanda_app_settings', JSON.stringify(settings));
+        }
+
+        function loadSettings() {
+            const saved = localStorage.getItem('oanda_app_settings');
+            if (saved) {
+                try {
+                    const settings = JSON.parse(saved);
+                    if (settings.btStartTime !== undefined) document.getElementById('btStartTime').value = settings.btStartTime;
+                    if (settings.btEndTime !== undefined) document.getElementById('btEndTime').value = settings.btEndTime;
+                    if (settings.btSpread !== undefined) document.getElementById('btSpread').value = settings.btSpread;
+                    if (settings.btInitialMargin !== undefined) document.getElementById('btInitialMargin').value = settings.btInitialMargin;
+                    if (settings.btLot !== undefined) document.getElementById('btLot').value = settings.btLot;
+                    if (settings.btMaxPos !== undefined) document.getElementById('btMaxPos').value = settings.btMaxPos;
+                    if (settings.e1Bid !== undefined) document.getElementById('e1Bid').checked = settings.e1Bid;
+                    if (settings.e1BidSigma !== undefined) document.getElementById('e1BidSigma').value = settings.e1BidSigma;
+                    if (settings.e1Ask !== undefined) document.getElementById('e1Ask').checked = settings.e1Ask;
+                    if (settings.e1AskSigma !== undefined) document.getElementById('e1AskSigma').value = settings.e1AskSigma;
+                    if (settings.nBidPips !== undefined) document.getElementById('nBidPips').value = settings.nBidPips;
+                    if (settings.nAskPips !== undefined) document.getElementById('nAskPips').value = settings.nAskPips;
+                    if (settings.useTp !== undefined) document.getElementById('useTp').checked = settings.useTp;
+                    if (settings.tpBid !== undefined) document.getElementById('tpBid').value = settings.tpBid;
+                    if (settings.tpAsk !== undefined) document.getElementById('tpAsk').value = settings.tpAsk;
+                    if (settings.useSl !== undefined) document.getElementById('useSl').checked = settings.useSl;
+                    if (settings.slBid !== undefined) document.getElementById('slBid').value = settings.slBid;
+                    if (settings.slAsk !== undefined) document.getElementById('slAsk').value = settings.slAsk;
+                } catch (e) {
+                    console.error("設定の読み込みに失敗しました", e);
+                }
+            }
+        }
 
         // === 1. インジケーター計算 ===
         function calcIndicators(dataArray) {
@@ -355,11 +404,18 @@
 
         // === 2. 初期化とイベント登録 ===
         window.addEventListener('DOMContentLoaded', () => {
+            // 保存されている設定の読み込み
+            loadSettings();
+
             document.getElementById('btnTopSettings').addEventListener('click', () => document.getElementById('modalSettings').classList.remove('hidden'));
+            
+            // モーダルを閉じる時に設定を保存
             document.getElementById('btnCloseModal').addEventListener('click', () => {
                 document.getElementById('modalSettings').classList.add('hidden');
+                saveSettings();
                 if (appMode === 'REAL') drawChart(); 
             });
+            
             document.getElementById('btnLegend').addEventListener('click', () => document.getElementById('legendPanel').classList.toggle('hidden'));
 
             document.getElementById('btnTogglePnL').addEventListener('click', () => {
@@ -525,14 +581,14 @@
 
         async function fetchHistoryReal() {
             try {
-                const data = await apiRequest(`/accounts/${accountId}/transactions?count=100`); 
+                const data = await apiRequest(`/accounts/${accountId}/transactions?type=ORDER_FILL&count=50`); 
                 if(!data) return;
                 
                 txHistoryData = []; 
                 const isJPY = instrument.includes('JPY');
                 
                 (data.transactions || []).forEach(t => {
-                    if (t.type === 'ORDER_FILL' && t.instrument === instrument) {
+                    if(t.instrument === instrument) {
                         const units = parseInt(t.units);
                         const isClose = t.tradesClosed && t.tradesClosed.length > 0;
                         const pl = parseFloat(t.pl) || 0;
@@ -557,12 +613,14 @@
                             pips: pips,
                             profitYen: pl,
                             balance: balance,
-                            count: 1
+                            count: 1,
+                            shortCount: currentShortUnits, 
+                            longCount: currentLongUnits
                         });
                     }
                 });
                 renderHistory(); 
-            } catch (e) { console.error("fetchHistoryReal Error:", e); }
+            } catch (e) { console.error(e); }
         }
 
         async function fetchHistoricalCandlesReal() {
@@ -571,34 +629,34 @@
                 const granularity = tfGranularity[tfVal];
                 const intervalMs = tfIntervalMs[tfVal] * 1000;
                 
-                const res = await apiRequest(`/instruments/${instrument}/candles?granularity=${granularity}&count=1000`); 
+                const res = await apiRequest(`/instruments/${instrument}/candles?granularity=${granularity}&count=1000&price=A`); 
                 if(!res || !res.candles) return;
                 
                 candlesData = res.candles.filter(c => c.complete).map(c => {
                     const tMs = parseFloat(c.time) * 1000;
                     return { 
                         time: tMs, 
-                        o: parseFloat(c.mid.o), h: parseFloat(c.mid.h), l: parseFloat(c.mid.l), c: parseFloat(c.mid.c),
+                        o: parseFloat(c.ask.o), h: parseFloat(c.ask.h), l: parseFloat(c.ask.l), c: parseFloat(c.ask.c),
                         startTime: tMs, 
                         endTime: tMs + intervalMs - 1 
                     };
                 });
-                displayCandles = [...candlesData]; 
+                displayCandles = candlesData; 
                 calcIndicators(displayCandles); 
                 drawChart();
-            } catch (e) { console.error("fetchHistoricalCandlesReal Error:", e); }
+            } catch (e) {}
         }
 
         async function fetchPricingAndUpdateChartReal() {
             try {
-                const data = await apiRequest(`/accounts/${accountId}/pricing?instruments=${instrument}`); if(!data || !data.prices) return;
+                const data = await apiRequest(`/accounts/${accountId}/pricing?instruments=${instrument}`); 
+                if(!data || !data.prices) return;
                 const priceData = data.prices[0];
                 if (priceData.status !== 'tradeable') { document.getElementById('marketClosedLabel').style.display = 'block'; return; }
                 else { document.getElementById('marketClosedLabel').style.display = 'none'; }
 
                 const askPrice = parseFloat(priceData.asks[0].price);
                 const bidPrice = parseFloat(priceData.bids[0].price);
-                const midPrice = (askPrice + bidPrice) / 2;
                 
                 document.getElementById('bidPrice').innerText = askPrice.toFixed(3);
                 document.getElementById('askPrice').innerText = askPrice.toFixed(3);
@@ -616,23 +674,25 @@
                 }
 
                 if (displayCandles.length > 0) {
-                    const last = displayCandles[displayCandles.length - 1]; const now = Date.now();
+                    const last = displayCandles[displayCandles.length - 1]; 
+                    const now = Date.now();
                     const tfVal = document.getElementById('tfSelector').value;
                     const intervalMs = tfIntervalMs[tfVal] * 1000;
 
                     if (now > last.endTime) { 
-                        const newC = { time: now, o: midPrice, h: midPrice, l: midPrice, c: midPrice, startTime: now, endTime: now + intervalMs - 1 };
+                        const newC = { time: now, o: askPrice, h: askPrice, l: askPrice, c: askPrice, startTime: now, endTime: now + intervalMs - 1 };
                         displayCandles.push(newC); candlesData.push(newC);
                         if (displayCandles.length > 2000) { displayCandles.shift(); candlesData.shift(); }
                     } else { 
-                        last.c = midPrice; last.h = Math.max(last.h, midPrice); last.l = Math.min(last.l, midPrice); last.endTime = now;
+                        last.c = askPrice; 
+                        last.h = Math.max(last.h, askPrice); 
+                        last.l = Math.min(last.l, askPrice); 
                     }
                 }
                 if (scrollOffset === 0) { calcIndicators(displayCandles); drawChart(); }
             } catch (e) {}
         }
 
-        // --- 手動注文系 ---
         function setupRealTradeEvents() {
             document.getElementById('btnAutoStart').addEventListener('click', () => { isAutoTrading = true; document.getElementById('btnAutoStart').disabled = true; document.getElementById('btnAutoStop').disabled = false; document.getElementById('btnAutoStart').innerText = "稼働中..."; });
             document.getElementById('btnAutoStop').addEventListener('click', () => { isAutoTrading = false; document.getElementById('btnAutoStart').disabled = false; document.getElementById('btnAutoStop').disabled = true; document.getElementById('btnAutoStart').innerText = "▶ スタート"; });
@@ -641,17 +701,14 @@
                 let u = document.getElementById('lotSize').value; if (!confirm(`${instrument} を ${u}通貨 売(ASK) しますか？`)) return;
                 try { const res = await apiRequest(`/accounts/${accountId}/orders`, 'POST', { order: { units: "-" + u, instrument, timeInForce: "FOK", type: "MARKET", positionFill: "DEFAULT" } }); if(res) { fetchAccount(); fetchPosition(); fetchHistoryReal(); } } catch(e) { alert("注文エラー"); }
             });
-            
             document.getElementById('btnBuy').addEventListener('click', async () => {
                 let u = document.getElementById('lotSize').value; if (!confirm(`${instrument} を ${u}通貨 買(ASK) しますか？`)) return;
                 try { const res = await apiRequest(`/accounts/${accountId}/orders`, 'POST', { order: { units: u, instrument, timeInForce: "FOK", type: "MARKET", positionFill: "DEFAULT" } }); if(res) { fetchAccount(); fetchPosition(); fetchHistoryReal(); } } catch(e) { alert("注文エラー"); }
             });
-            
             document.getElementById('btnSideCloseLong').addEventListener('click', async () => {
                 if(!confirm(`買ポジションを全決済しますか？`)) return;
                 try { const res = await apiRequest(`/accounts/${accountId}/positions/${instrument}/close`, 'PUT', { longUnits: "ALL" }); if(res) { fetchAccount(); fetchPosition(); fetchHistoryReal(); } } catch (e) { alert("決済エラー"); }
             });
-            
             document.getElementById('btnSideCloseShort').addEventListener('click', async () => {
                 if(!confirm(`売ポジションを全決済しますか？`)) return;
                 try { const res = await apiRequest(`/accounts/${accountId}/positions/${instrument}/close`, 'PUT', { shortUnits: "ALL" }); if(res) { fetchAccount(); fetchPosition(); fetchHistoryReal(); } } catch (e) { alert("決済エラー"); }
@@ -797,9 +854,6 @@
             return { totalPips, finalMargin: currentMargin };
         }
 
-        // ==========================================
-        // UI描画共通処理
-        // ==========================================
         function renderHistory() {
             const list = document.getElementById('historyList'); list.innerHTML = '';
             if (txHistoryData.length === 0) { list.innerHTML = '<div style="color: #64748b; padding: 10px;">取引なし</div>'; return; }
@@ -876,7 +930,7 @@
             const drawAskSigma = parseFloat(document.getElementById('e1AskSigma').value) || 2.0;
             const candleWidth = chartW / dataToDraw.length;
             
-            const getAsk = (val) => val + (spreadValue / 2);
+            const getAsk = (val) => appMode === 'BACKTEST' ? val + (spreadValue / 2) : val;
 
             let minP = Infinity, maxP = -Infinity;
             dataToDraw.forEach(c => {
