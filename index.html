@@ -11,9 +11,11 @@
         button { background-color: #1a73e8; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 4px; cursor: pointer; margin: 10px; }
         button:hover { background-color: #1557b0; }
         .hidden { display: none; }
-        input[type="text"] { width: 60%; padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 4px; }
-        #player-container { margin-top: 20px; }
+        input[type="text"] { width: 80%; padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        #player-container { margin-top: 20px; position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; }
+        #player-container iframe, #player-container div { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
         .user-info { font-size: 14px; color: #555; margin-bottom: 20px; }
+        .input-group { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -21,18 +23,20 @@
 <div class="container">
     <h1>Custom YouTube Player</h1>
 
+    <!-- 1. ログイン前の画面 -->
     <div id="login-section">
         <p>このアプリを使用するにはログインが必要です。</p>
         <button id="btn-login">Googleアカウントでログイン</button>
     </div>
 
+    <!-- 2. ログイン後の画面 -->
     <div id="app-section" class="hidden">
         <div class="user-info">
             ようこそ、<span id="user-name"></span> さん！
             <button id="btn-logout" style="background-color: #555; padding: 5px 10px; font-size: 12px;">ログアウト</button>
         </div>
 
-        <div>
+        <div class="input-group">
             <input type="text" id="playlist-id" placeholder="YouTubeプレイリストIDを入力">
             <button id="btn-load">読み込み</button>
         </div>
@@ -43,18 +47,20 @@
     </div>
 </div>
 
+<!-- Firebase SDK の読み込み (v10) -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getAuth, signInWithRedirect, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-    // ⚠️【重要】ご自身のFirebaseプロジェクトの設定に書き換えてください
+    // 工藤さんのFirebaseプロジェクト設定
     const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_AUTH_DOMAIN",
-        projectId: "YOUR_PROJECT_ID",
-        storageBucket: "YOUR_STORAGE_BUCKET",
-        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-        appId: "YOUR_APP_ID"
+      apiKey: "AIzaSyAq1rVSsjLcQHPiMJqd2-wAsG4S-gweqS4",
+      authDomain: "play-837e1.firebaseapp.com",
+      projectId: "play-837e1",
+      storageBucket: "play-837e1.firebasestorage.app",
+      messagingSenderId: "701724944383",
+      appId: "1:701724944383:web:c34c0d7b453bcee96729ca",
+      measurementId: "G-2JCCWYCESK"
     };
 
     // Firebaseの初期化
@@ -71,11 +77,9 @@
     const playlistInput = document.getElementById('playlist-id');
     const btnLoad = document.getElementById('btn-load');
 
-    // ログイン処理
+    // ログイン処理（スマホでブロックされないリダイレクト方式）
     btnLogin.addEventListener('click', () => {
-        signInWithPopup(auth, provider).catch((error) => {
-            alert("ログインに失敗しました: " + error.message);
-        });
+        signInWithRedirect(auth, provider);
     });
 
     // ログアウト処理
@@ -94,14 +98,13 @@
             // ログアウト中
             loginSection.classList.remove('hidden');
             appSection.classList.add('hidden');
-            if (player) player.destroy(); // プレイヤーを消去
+            if (player) player.destroy();
         }
     });
 
     // YouTube IFrame APIの制御
     let player;
     
-    // グローバル関数として定義してYouTube APIから呼べるようにする
     window.loadPlaylist = function() {
         const playlistId = playlistInput.value.trim();
         if (!playlistId) {
@@ -109,14 +112,12 @@
             return;
         }
 
-        // すでにプレイヤーがある場合は一度破棄
         if (player) {
             player.destroy();
         }
 
-        // 新しいプレイヤーを作成
         player = new YT.Player('player', {
-            height: '360',
+            height: '100%',
             width: '100%',
             playerVars: {
                 'listType': 'playlist',
@@ -128,6 +129,7 @@
     btnLoad.addEventListener('click', window.loadPlaylist);
 </script>
 
+<!-- YouTube IFrame API の読み込み -->
 <script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>
